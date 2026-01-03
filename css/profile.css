@@ -1,11 +1,62 @@
-/* profile.css */
-.codes-container {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;
+/* profile.css - أنماط صفحة العميل */
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 20px;
 }
 
-.code-display {
-    background: #000; border: 1px dashed var(--tech-blue);
-    padding: 15px; border-radius: 5px; color: var(--tech-blue);
-    font-family: monospace; font-size: 1.2rem; letter-spacing: 2px;
-    margin: 15px 0; text-align: center;
+.user-details h2 {
+    margin-bottom: 5px;
+}
+
+.orders-list {
+    display: grid;
+    gap: 20px;
+}
+
+.order-card {
+    transition: all 0.3s ease;
+}
+
+.order-card:hover {
+    transform: translateX(-5px);
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.status-success {
+    background: rgba(46, 204, 113, 0.2);
+    color: #2ecc71;
+    border: 1px solid #2ecc71;
+}
+
+.status-warning {
+    background: rgba(241, 196, 15, 0.2);
+    color: var(--iron-gold);
+    border: 1px solid var(--iron-gold);
+}
+
+.status-error {
+    background: rgba(231, 76, 60, 0.2);
+    color: #e74c3c;
+    border: 1px solid #e74c3c;
+}
+
+.status-info {
+    background: rgba(52, 152, 219, 0.2);
+    color: #3498db;
+    border: 1px solid #3498db;
+}
+
+.status-default {
+    background: rgba(149, 165, 166, 0.2);
+    color: #95a5a6;
+    border: 1px solid #95a5a6;
 }
