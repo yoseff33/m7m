@@ -1,393 +1,359 @@
-/**
- * Iron Plus - Admin Command Center v3.5 (FULL VERSION)
- * نظام إدارة المتجر المتكامل - النسخة الكاملة والمعدلة
- */
+// ========================================
+// لوحة تحكم Iron Plus - النظام الإداري المطور
+// ========================================
 
-// 1. إعدادات الأمان (Whitelist) - حط الـ IP حقك هنا
-const ADMIN_ALLOWED_IPS = ['123.456.789.0', '0.0.0.0']; 
-
-// مستمع التحميل الرئيسي
+// التحقق من حالة الصفحة عند التحميل
 document.addEventListener('DOMContentLoaded', async function() {
-    console.log("Tony, Jarvis is initializing systems... 🦾");
+    console.log('Admin panel loading... 🦾');
     
-    // التحقق من تسجيل الدخول أولاً
-    if (!isAdminLoggedIn()) {
-        showAdminLoginScreen();
+    // التحقق من وجود الكائن الرئيسي وصلاحية المشرف
+    if (!window.ironPlus || !window.ironPlus.isAdminLoggedIn()) {
+        console.log('Access denied. Redirecting to login...');
+        showLoginScreen();
         return;
     }
-
-    // التحقق من أمان الشبكة (IP)
-    await checkIPAccess();
     
-    // تشغيل الأنظمة
-    initAdminSystems();
-    setupAdminEventListeners();
+    // تهيئة لوحة التحكم والبدء في سحب البيانات
+    await initializeAdminPanel();
 });
 
-// --- أولاً: أنظمة الحماية والدخول ---
+// --- أولاً: إدارة شاشات الدخول والواجهة ---
 
-function isAdminLoggedIn() {
-    return localStorage.getItem('iron_admin') === 'true';
-}
-
-function showAdminLoginScreen() {
+function showLoginScreen() {
     const loginScreen = document.getElementById('adminLoginScreen');
     const dashboard = document.getElementById('adminDashboard');
+    
     if (loginScreen) loginScreen.style.display = 'flex';
     if (dashboard) dashboard.style.display = 'none';
+    
+    setupLoginListeners();
 }
 
-async function checkIPAccess() {
-    try {
-        const response = await fetch('https://api.ipify.org?format=json');
-        const data = await response.json();
-        const userIP = data.ip;
-        console.log("System Access IP:", userIP);
+function setupLoginListeners() {
+    const loginForm = document.getElementById('adminLoginForm');
+    if (!loginForm) return;
+    
+    loginForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const username = document.getElementById('adminUsername').value.trim();
+        const password = document.getElementById('adminPassword').value;
+        const messageDiv = document.getElementById('loginMessage');
+        
+        clearMessage(messageDiv);
+        
+        if (!username || !password) {
+            showMessage(messageDiv, 'يرجى ملء جميع الحقول يا بطل', 'error');
+            return;
+        }
+        
+        showMessage(messageDiv, 'جاري فحص الصلاحيات...', 'info');
+        
+        try {
+            const result = await window.ironPlus.adminLogin(username, password);
+            
+            if (result.success) {
+                showMessage(messageDiv, 'تم تسجيل الدخول.. جاري تشغيل الأنظمة!', 'success');
+                setTimeout(() => { window.location.reload(); }, 1000);
+            } else {
+                showMessage(messageDiv, result.message || 'بيانات الدخول غير صحيحة', 'error');
+            }
+        } catch (error) {
+            console.error('Login error:', error);
+            showMessage(messageDiv, 'عطلاً في الاتصال بالسيرفر المركزي', 'error');
+        }
+    });
+}
 
-        if (!ADMIN_ALLOWED_IPS.includes(userIP) && !ADMIN_ALLOWED_IPS.includes('0.0.0.0')) {
-            localStorage.removeItem('iron_admin');
-            alert('🚨 تنبيه أمني: جهازك غير مصرح له بدخول الأنظمة المركزية.');
-            window.location.href = 'index.html';
+// --- ثانياً: تهيئة الأنظمة (Initialization) ---
+
+async function initializeAdminPanel() {
+    try {
+        // إخفاء شاشة الدخول وإظهار لوحة التحكم
+        const loginScreen = document.getElementById('adminLoginScreen');
+        const dashboard = document.getElementById('adminDashboard');
+        
+        if (loginScreen) loginScreen.style.display = 'none';
+        if (dashboard) dashboard.style.display = 'block';
+        
+        // عرض اسم المشرف
+        const adminName = window.ironPlus.getAdminUsername();
+        const adminNameElement = document.getElementById('adminName');
+        if (adminNameElement && adminName) {
+            adminNameElement.textContent = `مرحباً، القائد ${adminName}`;
+        }
+        
+        // تشغيل الوظائف الأساسية
+        setupNavigation();
+        await loadDashboardData();
+        await loadProducts();
+        await loadOrders();
+        await loadProductsForCodes();
+        setupEventListeners();
+        
+        console.log('Jarvis: Admin panel is fully operational.');
+        
+    } catch (error) {
+        console.error('Initialization error:', error);
+        showNotification('فشل في تشغيل بعض الأنظمة', 'error');
+    }
+}
+
+// --- ثالثاً: إدارة التنقل (Navigation) ---
+
+function setupNavigation() {
+    const menuItems = document.querySelectorAll('.menu-item');
+    const sections = document.querySelectorAll('.admin-section');
+    
+    menuItems.forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            menuItems.forEach(el => el.classList.remove('active'));
+            sections.forEach(section => section.classList.remove('active'));
+            
+            this.classList.add('active');
+            
+            const sectionId = this.getAttribute('data-section') + 'Section';
+            const targetSection = document.getElementById(sectionId);
+            if (targetSection) {
+                targetSection.classList.add('active');
+                
+                // تحديث البيانات عند الانتقال للقسم
+                const section = this.getAttribute('data-section');
+                if(section === 'dashboard') loadDashboardData();
+                else if(section === 'products') loadProducts();
+                else if(section === 'orders') loadOrders();
+            }
+        });
+    });
+}
+
+// --- رابعاً: إدارة البيانات (Dashboard & Products) ---
+
+async function loadDashboardData() {
+    try {
+        const statsResult = await window.ironPlus.getSiteStats();
+        if (statsResult.success) {
+            const stats = statsResult.stats;
+            updateElement('totalSales', `${window.ironPlus.formatPrice(stats.totalSales)} ر.س`);
+            updateElement('totalProducts', stats.activeProducts);
+            updateElement('totalCustomers', stats.uniqueCustomers || 0);
+            updateElement('availableCodes', stats.availableCodes || 0);
+            updateElement('totalOrders', stats.totalOrders);
+        }
+        
+        const ordersResult = await window.ironPlus.getAllOrders({ limit: 5 });
+        if (ordersResult.success && ordersResult.orders.length > 0) {
+            updateRecentOrders(ordersResult.orders);
         }
     } catch (error) {
-        console.warn('Network layer offline. Manual verification needed.');
+        console.error('Dashboard load error:', error);
     }
 }
 
-// --- ثانياً: تهيئة البيانات (Dashboard Initialization) ---
-
-async function initAdminSystems() {
-    const adminName = localStorage.getItem('admin_username') || 'المشرف';
-    if(document.getElementById('adminName')) {
-        document.getElementById('adminName').textContent = `مرحباً، ${adminName}`;
-    }
-
-    // تحميل متزامن للبيانات
-    try {
-        await Promise.all([
-            loadStatistics(),
-            loadProductsTable(),
-            loadOrdersTable(),
-            loadProductSelect(),
-            loadBulkCodes()
-        ]);
-    } catch (error) {
-        console.error("Critical Load Error:", error);
-    }
+function updateRecentOrders(orders) {
+    const container = document.getElementById('recentOrdersContainer');
+    if (!container) return;
+    
+    container.innerHTML = orders.map(order => `
+        <div class="recent-order">
+            <div class="order-info">
+                <strong>${order.customer_phone}</strong>
+                <small>${window.ironPlus.formatPrice(order.amount)} ر.س</small>
+            </div>
+            <span class="status-badge ${getStatusClass(order.status)}">
+                ${getStatusText(order.status)}
+            </span>
+        </div>
+    `).join('');
 }
 
-// --- ثالثاً: نظام الإحصائيات (Analytics) ---
-
-async function loadStatistics() {
-    try {
-        // مبيعات مكتملة
-        const { data: salesData } = await supabaseClient
-            .from('orders')
-            .select('amount')
-            .eq('status', 'completed');
-            
-        const totalSales = salesData ? salesData.reduce((sum, o) => sum + o.amount, 0) : 0;
-        
-        // المنتجات النشطة
-        const { count: productsCount } = await supabaseClient
-            .from('products')
-            .select('*', { count: 'exact', head: true });
-            
-        // العملاء المسجلين
-        const { count: usersCount } = await supabaseClient
-            .from('users')
-            .select('*', { count: 'exact', head: true });
-            
-        // الأكواد غير المستخدمة
-        const { count: codesCount } = await supabaseClient
-            .from('activation_codes')
-            .select('*', { count: 'exact', head: true })
-            .eq('is_used', false);
-
-        // التحديث على الواجهة
-        document.getElementById('totalSales').textContent = `${(totalSales / 100).toFixed(2)} ر.س`;
-        document.getElementById('totalProducts').textContent = productsCount || 0;
-        document.getElementById('totalCustomers').textContent = usersCount || 0;
-        document.getElementById('availableCodes').textContent = codesCount || 0;
-        
-    } catch (error) {
-        console.error("Stats system failure:", error);
-    }
+async function loadProducts() {
+    const result = await window.ironPlus.getProducts();
+    if (result.success) renderProductsTable(result.products);
 }
 
-// --- رابعاً: إدارة المنتجات (CRUD Operations) ---
-
-async function loadProductsTable() {
+function renderProductsTable(products) {
     const tbody = document.getElementById('productsTableBody');
     if (!tbody) return;
-
-    const { data: products, error } = await supabaseClient
-        .from('products')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-    if (error) return showMessage("فشل تحميل المنتجات", "error");
-
-    tbody.innerHTML = products.map(p => `
+    
+    if (!products || products.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center">لا توجد منتجات حالياً</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = products.map(product => `
         <tr>
-            <td>
-                ${p.image_url ? `<img src="${p.image_url}" class="table-img" style="width:40px; height:40px; border-radius:5px; object-fit:cover;">` : '<i class="fas fa-box"></i>'}
-            </td>
-            <td><strong>${p.name}</strong></td>
-            <td><span class="text-glow-red font-bold">${(p.price / 100).toFixed(2)} ر.س</span></td>
-            <td>${p.duration || '-'}</td>
-            <td>${p.stock || '∞'}</td>
-            <td>
-                <span class="status-badge ${p.is_active ? 'status-active' : 'status-inactive'}">
-                    ${p.is_active ? 'نشط' : 'متوقف'}
-                </span>
-            </td>
+            <td><img src="${product.image_url || 'assets/default.png'}" style="width:50px; border-radius:8px;"></td>
+            <td><strong>${product.name}</strong></td>
+            <td><div class="price-display">${window.ironPlus.formatPrice(product.price)} ر.س</div></td>
+            <td>${product.duration || 'دائم'}</td>
+            <td><span class="badge">${product.stock === 999 ? '∞' : product.stock}</span></td>
+            <td><span class="status-badge ${product.is_active ? 'status-active' : 'status-inactive'}">${product.is_active ? 'نشط' : 'معطل'}</span></td>
             <td>
                 <div class="action-buttons">
-                    <button onclick="editProduct('${p.id}')" class="btn-action btn-edit"><i class="fas fa-edit"></i></button>
-                    <button onclick="deleteProduct('${p.id}')" class="btn-action btn-delete"><i class="fas fa-trash"></i></button>
-                    <button onclick="viewProduct('${p.id}')" class="btn-action btn-view"><i class="fas fa-eye"></i></button>
+                    <button onclick="adminPanel.showProductModal('${product.id}')" class="btn-action btn-edit"><i class="fas fa-edit"></i></button>
+                    <button onclick="adminPanel.deleteProduct('${product.id}', '${product.name}')" class="btn-action btn-delete"><i class="fas fa-trash"></i></button>
                 </div>
             </td>
         </tr>
     `).join('');
 }
 
-async function saveProduct(e) {
-    if(e) e.preventDefault();
-    
-    const productId = document.getElementById('productId').value;
-    const features = document.getElementById('productFeatures').value.split('\n').filter(f => f.trim() !== "");
+// --- خامساً: إدارة الطلبات والأكواد بالجملة ---
 
-    const productData = {
-        name: document.getElementById('productName').value,
-        description: document.getElementById('productDescription').value,
-        price: Math.round(parseFloat(document.getElementById('productPrice').value) * 100),
-        duration: document.getElementById('productDuration').value,
-        image_url: document.getElementById('productImage').value,
-        features: features,
-        updated_at: new Date()
-    };
-
-    let result;
-    if (productId) {
-        result = await supabaseClient.from('products').update(productData).eq('id', productId);
-    } else {
-        result = await supabaseClient.from('products').insert([productData]);
-    }
-
-    if (!result.error) {
-        showMessage("تم تحديث النظام بنجاح 💾", "success");
-        closeModal();
-        initAdminSystems();
-    } else {
-        showMessage("خطأ: " + result.error.message, "error");
-    }
+async function loadOrders(filters = {}) {
+    const result = await window.ironPlus.getAllOrders(filters);
+    if (result.success) renderOrdersTable(result.orders);
 }
 
-async function editProduct(id) {
-    const { data: product } = await supabaseClient.from('products').select('*').eq('id', id).single();
-    if (product) {
-        document.getElementById('productId').value = product.id;
-        document.getElementById('productName').value = product.name;
-        document.getElementById('productDescription').value = product.description;
-        document.getElementById('productPrice').value = (product.price / 100).toFixed(2);
-        document.getElementById('productDuration').value = product.duration;
-        document.getElementById('productImage').value = product.image_url;
-        document.getElementById('productFeatures').value = product.features ? product.features.join('\n') : '';
-        
-        document.getElementById('modalTitle').textContent = "تعديل المنتج";
-        document.getElementById('productModal').style.display = 'flex';
-    }
-}
-
-async function deleteProduct(id) {
-    if (confirm("🚨 هل أنت متأكد؟ سيتم مسح المنتج نهائياً من الوجود.")) {
-        const { error } = await supabaseClient.from('products').delete().eq('id', id);
-        if (!error) {
-            showMessage("تم المسح بنجاح", "success");
-            loadProductsTable();
-            loadStatistics();
-        }
-    }
-}
-
-// --- خامساً: إدارة الطلبات (Order Management) ---
-
-async function loadOrdersTable() {
+function renderOrdersTable(orders) {
     const tbody = document.getElementById('ordersTableBody');
     if (!tbody) return;
-
-    const { data: orders, error } = await supabaseClient
-        .from('orders')
-        .select('*, products(name)')
-        .order('created_at', { ascending: false });
-
-    if (error) return;
-
-    tbody.innerHTML = orders.map(o => `
+    
+    tbody.innerHTML = orders.map(order => `
         <tr>
-            <td><small>${o.id.substring(0,8)}</small></td>
-            <td><strong>${o.customer_phone}</strong><br><small>${o.customer_name || 'عميل'}</small></td>
-            <td>${o.products ? o.products.name : 'N/A'}</td>
-            <td><strong class="text-gold">${(o.amount / 100).toFixed(2)} ر.س</strong></td>
-            <td><span class="status-badge status-${o.status}">${getStatusText(o.status)}</span></td>
-            <td>${new Date(o.created_at).toLocaleDateString('ar-SA')}</td>
+            <td><strong>${order.id.substring(0,8)}</strong></td>
+            <td>${order.customer_phone}</td>
+            <td>${order.products?.name || 'N/A'}</td>
+            <td>${window.ironPlus.formatPrice(order.amount)} ر.س</td>
+            <td><span class="status-badge ${getStatusClass(order.status)}">${getStatusText(order.status)}</span></td>
+            <td><small>${window.ironPlus.formatDate(order.created_at)}</small></td>
             <td>
                 <div class="action-buttons">
-                    <button onclick="viewOrderDetails('${o.id}')" class="btn-action btn-view"><i class="fas fa-eye"></i></button>
-                    <button onclick="contactCustomer('${o.customer_phone}')" class="btn-action" style="background:#25D366"><i class="fab fa-whatsapp"></i></button>
-                    ${o.status !== 'completed' ? `<button onclick="updateOrderStatus('${o.id}', 'completed')" class="btn-action" style="background:#2ecc71">تأكيد</button>` : ''}
+                    <button onclick="adminPanel.deliverOrder('${order.id}', '${order.product_id}')" class="btn-action btn-success" title="تسليم الكود"><i class="fas fa-key"></i></button>
+                    <button onclick="adminPanel.contactCustomer('${order.customer_phone}')" class="btn-action btn-success"><i class="fab fa-whatsapp"></i></button>
                 </div>
             </td>
         </tr>
     `).join('');
 }
 
-function getStatusText(status) {
-    const statusMap = { 'pending': 'معلق', 'paid': 'مدفوع', 'completed': 'مكتمل', 'failed': 'فاشل' };
-    return statusMap[status] || status;
-}
-
-async function updateOrderStatus(orderId, status) {
-    const { error } = await supabaseClient.from('orders').update({ status }).eq('id', orderId);
-    if (!error) {
-        showMessage("حالة الطلب: " + getStatusText(status), "success");
-        loadOrdersTable();
-        loadStatistics();
-    }
-}
-
-// --- سادساً: إدارة الأكواد والرفع بالجملة (Codes Management) ---
-
-async function loadProductSelect() {
-    const { data: products } = await supabaseClient.from('products').select('id, name');
-    const select = document.getElementById('productForCodes');
-    if(select) {
-        select.innerHTML = '<option value="">اختر منتجاً للرفع...</option>' + 
-            products.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
-    }
-}
-
-async function uploadCodes() {
+async function handleBulkCodesUpload() {
     const productId = document.getElementById('productForCodes').value;
-    const text = document.getElementById('bulkCodesText').value;
-    const codes = text.split('\n').map(c => c.trim()).filter(c => c !== "");
-
-    if (!productId || codes.length === 0) return showMessage("الرجاء إدخال البيانات", "error");
-
-    const codeEntries = codes.map(c => ({ product_id: productId, code: c, is_used: false }));
+    const codesText = document.getElementById('bulkCodesText').value.trim();
     
-    const { error } = await supabaseClient.from('activation_codes').insert(codeEntries);
-
-    if (!error) {
-        showMessage(`تم شحن ${codes.length} كود بنجاح 🚀`, "success");
-        document.getElementById('bulkCodesText').value = "";
-        loadBulkCodes();
-        loadStatistics();
-    } else {
-        showMessage("فشل الرفع: كود مكرر", "error");
+    if (!productId || !codesText) {
+        showNotification('اختر المنتج وحط الأكواد يا مدير', 'warning');
+        return;
+    }
+    
+    const result = await window.ironPlus.uploadBulkCodes(productId, codesText);
+    if (result.success) {
+        showNotification(`تم شحن ${result.count} كود بنجاح! 🚀`, 'success');
+        document.getElementById('bulkCodesText').value = '';
+        await loadAvailableCodes(productId);
     }
 }
 
-async function loadBulkCodes() {
-    const container = document.getElementById('codesListContainer');
-    if(!container) return;
+// --- سادساً: الوظائف المساعدة والخدمات ---
 
-    const { data: codes } = await supabaseClient
-        .from('activation_codes')
-        .select('*, products(name)')
-        .order('created_at', { ascending: false })
-        .limit(50);
+function setupEventListeners() {
+    // مستمع لرفع الأكواد
+    const uploadBtn = document.getElementById('uploadCodesBtn');
+    if (uploadBtn) uploadBtn.onclick = handleBulkCodesUpload;
 
-    container.innerHTML = codes ? codes.map(c => `
-        <div class="code-item ${c.is_used ? 'used' : ''} hud-effect" style="margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; padding:10px;">
-            <div>
-                <span class="tech-font" style="color:var(--tech-blue)">${c.code}</span><br>
-                <small>${c.products?.name}</small>
-            </div>
-            <span class="status-badge ${c.is_used ? 'status-inactive' : 'status-active'}">${c.is_used ? 'مستخدم' : 'متاح'}</span>
-        </div>
-    `).join('') : '<p>لا توجد أكواد</p>';
+    // مستمع لنموذج المنتجات
+    const productForm = document.getElementById('productForm');
+    if (productForm) productForm.onsubmit = handleProductSubmit;
 }
 
-// --- سابعاً: وظائف الخدمات (Utility & Extras) ---
+async function handleProductSubmit(e) {
+    e.preventDefault();
+    const form = e.target;
+    const productId = form.productId.value;
+    
+    const data = {
+        name: form.productName.value,
+        price: parseFloat(form.productPrice.value),
+        description: form.productDescription.value,
+        image_url: form.productImage.value,
+        is_active: form.productIsActive.checked
+    };
 
-async function exportData() {
-    try {
-        const [p, o, c] = await Promise.all([
-            supabaseClient.from('products').select('*'),
-            supabaseClient.from('orders').select('*'),
-            supabaseClient.from('activation_codes').select('*')
-        ]);
-        
-        const backupData = { date: new Date(), products: p.data, orders: o.data, codes: c.data };
-        const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = `IronPlus_Backup_${new Date().toISOString().split('T')[0]}.json`;
-        a.click();
-        showMessage("تم تصدير النسخة الاحتياطية بنجاح 💾", "success");
-    } catch (e) { showMessage("فشل التصدير", "error"); }
+    const result = productId ? 
+        await window.ironPlus.updateProduct(productId, data) : 
+        await window.ironPlus.addProduct(data);
+
+    if (result.success) {
+        showNotification('تم الحفظ بنجاح ✅', 'success');
+        closeModal();
+        loadProducts();
+    }
 }
 
-function contactCustomer(phone) {
-    const cleanPhone = phone.startsWith('0') ? '966' + phone.substring(1) : phone;
-    window.open(`https://wa.me/${cleanPhone}?text=مرحباً، معك إدارة Iron Plus بخصوص طلبك..`, '_blank');
+function showNotification(msg, type) {
+    alert(`${type.toUpperCase()}: ${msg}`); // يمكن استبدالها بـ Toast مخصص
 }
 
-function showMessage(text, type) {
-    const msgDiv = document.getElementById('adminMessage') || createMessageElement();
-    msgDiv.textContent = text;
-    msgDiv.className = `message ${type} hud-effect`;
-    msgDiv.style.display = 'block';
-    setTimeout(() => msgDiv.style.display = 'none', 4500);
+function getStatusClass(s) {
+    if (s === 'completed') return 'status-active';
+    if (s === 'pending') return 'status-warning';
+    return 'status-inactive';
 }
 
-function createMessageElement() {
-    const div = document.createElement('div');
-    div.id = 'adminMessage';
-    div.style.cssText = "position:fixed; top:20px; right:20px; z-index:10000; padding:15px 30px; border-radius:10px; color:white; font-weight:bold; border:2px solid var(--iron-gold); background:rgba(0,0,0,0.95);";
-    document.body.appendChild(div);
-    return div;
+function getStatusText(s) {
+    const map = { completed: 'مكتمل', pending: 'معلق', paid: 'مدفوع', failed: 'فاشل' };
+    return map[s] || s;
+}
+
+function updateElement(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
 }
 
 function closeModal() {
     const modal = document.getElementById('productModal');
-    if(modal) modal.style.display = 'none';
+    if (modal) modal.style.display = 'none';
 }
 
-function setupAdminEventListeners() {
-    const form = document.getElementById('productForm');
-    if(form) form.addEventListener('submit', saveProduct);
-    
-    // إغلاق المودال عند الضغط خارجه
-    window.onclick = (event) => {
+// --- سابعاً: تصدير الدوال للاستخدام في HTML ---
+
+window.adminPanel = {
+    showProductModal: async (id) => {
         const modal = document.getElementById('productModal');
-        if (event.target == modal) closeModal();
+        const form = document.getElementById('productForm');
+        if (id) {
+            const res = await window.ironPlus.getProduct(id);
+            if (res.success) {
+                form.productId.value = res.product.id;
+                form.productName.value = res.product.name;
+                form.productPrice.value = window.ironPlus.formatPrice(res.product.price);
+                form.productIsActive.checked = res.product.is_active;
+            }
+        } else {
+            form.reset();
+            form.productId.value = '';
+        }
+        modal.style.display = 'flex';
+    },
+    deleteProduct: async (id, name) => {
+        if (confirm(`حذف ${name}؟`)) {
+            const res = await window.ironPlus.deleteProduct(id);
+            if (res.success) loadProducts();
+        }
+    },
+    deliverOrder: async (orderId, productId) => {
+        const res = await window.ironPlus.assignActivationCode(orderId, productId);
+        if (res.success) {
+            showNotification(`تم تسليم الكود بنجاح: ${res.code}`, 'success');
+            loadOrders();
+        } else {
+            showNotification(res.message, 'error');
+        }
+    },
+    contactCustomer: (phone) => {
+        window.open(`https://wa.me/966${phone.substring(1)}`, '_blank');
     }
-}
-
-function logoutAdmin() {
-    if(confirm("هل تريد إغلاق غرفة العمليات وتفويض الصلاحيات؟")) {
-        localStorage.removeItem('iron_admin');
-        window.location.reload();
-    }
-}
-
-// --- تصدير الدوال للـ HTML ---
-window.editProduct = editProduct;
-window.deleteProduct = deleteProduct;
-window.updateOrderStatus = updateOrderStatus;
-window.contactCustomer = contactCustomer;
-window.uploadCodes = uploadCodes;
-window.exportData = exportData;
-window.closeModal = closeModal;
-window.saveProduct = saveProduct;
-window.showAddProductModal = () => {
-    document.getElementById('productId').value = '';
-    document.getElementById('productForm').reset();
-    document.getElementById('modalTitle').textContent = "إضافة منتج جديد";
-    document.getElementById('productModal').style.display = 'flex';
 };
-window.logoutAdmin = logoutAdmin;
+
+async function loadProductsForCodes() {
+    const result = await window.ironPlus.getProducts();
+    if (result.success) {
+        const select = document.getElementById('productForCodes');
+        if (!select) return;
+        select.innerHTML = '<option value="">اختر منتجاً</option>' + 
+            result.products.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+    }
+}
