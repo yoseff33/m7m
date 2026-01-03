@@ -6,57 +6,20 @@
     <title>Iron Plus | تسجيل الدخول</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Rajdhani:wght@500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/styles.css">
-    <style>
-        .login-page { display: flex; align-items: center; justify-content: center; height: 80vh; }
-        .login-card { width: 100%; max-width: 400px; padding: 40px; }
-    </style>
 </head>
 <body class="iron-theme">
-    <div class="container login-page">
-        <div class="hud-card login-card text-center">
-            <h2 class="tech-font text-glow-gold">USER LOGIN</h2>
+    <div class="container flex justify-center items-center" style="height: 100vh;">
+        <div class="hud-card text-center" style="max-width: 400px; width: 100%;">
+            <h2 class="tech-font text-glow-gold">USER ACCESS</h2>
             <div id="step1">
-                <p>أدخل رقم جوالك لتلقي رمز التحقق</p>
+                <p style="margin-bottom: 20px;">أدخل رقم جوالك للدخول إلى حسابك</p>
                 <input type="tel" id="userPhone" class="input-iron" placeholder="05xxxxxxxx">
-                <button onclick="sendOTP()" class="btn-iron w-full">إرسال عبر واتساب</button>
+                <button onclick="sendOTP()" class="btn-iron w-full">إرسال كود التحقق</button>
             </div>
             <div id="step2" style="display:none;">
-                <p>أدخل الرمز المكون من 4 أرقام</p>
-                <input type="number" id="otpCode" class="input-iron text-center" style="letter-spacing: 10px;">
-                <button onclick="verifyOTP()" class="btn-iron w-full">تأكيد الدخول</button>
-            </div>
-        </div>
-    </div>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js/supabase-config.js"></script>
-    <script src="js/login.js"></script>
-</body>
-</html><!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Iron Plus | تسجيل الدخول</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Rajdhani:wght@500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/styles.css">
-    <style>
-        .login-page { display: flex; align-items: center; justify-content: center; height: 80vh; }
-        .login-card { width: 100%; max-width: 400px; padding: 40px; }
-    </style>
-</head>
-<body class="iron-theme">
-    <div class="container login-page">
-        <div class="hud-card login-card text-center">
-            <h2 class="tech-font text-glow-gold">USER LOGIN</h2>
-            <div id="step1">
-                <p>أدخل رقم جوالك لتلقي رمز التحقق</p>
-                <input type="tel" id="userPhone" class="input-iron" placeholder="05xxxxxxxx">
-                <button onclick="sendOTP()" class="btn-iron w-full">إرسال عبر واتساب</button>
-            </div>
-            <div id="step2" style="display:none;">
-                <p>أدخل الرمز المكون من 4 أرقام</p>
-                <input type="number" id="otpCode" class="input-iron text-center" style="letter-spacing: 10px;">
-                <button onclick="verifyOTP()" class="btn-iron w-full">تأكيد الدخول</button>
+                <p style="margin-bottom: 20px;">تم إرسال الرمز لواتسابك، أدخله هنا:</p>
+                <input type="number" id="otpCode" class="input-iron text-center" placeholder="----">
+                <button onclick="verifyOTP()" class="btn-iron w-full">تأكيد الرمز</button>
             </div>
         </div>
     </div>
