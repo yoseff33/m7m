@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iron Plus | طلباتي</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Rajdhani:wght@500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="iron-theme">
+    <nav class="nav-iron">
+        <div class="container flex justify-between items-center">
+            <div class="logo tech-font">IRON<span>+</span></div>
+            <a href="index.html" class="nav-btn">العودة للمتجر</a>
+        </div>
+    </nav>
+
+    <div class="container" style="padding-top: 50px;">
+        <h2 class="tech-font"><i class="fas fa-box-open"></i> مخزن أكوادي</h2>
+        <p id="welcomeUser" class="text-glow-blue"></p>
+
+        <div id="codesGrid" class="grid-layout" style="margin-top: 30px;">
+            <div class="loading">جاري جلب بياناتك من الأنظمة...</div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
+    <script src="js/profile.js"></script>
+</body>
+</html>
