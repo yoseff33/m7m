@@ -1,0 +1,11 @@
+/* profile.css */
+.codes-container {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;
+}
+
+.code-display {
+    background: #000; border: 1px dashed var(--tech-blue);
+    padding: 15px; border-radius: 5px; color: var(--tech-blue);
+    font-family: monospace; font-size: 1.2rem; letter-spacing: 2px;
+    margin: 15px 0; text-align: center;
+}
