@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تم الدفع بنجاح - Iron Plus</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/success.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="success-container">
+        <div class="success-card hud-effect">
+            <div class="success-icon" style="font-size: 80px; color: var(--iron-gold); margin-bottom: 20px;">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            
+            <h1 class="text-glow-gold">تم الدفع بنجاح!</h1>
+            <p class="text-glow-blue">شكراً لثقتك بنا. تمت عملية الدفع بنجاح.</p>
+            
+            <div id="orderDetails" class="order-details" style="margin-top: 30px;">
+                <!-- تفاصيل الطلب تظهر هنا -->
+                <div class="loading" style="text-align: center; padding: 20px;">
+                    <div class="loading-iron"></div>
+                    <p class="text-glow-blue">جاري تحميل تفاصيل طلبك...</p>
+                </div>
+            </div>
+            
+            <div class="success-actions" style="margin-top: 30px;">
+                <a href="index.html" class="btn-iron" style="margin-left: 10px;">
+                    <i class="fas fa-home" style="margin-left: 8px;"></i>
+                    العودة للرئيسية
+                </a>
+                <a href="profile.html" class="btn-iron">
+                    <i class="fas fa-user" style="margin-left: 8px;"></i>
+                    عرض طلباتي
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
+    <script src="js/success.js"></script>
+</body>
+</html>
