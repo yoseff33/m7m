@@ -2,29 +2,28 @@
 document.addEventListener('DOMContentLoaded', async () => {
     const productsGrid = document.getElementById('productsGrid');
     
-    // 1. جلب المنتجات النشطة من Supabase
-    const { data: products, error } = await supabase
+    // جلب المنتجات من القاعدة (التحكم بالسعر يتم من هنا تلقائياً)
+    const { data: products, error } = await supabaseClient
         .from('products')
         .select('*')
         .eq('is_active', true)
         .order('created_at', { ascending: false });
 
     if (error) {
-        console.error('Error:', error);
-        productsGrid.innerHTML = `<p class="text-glow-red">فشل في تحميل الأنظمة..</p>`;
+        productsGrid.innerHTML = `<p class="text-glow-red">خطأ في الاتصال بالأنظمة الرقمية..</p>`;
         return;
     }
 
-    // 2. عرض المنتجات في الصفحة
-    productsGrid.innerHTML = ''; // مسح اللودر
+    productsGrid.innerHTML = ''; // مسح علامة التحميل
+    
     products.forEach(product => {
         const card = `
             <div class="product-card hud-effect">
-                <img src="${product.image_url || 'https://via.placeholder.com/300'}" alt="${product.name}">
+                <img src="${product.image_url || 'assets/images/default.jpg'}" alt="${product.name}">
                 <h3 class="tech-font">${product.name}</h3>
-                <div class="price-tag">${window.ironHelper.formatPrice(product.price)} <span>ريال</span></div>
-                <button onclick="handlePurchase('${product.id}', ${product.price}, '${product.name}')" class="btn-iron w-full">
-                    <i class="fas fa-shopping-cart"></i> شراء الآن
+                <div class="price-tag">${window.ironFormat(product.price)} <span>ريال</span></div>
+                <button onclick="startPurchase('${product.id}', ${product.price})" class="btn-iron w-full">
+                    <i class="fas fa-bolt"></i> شراء الآن
                 </button>
             </div>
         `;
@@ -32,8 +31,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 });
 
-// دالة الضغط على الشراء
-function handlePurchase(id, price, name) {
-    window.ironHelper.saveToSession({ id, price, name });
-    window.location.href = 'rer.html'; // التوجه لصفحة الدفع
+function startPurchase(id, price) {
+    sessionStorage.setItem('selectedProductId', id);
+    sessionStorage.setItem('selectedPrice', price);
+    window.location.href = 'rer.html';
 }
