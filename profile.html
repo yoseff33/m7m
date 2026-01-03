@@ -3,28 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Iron Plus | طلباتي</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Rajdhani:wght@500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>حسابي - Iron Plus</title>
     <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/profile.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<body class="iron-theme">
+<body>
+    <!-- شريط التنقل -->
     <nav class="nav-iron">
-        <div class="container flex justify-between items-center">
-            <div class="logo tech-font">IRON<span>+</span></div>
-            <a href="index.html" class="nav-btn"><i class="fas fa-home"></i> المتجر</a>
+        <div class="container" style="max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; padding: 0 20px;">
+            <div class="logo">IRON+</div>
+            <div class="nav-links">
+                <a href="index.html" class="btn-iron" style="margin-left: 10px;">الرئيسية</a>
+                <button onclick="logout()" class="btn-iron">تسجيل خروج</button>
+            </div>
         </div>
     </nav>
 
-    <div class="container" style="padding-top: 40px;">
-        <h2 class="tech-font"><i class="fas fa-fingerprint"></i> مستودع الأكواد الخاص بك</h2>
-        <p id="welcomeUser" class="text-glow-blue" style="margin-bottom: 30px;"></p>
-
-        <div id="codesGrid" class="grid-layout">
-            <div class="iron-loading">جاري جلب مشترياتك من القاعدة...</div>
+    <div class="profile-container" style="max-width: 1200px; margin: 40px auto; padding: 0 20px;">
+        <div class="profile-header hud-effect" style="margin-bottom: 30px;">
+            <div class="user-info">
+                <div class="user-avatar">
+                    <i class="fas fa-user-circle" style="font-size: 60px; color: var(--iron-gold);"></i>
+                </div>
+                <div class="user-details">
+                    <h2 class="text-glow-gold" id="userPhoneDisplay"></h2>
+                    <p class="text-glow-blue" id="userStats"></p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="profile-content">
+            <div class="orders-section">
+                <h3 class="text-glow-gold" style="margin-bottom: 20px;">
+                    <i class="fas fa-shopping-cart" style="margin-left: 10px;"></i>
+                    طلباتي السابقة
+                </h3>
+                
+                <div id="ordersList" class="orders-list">
+                    <!-- الطلبات تظهر هنا -->
+                    <div class="loading" style="text-align: center; padding: 40px;">
+                        <div class="loading-iron"></div>
+                        <p class="text-glow-blue">جاري تحميل الطلبات...</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="account-section hud-effect" style="margin-top: 30px; padding: 25px;">
+                <h3 class="text-glow-gold" style="margin-bottom: 20px;">
+                    <i class="fas fa-user-shield" style="margin-left: 10px;"></i>
+                    معلومات الحساب
+                </h3>
+                
+                <div class="account-info">
+                    <div class="info-item" style="margin-bottom: 15px;">
+                        <strong class="text-gold">رقم الجوال:</strong>
+                        <span id="infoPhone"></span>
+                    </div>
+                    
+                    <div class="info-item" style="margin-bottom: 15px;">
+                        <strong class="text-gold">عدد الطلبات:</strong>
+                        <span id="infoOrdersCount"></span>
+                    </div>
+                    
+                    <div class="info-item">
+                        <strong class="text-gold">إجمالي المشتريات:</strong>
+                        <span id="infoTotalSpent"></span>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-
+    
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase-config.js"></script>
     <script src="js/profile.js"></script>
