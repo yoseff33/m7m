@@ -1,67 +1,53 @@
-/* هيدر المتجر */
-.nav-iron {
-    padding: 20px 0;
-    border-bottom: 2px solid var(--iron-red);
-    background: rgba(10, 10, 10, 0.95);
-    backdrop-filter: blur(10px);
-}
-
-.nav-content {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.logo {
-    font-size: 1.8rem;
-    color: white;
-}
-
-.logo span {
-    color: var(--iron-red);
-}
-
-/* قسم الهيرو (الترحيب) */
+/* index.css - واجهة المتجر */
 .hero-section {
     padding: 80px 0;
     text-align: center;
+    background: radial-gradient(circle at center, rgba(155, 17, 30, 0.15) 0%, transparent 75%);
 }
 
 .animate-text {
-    font-size: 3.5rem;
+    font-size: 4.5rem;
     color: var(--iron-gold);
     text-shadow: var(--glow-gold);
-    animation: pulse 2s infinite alternate;
+    letter-spacing: 8px;
+    margin-bottom: 15px;
 }
 
-@keyframes pulse {
-    from { opacity: 0.8; text-shadow: 0 0 10px var(--iron-gold); }
-    to { opacity: 1; text-shadow: 0 0 30px var(--iron-gold); }
+.hero-subtitle { color: var(--tech-blue); font-size: 1.2rem; opacity: 0.8; }
+
+.stats-container {
+    display: flex; justify-content: center; gap: 50px; margin-top: 40px;
 }
+.stat-box {
+    text-align: center; padding: 15px 30px; border-left: 1px solid var(--iron-gold);
+}
+.stat-box span { display: block; font-size: 2rem; font-weight: bold; color: #fff; }
+.stat-box label { font-size: 0.8rem; color: #aaa; text-transform: uppercase; }
 
 /* شبكة المنتجات */
 .grid-layout {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 30px;
-    margin-top: 40px;
+    margin: 50px 0;
 }
 
+.product-card {
+    transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.product-card:hover { transform: translateY(-15px); }
+
 .product-card img {
-    width: 100%;
-    height: 180px;
-    object-fit: cover;
-    border-radius: 8px;
-    margin-bottom: 15px;
+    width: 100%; height: 220px; object-fit: cover;
+    border-radius: 8px; border-bottom: 2px solid var(--iron-gold);
 }
 
 .price-tag {
-    font-size: 1.8rem;
-    margin: 15px 0;
-    color: white;
+    font-size: 2.2rem; font-weight: 900; margin: 20px 0;
+    color: #fff; display: flex; align-items: center; justify-content: center; gap: 10px;
 }
+.price-tag span { font-size: 1rem; color: var(--tech-blue); }
 
-.price-tag span {
-    font-size: 0.9rem;
-    color: var(--tech-blue);
-}
+/* لودر المفاعل */
+.iron-loading { text-align: center; padding: 50px; color: var(--tech-blue); }
