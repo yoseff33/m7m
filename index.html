@@ -19,8 +19,13 @@
         <div class="container nav-content">
             <div class="logo tech-font">IRON<span>+</span></div>
             <div class="nav-links">
-                <a href="login.html" class="nav-btn"><i class="fas fa-user-shield"></i> دخول</a>
-                <a href="profile.html" class="nav-btn"><i class="fas fa-shopping-bag"></i> طلباتي</a>
+                <a href="login.html" id="loginButton" class="nav-btn"><i class="fas fa-user-shield"></i> دخول</a>
+                
+                <div id="userInfo" style="display: none;" class="user-display">
+                    <span id="userPhone" class="text-gold"></span>
+                    <a href="profile.html" class="nav-btn"><i class="fas fa-shopping-bag"></i> طلباتي</a>
+                    <button id="logoutBtn" class="btn-iron btn-small"><i class="fas fa-power-off"></i></button>
+                </div>
             </div>
         </div>
     </nav>
@@ -33,11 +38,11 @@
             
             <div class="stats-container">
                 <div class="stat-box">
-                    <span id="visitorCount" class="counter">342</span>
-                    <label>متصل الآن</label>
+                    <span id="visitorCount" class="counter">0</span>
+                    <label>زائر نشط</label>
                 </div>
                 <div class="stat-box">
-                    <span id="orderCount" class="counter">8,940</span>
+                    <span id="orderCount" class="counter">0</span>
                     <label>عملية مكتملة</label>
                 </div>
             </div>
@@ -47,17 +52,17 @@
     <section class="products-area container">
         <h2 class="section-title tech-font"><i class="fas fa-layer-group"></i> الباقات المتاحة</h2>
         
-        <div id="productsGrid" class="grid-layout">
-            <div class="iron-loading">
+        <div id="productsContainer" class="grid-layout">
+            <div id="loadingMessage" class="iron-loading">
                 <div class="iron-spinner"></div>
-                <p>جاري مزامنة الأسعار من السيرفر الرئيسي...</p>
+                <p>جاري مزامنة الأنظمة وسحب الأسعار المحدثة...</p>
             </div>
         </div>
     </section>
 
     <footer class="footer-iron">
         <div class="container text-center">
-            <p class="tech-font">IRON PLUS OS v2.0 - ALL RIGHTS RESERVED</p>
+            <p class="tech-font">IRON PLUS OS v2.5 - FULLY OPERATIONAL</p>
             <div class="payment-methods">
                 <img src="https://cdn.salla.network/images/payment/mada_mini.png" alt="mada">
                 <img src="https://cdn.salla.network/images/payment/apple_pay_mini.png" alt="applepay">
