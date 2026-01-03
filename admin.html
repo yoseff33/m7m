@@ -51,7 +51,7 @@
             <div class="hud-card">
                 <div class="flex justify-between items-center" style="margin-bottom: 20px;">
                     <h3 class="text-gold"><i class="fas fa-dollar-sign"></i> التحكم بالباقات</h3>
-                    <button onclick="showAddProductModal()" class="btn-iron btn-small">+ جديد</button>
+                    <button onclick="adminPanel.showProductModal()" class="btn-iron btn-small">+ جديد</button>
                 </div>
                 <div style="overflow-x:auto">
                     <table class="admin-table">
@@ -77,7 +77,7 @@
                 <textarea id="bulkCodesText" class="input-iron" rows="6" placeholder="مثال:
 IRON-XXXX-YYYY
 IRON-ZZZZ-AAAA"></textarea>
-                <button onclick="uploadCodes()" class="btn-iron w-full">تحديث المخزون</button>
+                <button onclick="adminPanel.uploadCodes()" class="btn-iron w-full">تحديث المخزون</button>
             </div>
         </div>
 
@@ -114,7 +114,7 @@ IRON-ZZZZ-AAAA"></textarea>
                 <textarea id="productFeatures" class="input-iron" placeholder="المميزات (كل ميزة في سطر)"></textarea>
                 <div class="flex gap-4">
                     <button type="submit" class="btn-iron w-full">حفظ</button>
-                    <button type="button" onclick="closeModal()" class="btn-iron w-full" style="background:var(--metal-gray)">إلغاء</button>
+                    <button type="button" onclick="adminPanel.closeModal()" class="btn-iron w-full" style="background:var(--metal-gray)">إلغاء</button>
                 </div>
             </form>
         </div>
