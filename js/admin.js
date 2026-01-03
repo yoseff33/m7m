@@ -1,10 +1,10 @@
 // ========================================
-// لوحة تحكم Iron Plus - النظام الإداري المطور
+// لوحة تحكم Iron Plus - النظام الإداري المطور (النسخة الكاملة)
 // ========================================
 
-// التحقق من حالة الصفحة عند التحميل
+// 1. التحقق من حالة الصفحة عند التحميل
 document.addEventListener('DOMContentLoaded', async function() {
-    console.log('Admin panel loading... 🦾');
+    console.log('Jarvis: Admin systems initializing... 🦾');
     
     // التحقق من وجود الكائن الرئيسي وصلاحية المشرف
     if (!window.ironPlus || !window.ironPlus.isAdminLoggedIn()) {
@@ -40,6 +40,7 @@ function setupLoginListeners() {
         const password = document.getElementById('adminPassword').value;
         const messageDiv = document.getElementById('loginMessage');
         
+        // تنظيف الرسائل السابقة (الدالة موجودة في قسم المساعدات بالأسفل)
         clearMessage(messageDiv);
         
         if (!username || !password) {
@@ -47,7 +48,7 @@ function setupLoginListeners() {
             return;
         }
         
-        showMessage(messageDiv, 'جاري فحص الصلاحيات...', 'info');
+        showMessage(messageDiv, 'جاري فحص الصلاحيات الأمنية...', 'info');
         
         try {
             const result = await window.ironPlus.adminLogin(username, password);
@@ -69,21 +70,18 @@ function setupLoginListeners() {
 
 async function initializeAdminPanel() {
     try {
-        // إخفاء شاشة الدخول وإظهار لوحة التحكم
         const loginScreen = document.getElementById('adminLoginScreen');
         const dashboard = document.getElementById('adminDashboard');
         
         if (loginScreen) loginScreen.style.display = 'none';
         if (dashboard) dashboard.style.display = 'block';
         
-        // عرض اسم المشرف
         const adminName = window.ironPlus.getAdminUsername();
         const adminNameElement = document.getElementById('adminName');
         if (adminNameElement && adminName) {
             adminNameElement.textContent = `مرحباً، القائد ${adminName}`;
         }
         
-        // تشغيل الوظائف الأساسية
         setupNavigation();
         await loadDashboardData();
         await loadProducts();
@@ -91,7 +89,7 @@ async function initializeAdminPanel() {
         await loadProductsForCodes();
         setupEventListeners();
         
-        console.log('Jarvis: Admin panel is fully operational.');
+        console.log('Systems Online: Admin panel is fully operational.');
         
     } catch (error) {
         console.error('Initialization error:', error);
@@ -108,18 +106,14 @@ function setupNavigation() {
     menuItems.forEach(item => {
         item.addEventListener('click', function(e) {
             e.preventDefault();
-            
             menuItems.forEach(el => el.classList.remove('active'));
             sections.forEach(section => section.classList.remove('active'));
             
             this.classList.add('active');
-            
             const sectionId = this.getAttribute('data-section') + 'Section';
             const targetSection = document.getElementById(sectionId);
             if (targetSection) {
                 targetSection.classList.add('active');
-                
-                // تحديث البيانات عند الانتقال للقسم
                 const section = this.getAttribute('data-section');
                 if(section === 'dashboard') loadDashboardData();
                 else if(section === 'products') loadProducts();
@@ -157,7 +151,7 @@ function updateRecentOrders(orders) {
     if (!container) return;
     
     container.innerHTML = orders.map(order => `
-        <div class="recent-order">
+        <div class="recent-order hud-effect">
             <div class="order-info">
                 <strong>${order.customer_phone}</strong>
                 <small>${window.ironPlus.formatPrice(order.amount)} ر.س</small>
@@ -185,9 +179,9 @@ function renderProductsTable(products) {
     
     tbody.innerHTML = products.map(product => `
         <tr>
-            <td><img src="${product.image_url || 'assets/default.png'}" style="width:50px; border-radius:8px;"></td>
+            <td><img src="${product.image_url || 'assets/default.png'}" style="width:45px; border-radius:8px; border:1px solid var(--iron-gold);"></td>
             <td><strong>${product.name}</strong></td>
-            <td><div class="price-display">${window.ironPlus.formatPrice(product.price)} ر.س</div></td>
+            <td><div class="text-gold">${window.ironPlus.formatPrice(product.price)} ر.س</div></td>
             <td>${product.duration || 'دائم'}</td>
             <td><span class="badge">${product.stock === 999 ? '∞' : product.stock}</span></td>
             <td><span class="status-badge ${product.is_active ? 'status-active' : 'status-inactive'}">${product.is_active ? 'نشط' : 'معطل'}</span></td>
@@ -243,18 +237,16 @@ async function handleBulkCodesUpload() {
     if (result.success) {
         showNotification(`تم شحن ${result.count} كود بنجاح! 🚀`, 'success');
         document.getElementById('bulkCodesText').value = '';
-        await loadAvailableCodes(productId);
+        if (typeof loadAvailableCodes === 'function') await loadAvailableCodes(productId);
     }
 }
 
-// --- سادساً: الوظائف المساعدة والخدمات ---
+// --- سادساً: الوظائف المساعدة والخدمات (UI Helpers) ---
 
 function setupEventListeners() {
-    // مستمع لرفع الأكواد
     const uploadBtn = document.getElementById('uploadCodesBtn');
     if (uploadBtn) uploadBtn.onclick = handleBulkCodesUpload;
 
-    // مستمع لنموذج المنتجات
     const productForm = document.getElementById('productForm');
     if (productForm) productForm.onsubmit = handleProductSubmit;
 }
@@ -283,24 +275,42 @@ async function handleProductSubmit(e) {
     }
 }
 
+// الدوال التي كانت تسبب أخطاء ReferenceError
+function clearMessage(element) {
+    if (element) {
+        element.innerHTML = '';
+        element.style.display = 'none';
+    }
+}
+
+function showMessage(element, text, type = 'info') {
+    if (!element) return;
+    const icon = type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle';
+    element.innerHTML = `<i class="fas ${icon}"></i> ${text}`;
+    element.className = `message ${type}`;
+    element.style.display = 'block';
+}
+
 function showNotification(msg, type) {
-    alert(`${type.toUpperCase()}: ${msg}`); // يمكن استبدالها بـ Toast مخصص
+    console.log(`Notification: ${msg}`);
+    alert(`${type.toUpperCase()}: ${msg}`);
+}
+
+function updateElement(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
 }
 
 function getStatusClass(s) {
     if (s === 'completed') return 'status-active';
     if (s === 'pending') return 'status-warning';
+    if (s === 'paid') return 'status-success';
     return 'status-inactive';
 }
 
 function getStatusText(s) {
     const map = { completed: 'مكتمل', pending: 'معلق', paid: 'مدفوع', failed: 'فاشل' };
     return map[s] || s;
-}
-
-function updateElement(id, val) {
-    const el = document.getElementById(id);
-    if (el) el.textContent = val;
 }
 
 function closeModal() {
@@ -314,22 +324,27 @@ window.adminPanel = {
     showProductModal: async (id) => {
         const modal = document.getElementById('productModal');
         const form = document.getElementById('productForm');
+        const title = document.getElementById('modalTitle');
         if (id) {
+            if (title) title.textContent = "تعديل المنتج";
             const res = await window.ironPlus.getProduct(id);
             if (res.success) {
                 form.productId.value = res.product.id;
                 form.productName.value = res.product.name;
                 form.productPrice.value = window.ironPlus.formatPrice(res.product.price);
                 form.productIsActive.checked = res.product.is_active;
+                form.productDescription.value = res.product.description || '';
+                form.productImage.value = res.product.image_url || '';
             }
         } else {
+            if (title) title.textContent = "إضافة منتج جديد";
             form.reset();
             form.productId.value = '';
         }
         modal.style.display = 'flex';
     },
     deleteProduct: async (id, name) => {
-        if (confirm(`حذف ${name}؟`)) {
+        if (confirm(`هل أنت متأكد من حذف ${name}؟ سيتم مسحه من الوجود!`)) {
             const res = await window.ironPlus.deleteProduct(id);
             if (res.success) loadProducts();
         }
@@ -344,7 +359,8 @@ window.adminPanel = {
         }
     },
     contactCustomer: (phone) => {
-        window.open(`https://wa.me/966${phone.substring(1)}`, '_blank');
+        const cleanPhone = phone.startsWith('0') ? '966' + phone.substring(1) : phone;
+        window.open(`https://wa.me/${cleanPhone}`, '_blank');
     }
 };
 
@@ -357,3 +373,12 @@ async function loadProductsForCodes() {
             result.products.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
     }
 }
+
+function logoutAdmin() {
+    if(confirm("هل تريد إغلاق غرفة العمليات وتسجيل الخروج؟")) {
+        localStorage.removeItem('iron_admin');
+        localStorage.removeItem('admin_username');
+        window.location.reload();
+    }
+}
+window.logoutAdmin = logoutAdmin;
