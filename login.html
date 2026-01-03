@@ -3,26 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Iron Plus | تسجيل الدخول</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Rajdhani:wght@500&display=swap" rel="stylesheet">
+    <title>تسجيل الدخول - Iron Plus</title>
     <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/login.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<body class="iron-theme">
-    <div class="container flex justify-center items-center" style="height: 100vh;">
-        <div class="hud-card text-center" style="max-width: 400px; width: 100%;">
-            <h2 class="tech-font text-glow-gold">USER ACCESS</h2>
-            <div id="step1">
-                <p style="margin-bottom: 20px;">أدخل رقم جوالك للدخول إلى حسابك</p>
-                <input type="tel" id="userPhone" class="input-iron" placeholder="05xxxxxxxx">
-                <button onclick="sendOTP()" class="btn-iron w-full">إرسال كود التحقق</button>
+<body>
+    <div class="login-page">
+        <div class="login-container hud-effect">
+            <div class="logo text-center" style="margin-bottom: 30px;">
+                <h1 class="text-glow-red">IRON+</h1>
+                <p class="text-glow-blue">تسجيل الدخول إلى حسابك</p>
             </div>
-            <div id="step2" style="display:none;">
-                <p style="margin-bottom: 20px;">تم إرسال الرمز لواتسابك، أدخله هنا:</p>
-                <input type="number" id="otpCode" class="input-iron text-center" placeholder="----">
-                <button onclick="verifyOTP()" class="btn-iron w-full">تأكيد الرمز</button>
+            
+            <!-- خطوة 1: إدخال رقم الجوال -->
+            <div id="phoneStep" class="login-step">
+                <div class="input-group" style="margin-bottom: 20px;">
+                    <label class="text-gold" style="display: block; margin-bottom: 8px;">رقم الجوال</label>
+                    <input type="tel" id="phoneNumber" class="input-iron" placeholder="05xxxxxxxx" maxlength="10" required>
+                </div>
+                
+                <button onclick="sendOTP()" class="btn-iron" style="width: 100%;">
+                    <i class="fas fa-mobile-alt" style="margin-left: 8px;"></i>
+                    إرسال رمز التحقق
+                </button>
+                
+                <div style="margin-top: 20px; text-align: center;">
+                    <a href="index.html" class="text-glow-blue" style="text-decoration: none;">
+                        <i class="fas fa-arrow-right" style="margin-left: 5px;"></i>
+                        العودة للرئيسية
+                    </a>
+                </div>
             </div>
+            
+            <!-- خطوة 2: إدخال رمز التحقق -->
+            <div id="otpStep" class="login-step" style="display: none;">
+                <div class="input-group" style="margin-bottom: 20px;">
+                    <label class="text-gold" style="display: block; margin-bottom: 8px;">رمز التحقق</label>
+                    <input type="text" id="otpCode" class="input-iron" placeholder="أدخل الرمز المكون من 6 أرقام" maxlength="6" required>
+                </div>
+                
+                <button onclick="verifyOTP()" class="btn-iron" style="width: 100%;">
+                    <i class="fas fa-check-circle" style="margin-left: 8px;"></i>
+                    تأكيد الرمز
+                </button>
+                
+                <div style="margin-top: 20px; text-align: center;">
+                    <a href="javascript:void(0)" onclick="goBackToPhone()" class="text-glow-blue" style="text-decoration: none;">
+                        <i class="fas fa-arrow-right" style="margin-left: 5px;"></i>
+                        تعديل رقم الجوال
+                    </a>
+                </div>
+            </div>
+            
+            <div id="loginMessage" class="message" style="margin-top: 20px; display: none;"></div>
         </div>
     </div>
+    
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase-config.js"></script>
     <script src="js/login.js"></script>
