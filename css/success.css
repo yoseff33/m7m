@@ -1,0 +1,27 @@
+/* success.css - أنماط صفحة النجاح */
+.success-container {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.success-card {
+    width: 90%;
+    max-width: 600px;
+    text-align: center;
+    padding: 40px;
+}
+
+.success-actions {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+@media (max-width: 768px) {
+    .success-actions {
+        flex-direction: column;
+    }
+}
