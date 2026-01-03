@@ -11,41 +11,83 @@
 </head>
 <body class="iron-theme">
     
-    <div id="adminLogin" class="auth-overlay">
+    <div id="adminLoginScreen" class="auth-overlay">
         <div class="hud-card login-box text-center">
             <h2 class="tech-font text-glow-red">ADMIN LOGIN</h2>
-            <input type="password" id="adminPass" class="input-iron" placeholder="أدخل شفرة الدخول">
-            <button onclick="checkAdmin()" class="btn-iron w-full">دخول الأنظمة</button>
+            <form id="adminLoginForm">
+                <input type="text" id="adminUsername" class="input-iron" placeholder="اسم المستخدم" required>
+                <input type="password" id="adminPassword" class="input-iron" placeholder="كلمة المرور" required>
+                <div id="loginMessage" style="margin-bottom: 10px; font-size: 0.9rem;"></div>
+                <button type="submit" class="btn-iron w-full">دخول الأنظمة</button>
+            </form>
         </div>
     </div>
 
-    <div id="dashboard" class="container" style="display:none; padding: 40px 20px;">
+    <div id="adminDashboard" class="container" style="display:none; padding: 40px 20px;">
         <div class="dashboard-header flex justify-between items-center">
-            <h1 class="tech-font">IRON+ DASHBOARD</h1>
-            <button onclick="location.reload()" class="btn-iron" style="background:var(--metal-gray)">خروج</button>
+            <h1 class="tech-font text-glow-gold">IRON+ COMMAND CENTER</h1>
+            <div class="flex items-center gap-4">
+                <span id="adminName" class="text-gold"></span>
+                <button onclick="logoutAdmin()" class="btn-iron" style="background:var(--metal-gray)">خروج</button>
+            </div>
+        </div>
+
+        <div class="grid-layout" style="margin-top: 20px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+            <div class="hud-card text-center">
+                <small>إجمالي المبيعات</small>
+                <h2 id="totalSales" class="text-glow-gold">0 ر.س</h2>
+            </div>
+            <div class="hud-card text-center">
+                <small>الأكواد المتوفرة</small>
+                <h2 id="availableCodes" class="text-glow-red">0</h2>
+            </div>
+            <div class="hud-card text-center">
+                <small>العملاء</small>
+                <h2 id="totalCustomers">0</h2>
+            </div>
         </div>
 
         <div class="grid-layout" style="margin-top: 30px;">
             <div class="hud-card">
-                <h3 class="text-gold"><i class="fas fa-dollar-sign"></i> التحكم بالأسعار</h3>
-                <div id="adminProductsList">
-                    </div>
+                <div class="flex justify-between items-center" style="margin-bottom: 20px;">
+                    <h3 class="text-gold"><i class="fas fa-dollar-sign"></i> التحكم بالباقات</h3>
+                    <button onclick="showAddProductModal()" class="btn-iron btn-small">+ جديد</button>
+                </div>
+                <div style="overflow-x:auto">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>الصورة</th>
+                                <th>الاسم</th>
+                                <th>السعر</th>
+                                <th>المدة</th>
+                                <th>العمليات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productsTableBody"></tbody>
+                    </table>
+                </div>
             </div>
 
             <div class="hud-card">
-                <h3 class="text-gold"><i class="fas fa-key"></i> شحن المخزن</h3>
-                <select id="codeProductSelect" class="input-iron"></select>
-                <textarea id="bulkCodes" class="input-iron" rows="4" placeholder="كود في كل سطر.."></textarea>
-                <button onclick="uploadBulkCodes()" class="btn-iron w-full">تحديث المخزون</button>
+                <h3 class="text-gold"><i class="fas fa-key"></i> شحن المخزن (Bulk)</h3>
+                <label>اختر المنتج:</label>
+                <select id="productForCodes" class="input-iron"></select>
+                <label>الأكواد (كود في كل سطر):</label>
+                <textarea id="bulkCodesText" class="input-iron" rows="6" placeholder="مثال:
+IRON-XXXX-YYYY
+IRON-ZZZZ-AAAA"></textarea>
+                <button onclick="uploadCodes()" class="btn-iron w-full">تحديث المخزون</button>
             </div>
         </div>
 
         <div class="hud-card" style="margin-top: 30px;">
-            <h3 class="text-gold"><i class="fas fa-list"></i> سجل المبيعات والعملاء</h3>
+            <h3 class="text-gold"><i class="fas fa-list"></i> سجل المبيعات والعمليات</h3>
             <div style="overflow-x:auto">
                 <table class="admin-table">
                     <thead>
                         <tr>
+                            <th>ID</th>
                             <th>العميل</th>
                             <th>المنتج</th>
                             <th>المبلغ</th>
@@ -53,9 +95,28 @@
                             <th>واتساب</th>
                         </tr>
                     </thead>
-                    <tbody id="ordersLog"></tbody>
+                    <tbody id="ordersTableBody"></tbody>
                 </table>
             </div>
+        </div>
+    </div>
+
+    <div id="productModal" class="auth-overlay" style="display:none;">
+        <div class="hud-card" style="max-width: 500px; width: 90%;">
+            <h2 id="modalTitle" class="tech-font text-gold">إضافة منتج</h2>
+            <form id="productForm">
+                <input type="hidden" id="productId">
+                <input type="text" id="productName" class="input-iron" placeholder="اسم الباقة" required>
+                <input type="number" id="productPrice" class="input-iron" placeholder="السعر بالريال" step="0.01" required>
+                <input type="text" id="productDuration" class="input-iron" placeholder="المدة (مثلاً: شهر)">
+                <input type="text" id="productImage" class="input-iron" placeholder="رابط صورة المنتج">
+                <textarea id="productDescription" class="input-iron" placeholder="وصف قصير"></textarea>
+                <textarea id="productFeatures" class="input-iron" placeholder="المميزات (كل ميزة في سطر)"></textarea>
+                <div class="flex gap-4">
+                    <button type="submit" class="btn-iron w-full">حفظ</button>
+                    <button type="button" onclick="closeModal()" class="btn-iron w-full" style="background:var(--metal-gray)">إلغاء</button>
+                </div>
+            </form>
         </div>
     </div>
 
