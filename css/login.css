@@ -1,0 +1,21 @@
+/* login.css - أنماط صفحة تسجيل الدخول */
+.login-page {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, 
+        rgba(10, 10, 10, 0.95) 0%, 
+        rgba(26, 26, 26, 0.95) 100%
+    );
+}
+
+.login-container {
+    width: 90%;
+    max-width: 400px;
+    padding: 40px;
+}
+
+.login-step {
+    animation: fadeIn 0.5s ease;
+}
