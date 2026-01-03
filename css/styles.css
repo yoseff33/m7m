@@ -1,0 +1,103 @@
+/* الألوان الأساسية لهوية Iron Man */
+:root {
+    --iron-red: #9b111e;
+    --iron-gold: #ffd700;
+    --carbon-black: #0a0a0a;
+    --metal-gray: #1a1a1a;
+    --tech-blue: #00ffff;
+    
+    /* وهج HUD */
+    --glow-red: 0 0 20px rgba(155, 17, 30, 0.7);
+    --glow-gold: 0 0 15px rgba(255, 215, 0, 0.4);
+    --glow-blue: 0 0 15px rgba(0, 255, 255, 0.5);
+}
+
+/* تصفير الإعدادات */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: var(--carbon-black);
+    color: white;
+    font-family: 'Rajdhani', sans-serif;
+    overflow-x: hidden;
+}
+
+.tech-font {
+    font-family: 'Orbitron', sans-serif;
+    text-transform: uppercase;
+}
+
+/* حاوية المحتوى */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* تأثير HUD (اللوحة التقنية) */
+.hud-card {
+    background: rgba(20, 20, 20, 0.9);
+    border: 2px solid var(--iron-gold);
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: var(--glow-gold);
+    position: relative;
+}
+
+/* الأزرار العالمية (Iron Button) */
+.btn-iron {
+    background: linear-gradient(45deg, var(--iron-red), #e61e2a);
+    color: white;
+    border: 2px solid var(--iron-gold);
+    padding: 12px 25px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: 0.3s;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+.btn-iron:hover {
+    transform: scale(1.02);
+    box-shadow: var(--glow-red);
+}
+
+/* مدخلات النصوص (Inputs) */
+.input-iron {
+    background: #111;
+    border: 1px solid var(--tech-blue);
+    color: white;
+    padding: 12px;
+    border-radius: 4px;
+    width: 100%;
+    margin: 10px 0;
+    transition: 0.3s;
+}
+
+.input-iron:focus {
+    outline: none;
+    box-shadow: var(--glow-blue);
+    border-color: white;
+}
+
+/* خط المسح المتحرك HUD */
+.scanline {
+    width: 100%;
+    height: 100px;
+    z-index: 9999;
+    background: linear-gradient(0deg, rgba(0, 255, 255, 0) 0%, rgba(0, 255, 255, 0.1) 50%, rgba(0, 255, 255, 0) 100%);
+    opacity: 0.1;
+    position: fixed;
+    bottom: 100%;
+    animation: scanline 8s linear infinite;
+    pointer-events: none;
+}
+
+@keyframes scanline {
+    0% { bottom: 100%; }
+    100% { bottom: -100%; }
+}
