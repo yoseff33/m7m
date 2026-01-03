@@ -1,28 +1,26 @@
 // ========================================
-// إعدادات Supabase لنظام Iron Plus - النسخة النهائية الشاملة
+// إعدادات Supabase لنظام Iron Plus - النسخة الشاملة v3.0
 // ========================================
 
-// 1. التعريفات العالمية (Global Constants)
-// جعلناها في window لضمان وصول ملف index.js و admin.js لها بدون ReferenceError
+// 1. التعريفات العالمية (لضمان وصول جميع الملفات لها)
 window.SUPABASE_URL = 'https://xurecaeakqbsjzebcsuy.supabase.co';
 window.SUPABASE_ANON_KEY = 'sb_publishable_N4uzz2OJdyvbcfiyl8dmoQ_mEmAJgG1';
 
-// 2. تهيئة العميل (Client Initialization)
-// استخدام window.supabaseClient لتجنب خطأ "Identifier has already been declared"
+// 2. تهيئة العميل (تجنب خطأ Identifier has already been declared)
 if (typeof window.supabaseClient === 'undefined') {
     window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
 }
 
-// متغير الحالة المحلي
+// متغير مصادقة محلي
 let currentUser = null;
 
 // ========================================
-// المحرك الرئيسي (Iron Plus Core Engine)
+// المحرك الرئيسي لنظام Iron Plus
 // ========================================
 
 window.ironPlus = {
     
-    // --- [1] المصادقة والتحقق (Auth) ---
+    // --- [1] أنظمة المصادقة (Auth) ---
 
     async checkAuth() {
         try {
@@ -31,7 +29,7 @@ window.ironPlus = {
             currentUser = session?.user || null;
             return currentUser;
         } catch (error) {
-            console.error('Auth error:', error);
+            console.error('Auth check error:', error);
             return null;
         }
     },
@@ -40,7 +38,7 @@ window.ironPlus = {
         try {
             const cleanPhone = phone.replace(/\D/g, '');
             if (!cleanPhone.startsWith('05') || cleanPhone.length !== 10) {
-                return { success: false, message: 'رقم الهاتف يجب أن يبدأ بـ 05 ويتكون من 10 أرقام' };
+                return { success: false, message: 'رقم الجوال يجب أن يبدأ بـ 05 ويتكون من 10 أرقام' };
             }
             const { error } = await window.supabaseClient.auth.signInWithOtp({
                 phone: `+966${cleanPhone.substring(1)}`,
@@ -63,24 +61,25 @@ window.ironPlus = {
             });
             if (error) throw error;
 
-            // حفظ البيانات محلياً
             localStorage.setItem('iron_user_phone', cleanPhone);
             localStorage.setItem('iron_user_token', data.session.access_token);
             localStorage.setItem('iron_user_id', data.user.id);
 
             await this.recordLogin(cleanPhone);
-            return { success: true, user: data.user };
+            return { success: true, user: data.user, session: data.session };
         } catch (error) {
-            return { success: false, message: 'رمز التحقق غير صحيح' };
+            return { success: false, message: 'رمز التحقق غير صحيح أو منتهي الصلاحية' };
         }
     },
 
     async adminLogin(username, password) {
         try {
+            // استدعاء RPC verify_password
             const { data, error } = await window.supabaseClient.rpc('verify_password', {
                 p_username: username,
                 p_password: password
             });
+            
             if (error) throw error;
 
             if (data === true) {
@@ -88,32 +87,29 @@ window.ironPlus = {
                 localStorage.setItem('admin_username', username);
                 localStorage.setItem('admin_login_time', new Date().toISOString());
                 return { success: true };
+            } else {
+                return { success: false, message: 'اسم المستخدم أو كلمة المرور غير صحيحة' };
             }
-            return { success: false, message: 'بيانات الدخول غير صحيحة' };
         } catch (error) {
-            return { success: false, message: 'خطأ في الاتصال بقاعدة البيانات' };
+            console.error('Admin login error:', error);
+            return { success: false, message: 'حدث خطأ في الاتصال بقاعدة البيانات' };
         }
     },
+
+    // --- [2] فحص الحالة (Status) ---
+
+    isLoggedIn: () => localStorage.getItem('iron_user_phone') !== null,
+    isAdminLoggedIn: () => localStorage.getItem('iron_admin') === 'true',
+    getUserPhone: () => localStorage.getItem('iron_user_phone'),
+    getAdminUsername: () => localStorage.getItem('admin_username'),
+    getUserToken: () => localStorage.getItem('iron_user_token'),
 
     logout() {
         localStorage.clear();
         window.location.href = 'index.html';
     },
 
-    logoutAdmin() {
-        localStorage.removeItem('iron_admin');
-        localStorage.removeItem('admin_username');
-        window.location.href = 'admin.html';
-    },
-
-    // --- [2] فحص الحالة (Status Helpers) ---
-
-    isLoggedIn: () => localStorage.getItem('iron_user_phone') !== null,
-    isAdminLoggedIn: () => localStorage.getItem('iron_admin') === 'true',
-    getUserPhone: () => localStorage.getItem('iron_user_phone'),
-    getAdminUsername: () => localStorage.getItem('admin_username'),
-
-    // --- [3] المنتجات (Products) ---
+    // --- [3] إدارة المنتجات (Products) ---
 
     async getProducts() {
         try {
@@ -122,10 +118,12 @@ window.ironPlus = {
                 .select('*')
                 .eq('is_active', true)
                 .order('sort_order', { ascending: true });
+            
             if (error) throw error;
             return { success: true, products: data || [] };
         } catch (error) {
-            return { success: false, products: [] };
+            console.error('Get products error:', error);
+            return { success: false, message: error.message, products: [] };
         }
     },
 
@@ -135,50 +133,85 @@ window.ironPlus = {
             if (error) throw error;
             return { success: true, product: data };
         } catch (error) {
-            return { success: false };
+            return { success: false, message: error.message };
         }
     },
 
     async addProduct(productData) {
-        if (productData.price) productData.price = Math.round(productData.price * 100);
-        const { data, error } = await window.supabaseClient.from('products').insert([productData]).select().single();
-        return error ? { success: false, message: error.message } : { success: true, product: data };
+        try {
+            if (productData.price) productData.price = Math.round(productData.price * 100);
+            if (productData.features && typeof productData.features === 'string') {
+                productData.features = productData.features.split('\n').map(f => f.trim()).filter(f => f.length > 0);
+            }
+            const { data, error } = await window.supabaseClient.from('products').insert([productData]).select().single();
+            if (error) throw error;
+            return { success: true, product: data, message: 'تمت إضافة المنتج بنجاح' };
+        } catch (error) {
+            return { success: false, message: error.message };
+        }
     },
 
     async updateProduct(productId, updates) {
-        if (updates.price) updates.price = Math.round(updates.price * 100);
-        const { data, error } = await window.supabaseClient.from('products').update(updates).eq('id', productId).select().single();
-        return error ? { success: false, message: error.message } : { success: true, product: data };
+        try {
+            if (updates.price) updates.price = Math.round(updates.price * 100);
+            if (updates.features && typeof updates.features === 'string') {
+                updates.features = updates.features.split('\n').map(f => f.trim()).filter(f => f.length > 0);
+            }
+            const { data, error } = await window.supabaseClient.from('products').update(updates).eq('id', productId).select().single();
+            if (error) throw error;
+            return { success: true, product: data, message: 'تم تحديث المنتج بنجاح' };
+        } catch (error) {
+            return { success: false, message: error.message };
+        }
     },
 
     async deleteProduct(productId) {
-        const { error } = await window.supabaseClient.from('products').delete().eq('id', productId);
-        return error ? { success: false } : { success: true };
+        try {
+            const { error } = await window.supabaseClient.from('products').delete().eq('id', productId);
+            if (error) throw error;
+            return { success: true, message: 'تم حذف المنتج بنجاح' };
+        } catch (error) {
+            return { success: false, message: error.message };
+        }
     },
 
-    // --- [4] الطلبات والدفع (Orders & Payments) ---
+    // --- [4] إدارة الطلبات (Orders) ---
 
     async getUserOrders(phone) {
-        const { data, error } = await window.supabaseClient.from('orders').select('*, products(*)').eq('customer_phone', phone).order('created_at', { ascending: false });
-        return error ? { success: false, orders: [] } : { success: true, orders: data };
+        try {
+            const { data, error } = await window.supabaseClient.from('orders').select('*, products(*)').eq('customer_phone', phone).order('created_at', { ascending: false });
+            if (error) throw error;
+            return { success: true, orders: data || [] };
+        } catch (error) {
+            return { success: false, message: error.message, orders: [] };
+        }
     },
 
     async getAllOrders(filters = {}) {
-        let query = window.supabaseClient.from('orders').select('*, products(*)').order('created_at', { ascending: false });
-        if (filters.status) query = query.eq('status', filters.status);
-        if (filters.phone) query = query.ilike('customer_phone', `%${filters.phone}%`);
-        const { data, error } = await query;
-        return error ? { success: false, orders: [] } : { success: true, orders: data };
+        try {
+            let query = window.supabaseClient.from('orders').select('*, products(*)').order('created_at', { ascending: false });
+            if (filters.status) query = query.eq('status', filters.status);
+            if (filters.phone) query = query.ilike('customer_phone', `%${filters.phone}%`);
+            const { data, error } = await query;
+            if (error) throw error;
+            return { success: true, orders: data || [] };
+        } catch (error) {
+            return { success: false, message: error.message, orders: [] };
+        }
     },
 
     async updateOrderStatus(orderId, status) {
-        const { data, error } = await window.supabaseClient.from('orders').update({ status }).eq('id', orderId).select().single();
-        return error ? { success: false } : { success: true, order: data };
+        try {
+            const { data, error } = await window.supabaseClient.from('orders').update({ status }).eq('id', orderId).select().single();
+            if (error) throw error;
+            return { success: true, order: data };
+        } catch (error) {
+            return { success: false, message: error.message };
+        }
     },
 
     async createPayment(productId, phone, amount) {
         try {
-            // استدعاء Edge Function الخاص بـ Paylink
             const response = await fetch(`${window.SUPABASE_URL}/functions/v1/create_paylink`, {
                 method: 'POST',
                 headers: { 
@@ -191,66 +224,100 @@ window.ironPlus = {
             const data = await response.json();
             return { success: true, data: data };
         } catch (e) {
-            return { success: false, message: "بوابة الدفع غير متاحة حالياً" };
+            return { success: false, message: "جاري ربط بوابة الدفع..." };
         }
     },
 
-    // --- [5] الأكواد (Activation Codes) ---
+    // --- [5] أكواد التفعيل (Activation Codes) ---
 
     async getAvailableCodes(productId) {
-        const { data, error } = await window.supabaseClient.from('activation_codes').select('*').eq('product_id', productId).eq('is_used', false);
-        return error ? { success: false, codes: [] } : { success: true, codes: data };
+        try {
+            const { data, error } = await window.supabaseClient.from('activation_codes').select('*').eq('product_id', productId).eq('is_used', false).order('created_at', { ascending: true });
+            if (error) throw error;
+            return { success: true, codes: data || [] };
+        } catch (error) {
+            return { success: false, codes: [] };
+        }
     },
 
     async uploadBulkCodes(productId, codesText) {
-        const codes = codesText.split('\n').map(c => c.trim()).filter(c => c.length > 0)
-            .map(c => ({ product_id: productId, code: c, is_used: false }));
-        const { error } = await window.supabaseClient.from('activation_codes').insert(codes);
-        return error ? { success: false } : { success: true, count: codes.length };
+        try {
+            const codesArray = codesText.split('\n').map(code => code.trim()).filter(code => code.length > 0)
+                .map(code => ({ product_id: productId, code: code, is_used: false }));
+            if (codesArray.length === 0) return { success: false, message: 'لم يتم إدخال أكواد' };
+            const { error } = await window.supabaseClient.from('activation_codes').insert(codesArray);
+            if (error) throw error;
+            return { success: true, count: codesArray.length, message: `تم رفع ${codesArray.length} كود بنجاح` };
+        } catch (error) {
+            return { success: false, message: error.message };
+        }
     },
 
     async assignActivationCode(orderId, productId) {
-        const { data: code, error: cErr } = await window.supabaseClient.from('activation_codes').select('id, code').eq('product_id', productId).eq('is_used', false).limit(1).single();
-        if (cErr || !code) return { success: false, message: 'نفذت الأكواد' };
-        
-        await window.supabaseClient.from('activation_codes').update({ is_used: true, used_at: new Date() }).eq('id', code.id);
-        await window.supabaseClient.from('orders').update({ activation_code_id: code.id, status: 'completed' }).eq('id', orderId);
-        return { success: true, code: code.code };
+        try {
+            const { data: availableCodes, error: codesError } = await window.supabaseClient.from('activation_codes').select('id, code').eq('product_id', productId).eq('is_used', false).limit(1).single();
+            if (codesError || !availableCodes) return { success: false, message: 'لا توجد أكواد متاحة' };
+            
+            await window.supabaseClient.from('activation_codes').update({ is_used: true, used_at: new Date().toISOString() }).eq('id', availableCodes.id);
+            await window.supabaseClient.from('orders').update({ activation_code_id: availableCodes.id, status: 'completed' }).eq('id', orderId);
+            
+            return { success: true, code: availableCodes.code };
+        } catch (error) {
+            return { success: false, message: error.message };
+        }
     },
 
-    // --- [6] الإحصائيات والزيارات (Stats) ---
+    // --- [6] الإحصائيات (Analytics) ---
 
     async getSiteStats() {
         try {
-            const { data: sales } = await window.supabaseClient.rpc('get_total_sales');
-            const { count: pCount } = await window.supabaseClient.from('products').select('*', { count: 'exact', head: true }).eq('is_active', true);
-            const { count: oCount } = await window.supabaseClient.from('orders').select('*', { count: 'exact', head: true });
-            const { count: cCount } = await window.supabaseClient.from('activation_codes').select('*', { count: 'exact', head: true }).eq('is_used', false);
-            return { success: true, stats: { totalSales: sales || 0, activeProducts: pCount || 0, totalOrders: oCount || 0, availableCodes: cCount || 0 } };
-        } catch (e) { return { success: false, stats: { totalSales: 0, activeProducts: 0, totalOrders: 0, availableCodes: 0 } }; }
+            const { data: salesData } = await window.supabaseClient.rpc('get_total_sales');
+            const { data: customersData } = await window.supabaseClient.rpc('get_unique_customers');
+            const { count: productsCount } = await window.supabaseClient.from('products').select('*', { count: 'exact', head: true }).eq('is_active', true);
+            const { count: ordersCount } = await window.supabaseClient.from('orders').select('*', { count: 'exact', head: true });
+            const { count: codesCount } = await window.supabaseClient.from('activation_codes').select('*', { count: 'exact', head: true }).eq('is_used', false);
+            
+            return {
+                success: true,
+                stats: {
+                    totalSales: salesData || 0,
+                    uniqueCustomers: customersData || 0,
+                    activeProducts: productsCount || 0,
+                    totalOrders: ordersCount || 0,
+                    availableCodes: codesCount || 0
+                }
+            };
+        } catch (error) {
+            return { success: false, stats: { totalSales: 0, uniqueCustomers: 0, activeProducts: 0, totalOrders: 0, availableCodes: 0 } };
+        }
     },
 
     async recordVisit(page) {
         try {
-            await window.supabaseClient.from('site_visits').insert([{ page_visited: page }]);
-        } catch (e) { console.warn('Analytics offline'); }
+            const ipRes = await fetch('https://api.ipify.org?format=json').catch(() => null);
+            const ipData = ipRes ? await ipRes.json() : { ip: 'unknown' };
+            await window.supabaseClient.from('site_visits').insert([{ page_visited: page, ip_address: ipData.ip }]);
+        } catch (e) { /* تجاهل أخطاء الإحصائيات */ }
     },
 
     async recordLogin(phone) {
         try {
-            await window.supabaseClient.from('users').upsert({ phone: phone, updated_at: new Date() }, { onConflict: 'phone' });
+            await window.supabaseClient.from('users').upsert({ phone: phone, updated_at: new Date().toISOString() }, { onConflict: 'phone' });
         } catch (e) {}
     },
 
-    // --- [7] الأدوات (Utilities) ---
+    // --- [7] أدوات مساعدة (Utils) ---
 
-    formatPrice: (val) => (val / 100).toFixed(2),
-    formatDate: (str) => str ? new Date(str).toLocaleDateString('ar-SA', { year:'numeric', month:'long', day:'numeric' }) : ''
+    formatPrice: (amount) => (amount ? (amount / 100).toFixed(2) : '0.00'),
+    formatDate: (dateString) => {
+        if (!dateString) return '';
+        return new Date(dateString).toLocaleDateString('ar-SA', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
 };
 
-// التهيئة التلقائية عند التحميل
-document.addEventListener('DOMContentLoaded', () => {
+// --- التهيئة التلقائية ---
+document.addEventListener('DOMContentLoaded', async function() {
     const page = window.location.pathname.split('/').pop() || 'index.html';
-    window.ironPlus.recordVisit(page);
+    await window.ironPlus.recordVisit(page);
     console.log('Iron Plus Config: Systems fully operational. 🦾');
 });
