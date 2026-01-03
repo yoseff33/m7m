@@ -1,103 +1,107 @@
-/* الألوان الأساسية لهوية Iron Man */
+/* styles.css - الهوية البصرية العالمية لـ Iron Plus */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap');
+
 :root {
-    --iron-red: #9b111e;
-    --iron-gold: #ffd700;
-    --carbon-black: #0a0a0a;
-    --metal-gray: #1a1a1a;
-    --tech-blue: #00ffff;
+    --iron-red: #9b111e;      /* أحمر البدلة */
+    --iron-gold: #ffd700;     /* ذهبي ايرون مان */
+    --carbon-black: #0a0a0a;  /* أسود كربوني */
+    --metal-gray: #1a1a1a;    /* رمادي معدني */
+    --tech-blue: #00ffff;     /* أزرق المفاعل */
     
-    /* وهج HUD */
-    --glow-red: 0 0 20px rgba(155, 17, 30, 0.7);
+    /* وهج الـ HUD */
+    --glow-red: 0 0 20px rgba(155, 17, 30, 0.6);
     --glow-gold: 0 0 15px rgba(255, 215, 0, 0.4);
     --glow-blue: 0 0 15px rgba(0, 255, 255, 0.5);
 }
 
-/* تصفير الإعدادات */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+/* ريست وتنسيق أساسي */
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
     background-color: var(--carbon-black);
-    color: white;
-    font-family: 'Rajdhani', sans-serif;
+    color: #ffffff;
+    font-family: 'Rajdhani', 'Segoe UI', sans-serif;
+    line-height: 1.6;
     overflow-x: hidden;
 }
 
-.tech-font {
-    font-family: 'Orbitron', sans-serif;
-    text-transform: uppercase;
-}
+.tech-font { font-family: 'Orbitron', sans-serif; text-transform: uppercase; }
 
 /* حاوية المحتوى */
-.container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 20px;
-}
+.container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
 
 /* تأثير HUD (اللوحة التقنية) */
 .hud-card {
     background: rgba(20, 20, 20, 0.9);
     border: 2px solid var(--iron-gold);
-    border-radius: 10px;
-    padding: 20px;
+    border-radius: 12px;
+    padding: 25px;
     box-shadow: var(--glow-gold);
     position: relative;
+    backdrop-filter: blur(5px);
 }
 
-/* الأزرار العالمية (Iron Button) */
+.hud-card::before {
+    content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 3px;
+    background: linear-gradient(90deg, transparent, var(--iron-gold), transparent);
+}
+
+/* الأزرار الخارقة (Iron Button) */
 .btn-iron {
     background: linear-gradient(45deg, var(--iron-red), #e61e2a);
-    color: white;
+    color: #fff;
     border: 2px solid var(--iron-gold);
-    padding: 12px 25px;
-    border-radius: 5px;
+    padding: 12px 30px;
+    border-radius: 6px;
     cursor: pointer;
-    font-weight: bold;
-    transition: 0.3s;
+    font-weight: 700;
+    transition: 0.4s ease;
     text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    display: inline-flex; align-items: center; justify-content: center; gap: 10px;
 }
 
 .btn-iron:hover {
-    transform: scale(1.02);
+    transform: translateY(-3px) scale(1.02);
     box-shadow: var(--glow-red);
+    border-color: #fff;
 }
 
-/* مدخلات النصوص (Inputs) */
+/* المدخلات (Inputs) */
 .input-iron {
-    background: #111;
+    background: #000;
     border: 1px solid var(--tech-blue);
-    color: white;
-    padding: 12px;
-    border-radius: 4px;
+    color: #fff;
+    padding: 14px;
+    border-radius: 5px;
     width: 100%;
-    margin: 10px 0;
+    margin-bottom: 15px;
     transition: 0.3s;
+    font-family: inherit;
 }
 
 .input-iron:focus {
     outline: none;
     box-shadow: var(--glow-blue);
-    border-color: white;
+    border-color: #fff;
 }
 
-/* خط المسح المتحرك HUD */
+/* خط المسح المتحرك (Scanline Effect) */
 .scanline {
-    width: 100%;
-    height: 100px;
-    z-index: 9999;
-    background: linear-gradient(0deg, rgba(0, 255, 255, 0) 0%, rgba(0, 255, 255, 0.1) 50%, rgba(0, 255, 255, 0) 100%);
-    opacity: 0.1;
-    position: fixed;
-    bottom: 100%;
-    animation: scanline 8s linear infinite;
-    pointer-events: none;
+    width: 100%; height: 100px; z-index: 9999;
+    background: linear-gradient(0deg, transparent 0%, rgba(0, 255, 255, 0.05) 50%, transparent 100%);
+    position: fixed; bottom: 100%; animation: scanline 6s linear infinite; pointer-events: none;
 }
+@keyframes scanline { 0% { bottom: 100%; } 100% { bottom: -100%; } }
 
-@keyframes scanline {
-    0% { bottom: 100%; }
-    100% { bottom: -100%; }
+/* شريط التنقل (Navbar) */
+.nav-iron {
+    background: rgba(5, 5, 5, 0.95);
+    border-bottom: 2px solid var(--iron-red);
+    padding: 15px 0;
+    position: sticky; top: 0; z-index: 1000;
 }
+.nav-content { display: flex; justify-content: space-between; align-items: center; }
+.logo { font-size: 2rem; font-weight: 900; color: #fff; }
+.logo span { color: var(--iron-red); }
+.nav-btn { color: #fff; text-decoration: none; margin-right: 20px; font-weight: 600; transition: 0.3s; }
+.nav-btn:hover { color: var(--iron-gold); }
