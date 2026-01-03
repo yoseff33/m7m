@@ -3,57 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Iron Plus | لوحة تحكم توني ستارك</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+    <title>إدارة Iron Plus | Command Center</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/admin.css">
 </head>
 <body class="iron-theme">
+    
     <div id="adminLogin" class="auth-overlay">
         <div class="hud-card login-box text-center">
-            <h2 class="tech-font text-glow-red">ACCESS DENIED</h2>
-            <p>أدخل شفرة الإدارة للدخول</p>
-            <input type="password" id="adminPass" class="input-iron" placeholder="كلمة المرور">
+            <h2 class="tech-font text-glow-red">ADMIN LOGIN</h2>
+            <input type="password" id="adminPass" class="input-iron" placeholder="أدخل شفرة الدخول">
             <button onclick="checkAdmin()" class="btn-iron w-full">دخول الأنظمة</button>
         </div>
     </div>
 
-    <div id="dashboard" class="container" style="display:none; padding-top: 50px;">
+    <div id="dashboard" class="container" style="display:none; padding: 40px 20px;">
         <div class="dashboard-header flex justify-between items-center">
-            <h1 class="tech-font">COMMAND CENTER</h1>
-            <button onclick="logoutAdmin()" class="btn-iron" style="background: var(--metal-gray);">خروج</button>
+            <h1 class="tech-font">IRON+ DASHBOARD</h1>
+            <button onclick="location.reload()" class="btn-iron" style="background:var(--metal-gray)">خروج</button>
         </div>
 
         <div class="grid-layout" style="margin-top: 30px;">
             <div class="hud-card">
-                <h3 class="text-gold"><i class="fas fa-tags"></i> إدارة الأسعار والمنتجات</h3>
+                <h3 class="text-gold"><i class="fas fa-dollar-sign"></i> التحكم بالأسعار</h3>
                 <div id="adminProductsList">
                     </div>
             </div>
 
             <div class="hud-card">
-                <h3 class="text-gold"><i class="fas fa-key"></i> رفع أكواد التفعيل</h3>
+                <h3 class="text-gold"><i class="fas fa-key"></i> شحن المخزن</h3>
                 <select id="codeProductSelect" class="input-iron"></select>
-                <textarea id="bulkCodes" class="input-iron" rows="5" placeholder="ضع الأكواد هنا.. كود في كل سطر"></textarea>
-                <button onclick="uploadBulkCodes()" class="btn-iron w-full">حفظ الأكواد في المخزن</button>
+                <textarea id="bulkCodes" class="input-iron" rows="4" placeholder="كود في كل سطر.."></textarea>
+                <button onclick="uploadBulkCodes()" class="btn-iron w-full">تحديث المخزون</button>
             </div>
         </div>
 
         <div class="hud-card" style="margin-top: 30px;">
-            <h3 class="text-gold"><i class="fas fa-history"></i> آخر الطلبات والعملاء</h3>
-            <table class="admin-table">
-                <thead>
-                    <tr>
-                        <th>العميل</th>
-                        <th>المنتج</th>
-                        <th>المبلغ</th>
-                        <th>الحالة</th>
-                        <th>الإجراء</th>
-                    </tr>
-                </thead>
-                <tbody id="ordersLog"></tbody>
-            </table>
+            <h3 class="text-gold"><i class="fas fa-list"></i> سجل المبيعات والعملاء</h3>
+            <div style="overflow-x:auto">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>العميل</th>
+                            <th>المنتج</th>
+                            <th>المبلغ</th>
+                            <th>الحالة</th>
+                            <th>واتساب</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ordersLog"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 
