@@ -1,5 +1,5 @@
 // ========================================
-// صفحة تسجيل الدخول لـ Iron Plus - نظام التحقق المطوّر
+// صفحة تسجيل الدخول لـ Iron Plus - نظام الدخول السريع (Bypass)
 // ========================================
 
 // تهيئة الصفحة عند التحميل
@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const redirectUrl = urlParams.get('redirect') || 'profile.html';
     localStorage.setItem('login_redirect', redirectUrl);
     
-    // 2. التحقق إذا كان المستخدم مسجلاً بالفعل (تعديل الاسم ليتوافق مع الـ Config)
+    // 2. التحقق إذا كان المستخدم مسجلاً بالفعل
     if (window.ironPlus && window.ironPlus.isLoggedIn()) {
         console.log('Active session detected. Redirecting...');
         window.location.href = redirectUrl;
@@ -25,17 +25,8 @@ document.addEventListener('DOMContentLoaded', function() {
 // --- أولاً: إعداد مستمعي الأحداث (Event Listeners) ---
 
 function setupEventListeners() {
-    // أزرار التحكم
-    const sendOtpBtn = document.getElementById('sendOtpBtn');
-    const verifyOtpBtn = document.getElementById('verifyOtpBtn');
-    const backBtn = document.getElementById('backBtn');
-    
-    if (sendOtpBtn) sendOtpBtn.addEventListener('click', sendOTP);
-    if (verifyOtpBtn) verifyOtpBtn.addEventListener('click', verifyOTP);
-    if (backBtn) backBtn.addEventListener('click', () => window.history.back());
-
     // حقل رقم الهاتف (تنسيق وقيود)
-    const phoneInput = document.getElementById('phoneInput');
+    const phoneInput = document.getElementById('phoneNumber'); // تم تعديله ليتطابق مع login.html
     if (phoneInput) {
         phoneInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendOTP(); });
         
@@ -46,173 +37,71 @@ function setupEventListeners() {
             e.target.value = val;
         });
     }
-
-    // حقل رمز التحقق (OTP)
-    const otpInput = document.getElementById('otpInput');
-    if (otpInput) {
-        otpInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') verifyOTP(); });
-        
-        otpInput.addEventListener('input', function(e) {
-            e.target.value = e.target.value.replace(/\D/g, '').substring(0, 6);
-            // تحقق تلقائي عند اكتمال الـ 6 أرقام
-            if (e.target.value.length === 6) verifyOTP();
-        });
-    }
 }
 
-// --- ثانياً: منطق إرسال الرمز (Send OTP) ---
+// --- ثانياً: منطق الدخول المباشر (تجاوز الـ OTP) ---
 
 async function sendOTP() {
-    const phoneInput = document.getElementById('phoneInput');
-    const sendOtpBtn = document.getElementById('sendOtpBtn');
+    const phoneInput = document.getElementById('phoneNumber');
+    const loginMessage = document.getElementById('loginMessage');
     
-    if (!phoneInput || !sendOtpBtn) return;
+    if (!phoneInput) return;
     
     const phone = phoneInput.value.trim();
     
     // فحص صحة الرقم
     if (!phone || !phone.startsWith('05') || phone.length !== 10) {
-        showError('يرجى إدخال رقم جوال صحيح (05XXXXXXXX)');
+        showStatus('يرجى إدخال رقم جوال صحيح (05XXXXXXXX)', 'error');
         return;
     }
     
-    // حالة التحميل
-    const originalText = sendOtpBtn.innerHTML;
-    sendOtpBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري طلب الرمز...';
-    sendOtpBtn.disabled = true;
-    
-    clearMessages();
+    const cleanPhone = phone.replace(/\D/g, '');
+    showStatus('<i class="fas fa-spinner fa-spin"></i> جاري تسجيل الدخول...', 'info');
     
     try {
-        // نداء دالة الإرسال من ملف الـ Config
-        const result = await window.ironPlus.loginWithPhone(phone);
+        // --- تعديل التجاوز (Bypass) ---
+        // 1. تخزين رقم الجوال مباشرة في المتصفح
+        localStorage.setItem('iron_user_phone', cleanPhone);
         
-        if (result.success) {
-            showSuccess(result.message || 'تم إرسال رمز التحقق لواتسابك ✅');
-            
-            // تبديل الأقسام في الواجهة
-            document.getElementById('phoneSection').style.display = 'none';
-            document.getElementById('otpSection').style.display = 'block';
-            
-            const otpInput = document.getElementById('otpInput');
-            if (otpInput) otpInput.focus();
-            
-            // تشغيل عداد إعادة الإرسال
-            startResendTimer(phone);
-            
-        } else {
-            showError(result.message || 'عذراً، فشل إرسال الرمز');
+        // 2. تسجيل الدخول في قاعدة البيانات للتوثيق (اختياري)
+        if (window.ironPlus && window.ironPlus.recordLogin) {
+            await window.ironPlus.recordLogin(cleanPhone);
         }
+        
+        showStatus('تمت المصادقة بنجاح! جاري تشغيل واجهتك... 🦾', 'success');
+        
+        // 3. التوجيه الفوري لصفحة الحساب أو صفحة الدفع
+        const redirectUrl = localStorage.getItem('login_redirect') || 'profile.html';
+        
+        setTimeout(() => {
+            window.location.href = redirectUrl;
+        }, 1200);
+        
     } catch (error) {
-        console.error('OTP Request Error:', error);
-        showError('حدث خطأ في الاتصال بالأنظمة');
-    } finally {
-        sendOtpBtn.innerHTML = originalText;
-        sendOtpBtn.disabled = false;
+        console.error('Login Error:', error);
+        // حتى في حال وجود خطأ في الاتصال، نسمح له بالدخول محلياً
+        localStorage.setItem('iron_user_phone', cleanPhone);
+        window.location.href = 'profile.html';
     }
 }
 
-// --- ثالثاً: منطق التحقق من الرمز (Verify OTP) ---
+// --- ثالثاً: الخدمات المساعدة (UI Helpers) ---
 
+function showStatus(msg, type) {
+    const messageDiv = document.getElementById('loginMessage');
+    if (messageDiv) {
+        messageDiv.innerHTML = msg;
+        messageDiv.className = `message ${type}`;
+        messageDiv.style.display = 'block';
+    }
+}
+
+// دالة verifyOTP أصبحت غير ضرورية الآن ولكن تركناها فارغة لتجنب أخطاء الاستدعاء إن وجدت
 async function verifyOTP() {
-    const phoneInput = document.getElementById('phoneInput');
-    const otpInput = document.getElementById('otpInput');
-    const verifyOtpBtn = document.getElementById('verifyOtpBtn');
-    
-    if (!phoneInput || !otpInput || !verifyOtpBtn) return;
-    
-    const phone = phoneInput.value.trim();
-    const otp = otpInput.value.trim();
-    
-    if (!otp || otp.length !== 6) {
-        showError('أدخل الرمز المكون من 6 أرقام');
-        return;
-    }
-    
-    const originalText = verifyOtpBtn.innerHTML;
-    verifyOtpBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري فحص الشفرة...';
-    verifyOtpBtn.disabled = true;
-    
-    clearError();
-    
-    try {
-        // نداء دالة التحقق من ملف الـ Config
-        const result = await window.ironPlus.verifyOTP(phone, otp);
-        
-        if (result.success) {
-            showSuccess('تمت المصادقة بنجاح! جاري تشغيل واجهتك... 🦾');
-            
-            const redirectUrl = localStorage.getItem('login_redirect') || 'profile.html';
-            
-            setTimeout(() => {
-                window.location.href = redirectUrl;
-            }, 1500);
-            
-        } else {
-            showError(result.message || 'الرمز غير صحيح، حاول مرة أخرى');
-            otpInput.classList.add('shake'); // تأثير اهتزاز عند الخطأ
-            setTimeout(() => otpInput.classList.remove('shake'), 500);
-        }
-    } catch (error) {
-        console.error('Verification Error:', error);
-        showError('حدث خطأ أثناء عملية التحقق');
-    } finally {
-        verifyOtpBtn.innerHTML = originalText;
-        verifyOtpBtn.disabled = false;
-    }
-}
-
-// --- رابعاً: الخدمات المساعدة (UI Helpers) ---
-
-function startResendTimer(phone) {
-    const resendBtn = document.getElementById('resendBtn');
-    const timerSpan = document.getElementById('resendTimer');
-    
-    if (!resendBtn || !timerSpan) return;
-    
-    let timeLeft = 60;
-    resendBtn.disabled = true;
-    resendBtn.style.display = 'none';
-    timerSpan.style.display = 'inline';
-    
-    const timer = setInterval(() => {
-        timeLeft--;
-        timerSpan.textContent = timeLeft;
-        
-        if (timeLeft <= 0) {
-            clearInterval(timer);
-            resendBtn.disabled = false;
-            resendBtn.style.display = 'inline';
-            timerSpan.style.display = 'none';
-            timerSpan.textContent = '60';
-        }
-    }, 1000);
-}
-
-function showError(msg) {
-    const errorDiv = document.getElementById('errorMessage');
-    if (errorDiv) {
-        errorDiv.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${msg}`;
-        errorDiv.style.display = 'block';
-    }
-}
-
-function showSuccess(msg) {
-    const successDiv = document.getElementById('successMessage');
-    if (successDiv) {
-        successDiv.innerHTML = `<i class="fas fa-check-circle"></i> ${msg}`;
-        successDiv.style.display = 'block';
-    }
+    console.log("OTP Verification bypassed.");
 }
 
 function clearMessages() {
-    const err = document.getElementById('errorMessage');
-    const succ = document.getElementById('successMessage');
-    if (err) err.style.display = 'none';
-    if (succ) succ.style.display = 'none';
-}
-
-function clearError() {
-    const err = document.getElementById('errorMessage');
-    if (err) err.style.display = 'none';
+    const messageDiv = document.getElementById('loginMessage');
+    if (messageDiv) messageDiv.style.display = 'none';
 }
