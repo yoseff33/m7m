@@ -3,75 +3,245 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Iron Plus | متجر تطبيقات البلس العالمي</title>
     
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
+    <title>IRON+ | متجر تطبيقات البلس والأكواد الرقمية 🦾</title>
+    <meta name="description" content="متجر ايرون بلس - تفعيل فوري تطبيقات بلس، فك حظر سناب، واشتراكات رقمية بأعلى استقرار وأمان ضد الحظر.">
+    <meta name="keywords" content="سناب بلس, تيك توك بلس, فك حظر سناب, تطبيقات بلس, ايرون بلس, متجر بلس">
+    
+    <script>
+        // هنا تضع كود بكسل سناب شات وتيك توك الخاص بك
+        console.log("Tracking Systems: Initializing... 📈");
+    </script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@500;700&family=Cairo:wght@600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <link rel="stylesheet" href="css/styles.css"> 
+    <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/index.css">
+
+    <style>
+        /* دمج هوية آيرون مان مع المتجر الاحترافي */
+        :root {
+            --iron-red: #9b111e;
+            --iron-gold: #ffd700;
+            --dark-bg: #0a0a0a;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+        }
+
+        /* شريط الإعلانات المتحرك (مثل A2D) */
+        .announcement-bar {
+            background: var(--iron-red);
+            color: #fff;
+            padding: 10px 0;
+            overflow: hidden;
+            border-bottom: 1px solid var(--iron-gold);
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+        .announcement-track {
+            display: flex;
+            white-space: nowrap;
+            animation: scrollText 25s linear infinite;
+        }
+        .announcement-track span { padding: 0 50px; }
+        @keyframes scrollText { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
+
+        /* ستايل الهيدر المطور */
+        .nav-iron-pro {
+            background: rgba(10, 10, 10, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 2px solid var(--iron-red);
+            position: sticky; top: 0; z-index: 1000;
+        }
+
+        /* الإشعارات الحية (Social Proof) */
+        .live-notif {
+            position: fixed; bottom: 20px; right: 20px;
+            background: var(--iron-red); color: #fff;
+            padding: 12px 20px; border-radius: 50px;
+            border: 1px solid var(--iron-gold);
+            box-shadow: 0 0 15px rgba(155, 17, 30, 0.5);
+            z-index: 999; display: none; align-items: center; gap: 10px;
+            animation: slideUp 0.5s ease;
+        }
+    </style>
 </head>
 <body class="iron-theme">
 
     <div class="scanline"></div>
 
-    <nav class="nav-iron">
-        <div class="container nav-content">
-            <div class="logo tech-font">IRON<span>+</span></div>
-            <div class="nav-links">
-                <a href="login.html" id="loginButton" class="nav-btn"><i class="fas fa-user-shield"></i> دخول</a>
-                
-                <div id="userInfo" style="display: none;" class="user-display">
+    <div class="announcement-bar">
+        <div class="announcement-track">
+            <span>🔥 عرض محدود: باقة سناب بلس بخصم ٣٠٪ لفترة محدودة</span>
+            <span>🛠️ خدمة فك حظر IP السناب متاحة الآن - تفعيل فوري</span>
+            <span>✅ جميع تطبيقاتنا محدثة لآخر إصدار وضد الحظر</span>
+        </div>
+    </div>
+
+    <nav class="nav-iron-pro">
+        <div class="container nav-content flex justify-between items-center py-3">
+            <div class="logo-area flex items-center gap-3">
+                <div class="logo tech-font" style="font-size: 1.8rem;">IRON<span class="text-gold">+</span></div>
+                <div class="status-badge"><span class="pulse-dot"></span> <small>الأنظمة نشطة</small></div>
+            </div>
+            
+            <div class="nav-tools flex items-center gap-4">
+                <a href="login.html" id="loginButton" class="btn-iron btn-small"><i class="fas fa-fingerprint"></i> دخول</a>
+                <div id="userInfo" style="display: none;" class="user-pill flex items-center gap-2">
                     <span id="userPhone" class="text-gold"></span>
-                    <a href="profile.html" class="nav-btn"><i class="fas fa-shopping-bag"></i> طلباتي</a>
-                    <button id="logoutBtn" class="btn-iron btn-small"><i class="fas fa-power-off"></i></button>
+                    <a href="profile.html" title="طلباتي"><i class="fas fa-box-open text-white"></i></a>
+                    <button id="logoutBtn" class="text-red-500"><i class="fas fa-power-off"></i></button>
                 </div>
             </div>
         </div>
     </nav>
 
-    <header class="hero-section">
+    <header class="hero-section text-center py-20">
         <div class="container">
-            <div class="arc-reactor-main"></div>
-            <h1 class="tech-font animate-glow">SYSTEM ONLINE</h1>
-            <p class="hero-subtitle">مرحباً بك في أنظمة ايرون بلس.. التفعيل الفوري بلمسة واحدة</p>
+            <div class="arc-reactor-main mx-auto mb-6"></div>
+            <h1 class="tech-font text-glow-red" style="font-size: 3rem;">SYSTEM INITIALIZED</h1>
+            <p class="hero-subtitle mb-8 text-gray-300">أقوى تطبيقات البلس والشهادات المدفوعة.. استقرار بلا حدود 🦾</p>
             
-            <div class="stats-container">
-                <div class="stat-box">
-                    <span id="visitorCount" class="counter">0</span>
+            <div class="stats-grid grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
+                <div class="stat-box hud-effect">
+                    <h3 id="visitorCount" class="counter text-gold">1,247</h3>
                     <label>زائر نشط</label>
                 </div>
-                <div class="stat-box">
-                    <span id="orderCount" class="counter">0</span>
+                <div class="stat-box hud-effect">
+                    <h3 id="orderCount" class="counter text-gold">5,283</h3>
                     <label>عملية مكتملة</label>
+                </div>
+                <div class="stat-box hud-effect">
+                    <h3 class="text-gold">99.9%</h3>
+                    <label>وقت التشغيل</label>
+                </div>
+                <div class="stat-box hud-effect">
+                    <h3 class="text-gold">60s</h3>
+                    <label>متوسط التفعيل</label>
                 </div>
             </div>
         </div>
     </header>
 
-    <section class="products-area container">
-        <h2 class="section-title tech-font"><i class="fas fa-layer-group"></i> الباقات المتاحة</h2>
+    <section id="products" class="products-area container py-12">
+        <div class="section-title flex justify-between items-center mb-8 border-b border-red-900 pb-4">
+            <h2 class="tech-font text-gold"><i class="fas fa-layer-group"></i> الباقات المتاحة</h2>
+            <div class="search-box">
+                <input type="text" id="globalSearch" class="input-iron" placeholder="ابحث عن باقة..." onkeyup="searchProducts()">
+            </div>
+        </div>
         
         <div id="productsContainer" class="grid-layout">
-            <div id="loadingMessage" class="iron-loading">
-                <div class="iron-spinner"></div>
-                <p>جاري مزامنة الأنظمة وسحب الأسعار المحدثة...</p>
             </div>
+    </section>
+
+    <section id="reviews" class="reviews-section bg-black bg-opacity-40 py-16">
+        <div class="container">
+            <h2 class="tech-font text-center mb-12 text-glow-red">سجل ثقة المشتركين ⭐</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="review-card hud-effect p-6">
+                    <div class="flex justify-between mb-3">
+                        <strong>سعد العتيبي</strong>
+                        <span class="text-green-500 text-xs"><i class="fas fa-check-circle"></i> مشترك مؤكد</span>
+                    </div>
+                    <p class="text-sm text-gray-300">"أفضل متجر تعاملت معه، التفعيل فوري والسناب شغال معي زي الحلاوة بدون حظر."</p>
+                    <div class="stars text-gold text-xs mt-3">★★★★★</div>
+                </div>
+                <div class="review-card hud-effect p-6">
+                    <div class="flex justify-between mb-3">
+                        <strong>نورة الشمري</strong>
+                        <span class="text-green-500 text-xs"><i class="fas fa-check-circle"></i> مشترك مؤكد</span>
+                    </div>
+                    <p class="text-sm text-gray-300">"جربت متاجر واجد بس ايرون بلس يفرق في جودة النسخ والدعم الفني السريع."</p>
+                    <div class="stars text-gold text-xs mt-3">★★★★★</div>
+                </div>
+                <div class="review-card hud-effect p-6">
+                    <div class="flex justify-between mb-3">
+                        <strong>يوسف العنزي</strong>
+                        <span class="text-green-500 text-xs"><i class="fas fa-check-circle"></i> مشترك مؤكد</span>
+                    </div>
+                    <p class="text-sm text-gray-300">"خدمة فك حظر الـ IP أنقذتني، شكرًا لكم على المصداقية والسرعة."</p>
+                    <div class="stars text-gold text-xs mt-3">★★★★★</div>
+                </div>
+                </div>
         </div>
     </section>
 
-    <footer class="footer-iron">
-        <div class="container text-center">
-            <p class="tech-font">IRON PLUS OS v2.5 - FULLY OPERATIONAL</p>
-            <div class="payment-methods">
-                <img src="https://cdn.salla.network/images/payment/mada_mini.png" alt="mada">
-                <img src="https://cdn.salla.network/images/payment/apple_pay_mini.png" alt="applepay">
+    <footer class="footer-iron bg-black py-12 border-t-2 border-red-900">
+        <div class="container grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div class="footer-about">
+                <div class="logo tech-font text-gold mb-4">IRON<span>+</span></div>
+                <p class="text-gray-400 text-sm">منصة ايرون بلس الرائدة في توفير تطبيقات البلس والخدمات الرقمية بأعلى معايير الأمان والاستقرار.</p>
+                <div class="social-icons flex gap-4 mt-4">
+                    <a href="#" class="text-white hover:text-gold"><i class="fab fa-snapchat"></i></a>
+                    <a href="#" class="text-white hover:text-gold"><i class="fab fa-tiktok"></i></a>
+                    <a href="#" class="text-white hover:text-gold"><i class="fab fa-instagram"></i></a>
+                </div>
+            </div>
+            
+            <div class="footer-links">
+                <h4 class="text-gold mb-4">روابط سريعة</h4>
+                <ul class="text-gray-400 text-sm flex flex-col gap-2">
+                    <li><a href="#">الأسئلة الشائعة</a></li>
+                    <li><a href="#">طريقة التفعيل</a></li>
+                    <li><a href="#">من نحن ؟</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-legal">
+                <h4 class="text-gold mb-4">السياسات</h4>
+                <ul class="text-gray-400 text-sm flex flex-col gap-2">
+                    <li><a href="#">سياسة الاسترجاع</a></li>
+                    <li><a href="#">شروط الاشتراك</a></li>
+                    <li><a href="#">اتفاقية الاستخدام</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-trust">
+                <h4 class="text-gold mb-4">توثيق المتجر</h4>
+                <div class="sbc-badge flex items-center gap-2 bg-white bg-opacity-5 p-3 rounded border border-gray-800">
+                    <img src="https://cdn.salla.network/images/sbc.png" width="40" alt="SBC">
+                    <div>
+                        <p class="text-xs text-white">موثق في منصة الأعمال</p>
+                        <small class="text-gray-500">رقم: 00000XXXXX</small>
+                    </div>
+                </div>
+                <div class="payments mt-4 flex gap-2">
+                    <img src="https://cdn.salla.network/images/payment/mada_mini.png" height="20">
+                    <img src="https://cdn.salla.network/images/payment/apple_pay_mini.png" height="20">
+                </div>
             </div>
         </div>
+        <div class="text-center mt-12 text-gray-600 text-xs border-t border-gray-900 pt-6">
+            <p>IRON PLUS OS v4.5 - جميع الحقوق محفوظة © 2025</p>
+        </div>
     </footer>
+
+    <div id="liveNotif" class="live-notif">
+        <i class="fas fa-bolt"></i>
+        <span id="notifText">أحد العملاء اشترى باقة سناب بلس الآن ⚡</span>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase-config.js"></script>
     <script src="js/index.js"></script>
+    
+    <script>
+        // إشعارات حية بسيطة لزيادة الحماس
+        const messages = [
+            "خالد اشترى باقة بلس الآن ⚡",
+            "سلطان حصل على كود فك الحظر ✅",
+            "تحديث: تم تفعيل ٤ باقات في آخر ١٠ دقائق",
+            "نورة فعلت اشتراك برامج بلس بنجاح ✨"
+        ];
+        
+        function showLiveNotif() {
+            const notif = document.getElementById('liveNotif');
+            const text = document.getElementById('notifText');
+            text.innerText = messages[Math.floor(Math.random() * messages.length)];
+            notif.style.display = 'flex';
+            setTimeout(() => { notif.style.display = 'none'; }, 5000);
+        }
+        setInterval(showLiveNotif, 12000); // تظهر كل ١٢ ثانية
+    </script>
 </body>
 </html>
