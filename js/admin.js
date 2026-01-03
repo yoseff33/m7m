@@ -295,3 +295,11 @@ window.logoutAdmin = () => {
 // جعل الدوال متاحة للـ HTML القديم
 window.closeModal = window.adminPanel.closeModal;
 window.uploadCodes = window.adminPanel.uploadCodes;
+// جسر لربط أزرار الـ HTML القديمة بالدوال الجديدة
+window.showAddProductModal = function() {
+    if (window.adminPanel && window.adminPanel.showProductModal) {
+        window.adminPanel.showProductModal();
+    } else {
+        console.error("خطأ: نظام اللوحة لم يكتمل تحميله بعد");
+    }
+};
