@@ -2,6 +2,15 @@
 // لوحة تحكم Iron Plus - النظام الإداري المطور v5.5
 // ========================================
 
+// دالة لمعالجة أخطاء الصور
+function handleImageError(img) {
+    // استبدال الصور المعطوبة بصورة افتراضية
+    const productName = img.alt || 'Product';
+    const encodedName = encodeURIComponent(productName.substring(0, 20));
+    img.src = `https://ui-avatars.com/api/?name=${encodedName}&background=3d5afe&color=ffffff&size=40`;
+    img.onerror = null; // منع تكرار الأخطاء
+}
+
 // 1. تشغيل النظام عند تحميل الصفحة
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Jarvis: Admin Systems Initializing v5.5... 🦾');
@@ -155,7 +164,12 @@ async function loadProducts() {
         if (res.success && tbody) {
             tbody.innerHTML = res.products.map(p => `
                 <tr>
-                    <td><img src="${p.image_url || 'assets/default.png'}" style="width:40px; border-radius:5px;" alt="${p.name}"></td>
+                    <td>
+                        <img src="${p.image_url || '#'}" 
+                             onerror="handleImageError(this)"
+                             style="width:40px; height:40px; border-radius:5px; object-fit:cover;"
+                             alt="${p.name}">
+                    </td>
                     <td><strong>${p.name}</strong></td>
                     <td><div class="text-gold">${window.ironPlus.formatPrice(p.price)} ر.س</div></td>
                     <td>${p.duration || '-'}</td>
@@ -167,6 +181,17 @@ async function loadProducts() {
                     </td>
                 </tr>
             `).join('');
+            
+            // إضافة معالج الأخطاء للصور بعد التحميل
+            setTimeout(() => {
+                tbody.querySelectorAll('img').forEach(img => {
+                    img.onerror = function() {
+                        const productName = img.alt || 'Product';
+                        const encodedName = encodeURIComponent(productName.substring(0, 20));
+                        this.src = `https://ui-avatars.com/api/?name=${encodedName}&background=3d5afe&color=ffffff&size=40`;
+                    };
+                });
+            }, 100);
         } else if (!res.success) {
             showNotification('فشل تحميل المنتجات', 'error');
         }
@@ -308,7 +333,10 @@ async function loadBanners() {
         if (res.success && container) {
             container.innerHTML = res.banners.map(b => `
                 <div class="hud-card">
-                    <img src="${b.image_url || 'assets/default.png'}" style="width:100%; height:150px; object-fit:cover; border-radius:5px;" alt="${b.title}">
+                    <img src="${b.image_url || '#'}" 
+                         onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(b.title.substring(0, 20))}&background=3d5afe&color=ffffff&size=300x150'"
+                         style="width:100%; height:150px; object-fit:cover; border-radius:5px;" 
+                         alt="${b.title}">
                     <div style="padding:15px;">
                         <h4>${b.title}</h4>
                         <p class="text-sm text-gray-400">${b.link || 'لا يوجد رابط'}</p>
@@ -831,3 +859,6 @@ window.logoutAdmin = () => {
 // جعل الدوال متاحة للـ HTML القديم
 window.closeModal = window.adminPanel.closeModal;
 window.uploadCodes = window.adminPanel.uploadCodes;
+
+// تعريف دالة handleImageError في النطاق العام
+window.handleImageError = handleImageError;
