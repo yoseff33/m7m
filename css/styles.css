@@ -1224,3 +1224,51 @@ body {
 .review-card:nth-child(4) { animation-delay: 0.3s; }
 .review-card:nth-child(5) { animation-delay: 0.4s; }
 .review-card:nth-child(6) { animation-delay: 0.5s; }
+/* توافق مع التصميم الجديد v4.6 */
+@media (min-width: 769px) {
+    .nav-container {
+        backdrop-filter: blur(20px) !important;
+    }
+    
+    .section-spacing {
+        padding-top: 6rem !important;
+        padding-bottom: 6rem !important;
+    }
+}
+
+/* إصلاحات للتوافق مع Tailwind */
+.hidden {
+    display: none !important;
+}
+
+.flex {
+    display: flex !important;
+}
+
+.grid {
+    display: grid !important;
+}
+
+.relative {
+    position: relative !important;
+}
+
+.fixed {
+    position: fixed !important;
+}
+
+.sticky {
+    position: sticky !important;
+}
+
+.block {
+    display: block !important;
+}
+
+.inline-block {
+    display: inline-block !important;
+}
+
+.inline-flex {
+    display: inline-flex !important;
+}
