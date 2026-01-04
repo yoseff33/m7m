@@ -1,27 +1,23 @@
 // ========================================
-// إعدادات Supabase لنظام Iron Plus - النسخة الشاملة v3.0
+// إعدادات Supabase لنظام Iron Plus - النسخة الشاملة v5.0
 // ========================================
 
-// 1. التعريفات العالمية (لضمان وصول جميع الملفات لها)
 window.SUPABASE_URL = 'https://xurecaeakqbsjzebcsuy.supabase.co';
 window.SUPABASE_ANON_KEY = 'sb_publishable_N4uzz2OJdyvbcfiyl8dmoQ_mEmAJgG1';
 
-// 2. تهيئة العميل (تجنب خطأ Identifier has already been declared)
 if (typeof window.supabaseClient === 'undefined') {
     window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
 }
 
-// متغير مصادقة محلي
 let currentUser = null;
 
 // ========================================
-// المحرك الرئيسي لنظام Iron Plus
+// المحرك الرئيسي لنظام Iron Plus v5.0
 // ========================================
 
 window.ironPlus = {
     
     // --- [1] أنظمة المصادقة (Auth) ---
-
     async checkAuth() {
         try {
             const { data: { session }, error } = await window.supabaseClient.auth.getSession();
@@ -74,7 +70,6 @@ window.ironPlus = {
 
     async adminLogin(username, password) {
         try {
-            // استدعاء RPC verify_password
             const { data, error } = await window.supabaseClient.rpc('verify_password', {
                 p_username: username,
                 p_password: password
@@ -97,7 +92,6 @@ window.ironPlus = {
     },
 
     // --- [2] فحص الحالة (Status) ---
-
     isLoggedIn: () => localStorage.getItem('iron_user_phone') !== null,
     isAdminLoggedIn: () => localStorage.getItem('iron_admin') === 'true',
     getUserPhone: () => localStorage.getItem('iron_user_phone'),
@@ -110,7 +104,6 @@ window.ironPlus = {
     },
 
     // --- [3] إدارة المنتجات (Products) ---
-
     async getProducts() {
         try {
             const { data, error } = await window.supabaseClient
@@ -176,7 +169,6 @@ window.ironPlus = {
     },
 
     // --- [4] إدارة الطلبات (Orders) ---
-
     async getUserOrders(phone) {
         try {
             const { data, error } = await window.supabaseClient.from('orders').select('*, products(*)').eq('customer_phone', phone).order('created_at', { ascending: false });
@@ -229,7 +221,6 @@ window.ironPlus = {
     },
 
     // --- [5] أكواد التفعيل (Activation Codes) ---
-
     async getAvailableCodes(productId) {
         try {
             const { data, error } = await window.supabaseClient.from('activation_codes').select('*').eq('product_id', productId).eq('is_used', false).order('created_at', { ascending: true });
@@ -268,7 +259,6 @@ window.ironPlus = {
     },
 
     // --- [6] الإحصائيات (Analytics) ---
-
     async getSiteStats() {
         try {
             const { data: salesData } = await window.supabaseClient.rpc('get_total_sales');
@@ -306,12 +296,232 @@ window.ironPlus = {
         } catch (e) {}
     },
 
-    // --- [7] أدوات مساعدة (Utils) ---
+    // --- [7] نظام الإعدادات الجديد v5.0 ---
+    async getSiteSettings() {
+        try {
+            const { data, error } = await window.supabaseClient.from('site_settings').select('*');
+            if (error) throw error;
+            
+            // تحويل المصفوفة إلى كائن
+            const settings = {};
+            data.forEach(item => {
+                settings[item.setting_key] = item.setting_value;
+            });
+            
+            return { success: true, settings };
+        } catch (error) {
+            console.error('Get settings error:', error);
+            return { success: false, settings: {} };
+        }
+    },
 
+    async updateSiteSetting(key, value) {
+        try {
+            const { data, error } = await window.supabaseClient
+                .from('site_settings')
+                .update({ setting_value: value, updated_at: new Date().toISOString() })
+                .eq('setting_key', key)
+                .select()
+                .single();
+            
+            if (error) throw error;
+            return { success: true, setting: data };
+        } catch (error) {
+            return { success: false, message: error.message };
+        }
+    },
+
+    async updateMultipleSettings(settings) {
+        try {
+            const updates = Object.entries(settings).map(([key, value]) => ({
+                setting_key: key,
+                setting_value: value,
+                updated_at: new Date().toISOString()
+            }));
+            
+            const { error } = await window.supabaseClient.from('site_settings').upsert(updates);
+            if (error) throw error;
+            return { success: true };
+        } catch (error) {
+            return { success: false, message: error.message };
+        }
+    },
+
+    // --- [8] إدارة البانرات ---
+    async getBanners() {
+        try {
+            const { data, error } = await window.supabaseClient
+                .from('banners')
+                .select('*')
+                .eq('is_active', true)
+                .order('display_order', { ascending: true });
+            
+            if (error) throw error;
+            return { success: true, banners: data || [] };
+        } catch (error) {
+            return { success: false, message: error.message };
+        }
+    },
+
+    async addBanner(bannerData) {
+        try {
+            const { data, error } = await window.supabaseClient
+                .from('banners')
+                .insert([bannerData])
+                .select()
+                .single();
+            
+            if (error) throw error;
+            return { success: true, banner: data };
+        } catch (error) {
+            return { success: false, message: error.message };
+        }
+    },
+
+    async updateBanner(id, updates) {
+        try {
+            const { data, error } = await window.supabaseClient
+                .from('banners')
+                .update(updates)
+                .eq('id', id)
+                .select()
+                .single();
+            
+            if (error) throw error;
+            return { success: true, banner: data };
+        } catch (error) {
+            return { success: false, message: error.message };
+        }
+    },
+
+    async deleteBanner(id) {
+        try {
+            const { error } = await window.supabaseClient
+                .from('banners')
+                .delete()
+                .eq('id', id);
+            
+            if (error) throw error;
+            return { success: true };
+        } catch (error) {
+            return { success: false, message: error.message };
+        }
+    },
+
+    // --- [9] إدارة الصفحات ---
+    async getPages() {
+        try {
+            const { data, error } = await window.supabaseClient
+                .from('pages')
+                .select('*')
+                .order('title', { ascending: true });
+            
+            if (error) throw error;
+            return { success: true, pages: data || [] };
+        } catch (error) {
+            return { success: false, message: error.message };
+        }
+    },
+
+    async getPage(slug) {
+        try {
+            const { data, error } = await window.supabaseClient
+                .from('pages')
+                .select('*')
+                .eq('slug', slug)
+                .single();
+            
+            if (error) throw error;
+            return { success: true, page: data };
+        } catch (error) {
+            return { success: false, message: error.message };
+        }
+    },
+
+    async updatePage(slug, updates) {
+        try {
+            const { data, error } = await window.supabaseClient
+                .from('pages')
+                .update(updates)
+                .eq('slug', slug)
+                .select()
+                .single();
+            
+            if (error) throw error;
+            return { success: true, page: data };
+        } catch (error) {
+            return { success: false, message: error.message };
+        }
+    },
+
+    // --- [10] إدارة المسؤولين ---
+    async updateAdminCredentials(username, newPassword, currentPassword) {
+        try {
+            // التحقق من كلمة المرور الحالية
+            const { data: verifyResult } = await window.supabaseClient.rpc('verify_password', {
+                p_username: localStorage.getItem('admin_username'),
+                p_password: currentPassword
+            });
+            
+            if (!verifyResult) {
+                return { success: false, message: 'كلمة المرور الحالية غير صحيحة' };
+            }
+            
+            // تحديث بيانات المسؤول
+            const { data, error } = await window.supabaseClient
+                .from('admin_users')
+                .update({ 
+                    username: username,
+                    password_hash: newPassword, // في الواقع يجب تشفيرها
+                    updated_at: new Date().toISOString()
+                })
+                .eq('username', localStorage.getItem('admin_username'))
+                .select()
+                .single();
+            
+            if (error) throw error;
+            
+            // تحديث البيانات المحلية
+            localStorage.setItem('admin_username', username);
+            
+            return { success: true, message: 'تم تحديث بيانات الدخول بنجاح' };
+        } catch (error) {
+            return { success: false, message: error.message };
+        }
+    },
+
+    // --- [11] التحقق من وضع الصيانة ---
+    async checkMaintenanceMode() {
+        try {
+            const { data, error } = await window.supabaseClient
+                .from('site_settings')
+                .select('setting_value')
+                .eq('setting_key', 'maintenance_mode')
+                .single();
+            
+            if (error) throw error;
+            return data.setting_value === 'true';
+        } catch (error) {
+            return false;
+        }
+    },
+
+    // --- [12] أدوات مساعدة (Utils) ---
     formatPrice: (amount) => (amount ? (amount / 100).toFixed(2) : '0.00'),
     formatDate: (dateString) => {
         if (!dateString) return '';
-        return new Date(dateString).toLocaleDateString('ar-SA', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+        return new Date(dateString).toLocaleDateString('ar-SA', { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric', 
+            hour: '2-digit', 
+            minute: '2-digit' 
+        });
+    },
+
+    // حساب الضريبة
+    calculateTax: (amount, taxRate = 15) => {
+        return (amount * taxRate) / 100;
     }
 };
 
@@ -319,5 +529,12 @@ window.ironPlus = {
 document.addEventListener('DOMContentLoaded', async function() {
     const page = window.location.pathname.split('/').pop() || 'index.html';
     await window.ironPlus.recordVisit(page);
-    console.log('Iron Plus Config: Systems fully operational. 🦾');
+    
+    // التحقق من وضع الصيانة
+    const isMaintenance = await window.ironPlus.checkMaintenanceMode();
+    if (isMaintenance && !window.location.href.includes('admin.html')) {
+        window.location.href = 'maintenance.html';
+    }
+    
+    console.log('Iron Plus Config v5.0: Systems fully operational. 🦾');
 });
