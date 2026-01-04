@@ -1,23 +1,27 @@
 // ========================================
-// إعدادات Supabase لنظام Iron Plus - النسخة الشاملة v5.0
+// إعدادات Supabase لنظام Iron Plus - النسخة الشاملة v5.5
 // ========================================
 
+// 1. التعريفات العالمية (لضمان وصول جميع الملفات لها)
 window.SUPABASE_URL = 'https://xurecaeakqbsjzebcsuy.supabase.co';
 window.SUPABASE_ANON_KEY = 'sb_publishable_N4uzz2OJdyvbcfiyl8dmoQ_mEmAJgG1';
 
+// 2. تهيئة العميل (تجنب خطأ Identifier has already been declared)
 if (typeof window.supabaseClient === 'undefined') {
     window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
 }
 
+// متغير مصادقة محلي
 let currentUser = null;
 
 // ========================================
-// المحرك الرئيسي لنظام Iron Plus v5.0
+// المحرك الرئيسي لنظام Iron Plus v5.5
 // ========================================
 
 window.ironPlus = {
     
     // --- [1] أنظمة المصادقة (Auth) ---
+
     async checkAuth() {
         try {
             const { data: { session }, error } = await window.supabaseClient.auth.getSession();
@@ -70,6 +74,7 @@ window.ironPlus = {
 
     async adminLogin(username, password) {
         try {
+            // استدعاء RPC verify_password
             const { data, error } = await window.supabaseClient.rpc('verify_password', {
                 p_username: username,
                 p_password: password
@@ -92,6 +97,7 @@ window.ironPlus = {
     },
 
     // --- [2] فحص الحالة (Status) ---
+
     isLoggedIn: () => localStorage.getItem('iron_user_phone') !== null,
     isAdminLoggedIn: () => localStorage.getItem('iron_admin') === 'true',
     getUserPhone: () => localStorage.getItem('iron_user_phone'),
@@ -104,6 +110,7 @@ window.ironPlus = {
     },
 
     // --- [3] إدارة المنتجات (Products) ---
+
     async getProducts() {
         try {
             const { data, error } = await window.supabaseClient
@@ -169,6 +176,7 @@ window.ironPlus = {
     },
 
     // --- [4] إدارة الطلبات (Orders) ---
+
     async getUserOrders(phone) {
         try {
             const { data, error } = await window.supabaseClient.from('orders').select('*, products(*)').eq('customer_phone', phone).order('created_at', { ascending: false });
@@ -220,7 +228,49 @@ window.ironPlus = {
         }
     },
 
+    async createOrder(productId, phone, amount, couponCode = null) {
+        try {
+            // التحقق من الكوبون إذا كان موجودًا
+            let finalAmount = amount;
+            let couponId = null;
+            if (couponCode) {
+                const couponRes = await this.validateCoupon(couponCode, productId);
+                if (!couponRes.success) {
+                    return couponRes; // خطأ في الكوبون
+                }
+                finalAmount = couponRes.finalAmount;
+                couponId = couponRes.couponId;
+            }
+
+            // إنشاء الطلب
+            const orderData = {
+                product_id: productId,
+                customer_phone: phone,
+                amount: finalAmount,
+                original_amount: amount,
+                status: finalAmount === 0 ? 'completed' : 'pending', // إذا كان المبلغ النهائي 0، فالطلب مكتمل
+                coupon_id: couponId
+            };
+
+            const { data, error } = await window.supabaseClient.from('orders').insert([orderData]).select().single();
+            if (error) throw error;
+
+            // إذا كان الطلب مكتمل (مبلغ 0) نقوم بتعيين كود التفعيل مباشرة
+            if (finalAmount === 0) {
+                const assignRes = await this.assignActivationCode(data.id, productId);
+                if (assignRes.success) {
+                    data.activation_code = assignRes.code;
+                }
+            }
+
+            return { success: true, order: data, finalAmount: finalAmount };
+        } catch (error) {
+            return { success: false, message: error.message };
+        }
+    },
+
     // --- [5] أكواد التفعيل (Activation Codes) ---
+
     async getAvailableCodes(productId) {
         try {
             const { data, error } = await window.supabaseClient.from('activation_codes').select('*').eq('product_id', productId).eq('is_used', false).order('created_at', { ascending: true });
@@ -258,7 +308,242 @@ window.ironPlus = {
         }
     },
 
-    // --- [6] الإحصائيات (Analytics) ---
+    // --- [6] الكوبونات (Coupons) ---
+
+    async getCoupons() {
+        try {
+            const { data, error } = await window.supabaseClient.from('coupons').select('*').order('created_at', { ascending: false });
+            if (error) throw error;
+            return { success: true, coupons: data || [] };
+        } catch (error) {
+            return { success: false, message: error.message, coupons: [] };
+        }
+    },
+
+    async getCoupon(couponId) {
+        try {
+            const { data, error } = await window.supabaseClient.from('coupons').select('*').eq('id', couponId).single();
+            if (error) throw error;
+            return { success: true, coupon: data };
+        } catch (error) {
+            return { success: false, message: error.message };
+        }
+    },
+
+    async validateCoupon(code, productId) {
+        try {
+            const { data, error } = await window.supabaseClient.from('coupons').select('*').eq('code', code).eq('is_active', true).single();
+            if (error) throw error;
+
+            // التحقق من تاريخ الصلاحية
+            const now = new Date();
+            const validFrom = new Date(data.valid_from);
+            const validTo = new Date(data.valid_to);
+            if (now < validFrom || now > validTo) {
+                return { success: false, message: 'الكوبون منتهي الصلاحية أو غير فعال حالياً' };
+            }
+
+            // التحقق من المنتج إذا كان الكوبون خاصاً بمنتج معين
+            if (data.product_id && data.product_id !== productId) {
+                return { success: false, message: 'هذا الكوبون غير صالح لهذا المنتج' };
+            }
+
+            // حساب المبلغ بعد الخصم
+            let finalAmount = 0;
+            if (data.discount_type === 'percentage') {
+                finalAmount = data.original_amount - (data.original_amount * data.discount_value / 100);
+            } else if (data.discount_type === 'fixed') {
+                finalAmount = data.original_amount - data.discount_value;
+            }
+            if (finalAmount < 0) finalAmount = 0;
+
+            return { success: true, finalAmount: finalAmount, couponId: data.id };
+        } catch (error) {
+            return { success: false, message: 'كود الخصم غير صحيح' };
+        }
+    },
+
+    async addCoupon(couponData) {
+        try {
+            const { data, error } = await window.supabaseClient.from('coupons').insert([couponData]).select().single();
+            if (error) throw error;
+            return { success: true, coupon: data, message: 'تمت إضافة الكوبون بنجاح' };
+        } catch (error) {
+            return { success: false, message: error.message };
+        }
+    },
+
+    async updateCoupon(couponId, updates) {
+        try {
+            const { data, error } = await window.supabaseClient.from('coupons').update(updates).eq('id', couponId).select().single();
+            if (error) throw error;
+            return { success: true, coupon: data, message: 'تم تحديث الكوبون بنجاح' };
+        } catch (error) {
+            return { success: false, message: error.message };
+        }
+    },
+
+    async deleteCoupon(couponId) {
+        try {
+            const { error } = await window.supabaseClient.from('coupons').delete().eq('id', couponId);
+            if (error) throw error;
+            return { success: true, message: 'تم حذف الكوبون بنجاح' };
+        } catch (error) {
+            return { success: false, message: error.message };
+        }
+    },
+
+    // --- [7] الإعدادات (Site Settings) ---
+
+    async getSiteSettings() {
+        try {
+            const { data, error } = await window.supabaseClient.from('site_settings').select('*');
+            if (error) throw error;
+
+            // تحويل البيانات من صفيف إلى كائن
+            const settings = {};
+            data.forEach(item => {
+                settings[item.key] = item.value;
+            });
+            return { success: true, settings: settings };
+        } catch (error) {
+            return { success: false, message: error.message, settings: {} };
+        }
+    },
+
+    async updateSiteSettings(settings) {
+        try {
+            // تحويل الكائن إلى صفيف من السجلات
+            const updates = Object.keys(settings).map(key => ({
+                key: key,
+                value: settings[key]
+            }));
+
+            // استخدام upsert لتحديث الإعدادات
+            const { error } = await window.supabaseClient.from('site_settings').upsert(updates, { onConflict: 'key' });
+            if (error) throw error;
+            return { success: true, message: 'تم تحديث الإعدادات بنجاح' };
+        } catch (error) {
+            return { success: false, message: error.message };
+        }
+    },
+
+    // --- [8] البانرات (Banners) ---
+
+    async getBanners() {
+        try {
+            const { data, error } = await window.supabaseClient.from('banners').select('*').order('sort_order', { ascending: true });
+            if (error) throw error;
+            return { success: true, banners: data || [] };
+        } catch (error) {
+            return { success: false, message: error.message, banners: [] };
+        }
+    },
+
+    async getBanner(bannerId) {
+        try {
+            const { data, error } = await window.supabaseClient.from('banners').select('*').eq('id', bannerId).single();
+            if (error) throw error;
+            return { success: true, banner: data };
+        } catch (error) {
+            return { success: false, message: error.message };
+        }
+    },
+
+    async addBanner(bannerData) {
+        try {
+            const { data, error } = await window.supabaseClient.from('banners').insert([bannerData]).select().single();
+            if (error) throw error;
+            return { success: true, banner: data, message: 'تمت إضافة البانر بنجاح' };
+        } catch (error) {
+            return { success: false, message: error.message };
+        }
+    },
+
+    async updateBanner(bannerId, updates) {
+        try {
+            const { data, error } = await window.supabaseClient.from('banners').update(updates).eq('id', bannerId).select().single();
+            if (error) throw error;
+            return { success: true, banner: data, message: 'تم تحديث البانر بنجاح' };
+        } catch (error) {
+            return { success: false, message: error.message };
+        }
+    },
+
+    async deleteBanner(bannerId) {
+        try {
+            const { error } = await window.supabaseClient.from('banners').delete().eq('id', bannerId);
+            if (error) throw error;
+            return { success: true, message: 'تم حذف البانر بنجاح' };
+        } catch (error) {
+            return { success: false, message: error.message };
+        }
+    },
+
+    // --- [9] الصفحات (Pages) ---
+
+    async getPages() {
+        try {
+            const { data, error } = await window.supabaseClient.from('pages').select('*').order('created_at', { ascending: false });
+            if (error) throw error;
+            return { success: true, pages: data || [] };
+        } catch (error) {
+            return { success: false, message: error.message, pages: [] };
+        }
+    },
+
+    async getPage(pageId) {
+        try {
+            const { data, error } = await window.supabaseClient.from('pages').select('*').eq('id', pageId).single();
+            if (error) throw error;
+            return { success: true, page: data };
+        } catch (error) {
+            return { success: false, message: error.message };
+        }
+    },
+
+    async getPageBySlug(slug) {
+        try {
+            const { data, error } = await window.supabaseClient.from('pages').select('*').eq('slug', slug).single();
+            if (error) throw error;
+            return { success: true, page: data };
+        } catch (error) {
+            return { success: false, message: error.message };
+        }
+    },
+
+    async addPage(pageData) {
+        try {
+            const { data, error } = await window.supabaseClient.from('pages').insert([pageData]).select().single();
+            if (error) throw error;
+            return { success: true, page: data, message: 'تمت إضافة الصفحة بنجاح' };
+        } catch (error) {
+            return { success: false, message: error.message };
+        }
+    },
+
+    async updatePage(pageId, updates) {
+        try {
+            const { data, error } = await window.supabaseClient.from('pages').update(updates).eq('id', pageId).select().single();
+            if (error) throw error;
+            return { success: true, page: data, message: 'تم تحديث الصفحة بنجاح' };
+        } catch (error) {
+            return { success: false, message: error.message };
+        }
+    },
+
+    async deletePage(pageId) {
+        try {
+            const { error } = await window.supabaseClient.from('pages').delete().eq('id', pageId);
+            if (error) throw error;
+            return { success: true, message: 'تم حذف الصفحة بنجاح' };
+        } catch (error) {
+            return { success: false, message: error.message };
+        }
+    },
+
+    // --- [10] الإحصائيات (Analytics) ---
+
     async getSiteStats() {
         try {
             const { data: salesData } = await window.supabaseClient.rpc('get_total_sales');
@@ -296,232 +581,12 @@ window.ironPlus = {
         } catch (e) {}
     },
 
-    // --- [7] نظام الإعدادات الجديد v5.0 ---
-    async getSiteSettings() {
-        try {
-            const { data, error } = await window.supabaseClient.from('site_settings').select('*');
-            if (error) throw error;
-            
-            // تحويل المصفوفة إلى كائن
-            const settings = {};
-            data.forEach(item => {
-                settings[item.setting_key] = item.setting_value;
-            });
-            
-            return { success: true, settings };
-        } catch (error) {
-            console.error('Get settings error:', error);
-            return { success: false, settings: {} };
-        }
-    },
+    // --- [11] أدوات مساعدة (Utils) ---
 
-    async updateSiteSetting(key, value) {
-        try {
-            const { data, error } = await window.supabaseClient
-                .from('site_settings')
-                .update({ setting_value: value, updated_at: new Date().toISOString() })
-                .eq('setting_key', key)
-                .select()
-                .single();
-            
-            if (error) throw error;
-            return { success: true, setting: data };
-        } catch (error) {
-            return { success: false, message: error.message };
-        }
-    },
-
-    async updateMultipleSettings(settings) {
-        try {
-            const updates = Object.entries(settings).map(([key, value]) => ({
-                setting_key: key,
-                setting_value: value,
-                updated_at: new Date().toISOString()
-            }));
-            
-            const { error } = await window.supabaseClient.from('site_settings').upsert(updates);
-            if (error) throw error;
-            return { success: true };
-        } catch (error) {
-            return { success: false, message: error.message };
-        }
-    },
-
-    // --- [8] إدارة البانرات ---
-    async getBanners() {
-        try {
-            const { data, error } = await window.supabaseClient
-                .from('banners')
-                .select('*')
-                .eq('is_active', true)
-                .order('display_order', { ascending: true });
-            
-            if (error) throw error;
-            return { success: true, banners: data || [] };
-        } catch (error) {
-            return { success: false, message: error.message };
-        }
-    },
-
-    async addBanner(bannerData) {
-        try {
-            const { data, error } = await window.supabaseClient
-                .from('banners')
-                .insert([bannerData])
-                .select()
-                .single();
-            
-            if (error) throw error;
-            return { success: true, banner: data };
-        } catch (error) {
-            return { success: false, message: error.message };
-        }
-    },
-
-    async updateBanner(id, updates) {
-        try {
-            const { data, error } = await window.supabaseClient
-                .from('banners')
-                .update(updates)
-                .eq('id', id)
-                .select()
-                .single();
-            
-            if (error) throw error;
-            return { success: true, banner: data };
-        } catch (error) {
-            return { success: false, message: error.message };
-        }
-    },
-
-    async deleteBanner(id) {
-        try {
-            const { error } = await window.supabaseClient
-                .from('banners')
-                .delete()
-                .eq('id', id);
-            
-            if (error) throw error;
-            return { success: true };
-        } catch (error) {
-            return { success: false, message: error.message };
-        }
-    },
-
-    // --- [9] إدارة الصفحات ---
-    async getPages() {
-        try {
-            const { data, error } = await window.supabaseClient
-                .from('pages')
-                .select('*')
-                .order('title', { ascending: true });
-            
-            if (error) throw error;
-            return { success: true, pages: data || [] };
-        } catch (error) {
-            return { success: false, message: error.message };
-        }
-    },
-
-    async getPage(slug) {
-        try {
-            const { data, error } = await window.supabaseClient
-                .from('pages')
-                .select('*')
-                .eq('slug', slug)
-                .single();
-            
-            if (error) throw error;
-            return { success: true, page: data };
-        } catch (error) {
-            return { success: false, message: error.message };
-        }
-    },
-
-    async updatePage(slug, updates) {
-        try {
-            const { data, error } = await window.supabaseClient
-                .from('pages')
-                .update(updates)
-                .eq('slug', slug)
-                .select()
-                .single();
-            
-            if (error) throw error;
-            return { success: true, page: data };
-        } catch (error) {
-            return { success: false, message: error.message };
-        }
-    },
-
-    // --- [10] إدارة المسؤولين ---
-    async updateAdminCredentials(username, newPassword, currentPassword) {
-        try {
-            // التحقق من كلمة المرور الحالية
-            const { data: verifyResult } = await window.supabaseClient.rpc('verify_password', {
-                p_username: localStorage.getItem('admin_username'),
-                p_password: currentPassword
-            });
-            
-            if (!verifyResult) {
-                return { success: false, message: 'كلمة المرور الحالية غير صحيحة' };
-            }
-            
-            // تحديث بيانات المسؤول
-            const { data, error } = await window.supabaseClient
-                .from('admin_users')
-                .update({ 
-                    username: username,
-                    password_hash: newPassword, // في الواقع يجب تشفيرها
-                    updated_at: new Date().toISOString()
-                })
-                .eq('username', localStorage.getItem('admin_username'))
-                .select()
-                .single();
-            
-            if (error) throw error;
-            
-            // تحديث البيانات المحلية
-            localStorage.setItem('admin_username', username);
-            
-            return { success: true, message: 'تم تحديث بيانات الدخول بنجاح' };
-        } catch (error) {
-            return { success: false, message: error.message };
-        }
-    },
-
-    // --- [11] التحقق من وضع الصيانة ---
-    async checkMaintenanceMode() {
-        try {
-            const { data, error } = await window.supabaseClient
-                .from('site_settings')
-                .select('setting_value')
-                .eq('setting_key', 'maintenance_mode')
-                .single();
-            
-            if (error) throw error;
-            return data.setting_value === 'true';
-        } catch (error) {
-            return false;
-        }
-    },
-
-    // --- [12] أدوات مساعدة (Utils) ---
     formatPrice: (amount) => (amount ? (amount / 100).toFixed(2) : '0.00'),
     formatDate: (dateString) => {
         if (!dateString) return '';
-        return new Date(dateString).toLocaleDateString('ar-SA', { 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric', 
-            hour: '2-digit', 
-            minute: '2-digit' 
-        });
-    },
-
-    // حساب الضريبة
-    calculateTax: (amount, taxRate = 15) => {
-        return (amount * taxRate) / 100;
+        return new Date(dateString).toLocaleDateString('ar-SA', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
     }
 };
 
@@ -529,12 +594,5 @@ window.ironPlus = {
 document.addEventListener('DOMContentLoaded', async function() {
     const page = window.location.pathname.split('/').pop() || 'index.html';
     await window.ironPlus.recordVisit(page);
-    
-    // التحقق من وضع الصيانة
-    const isMaintenance = await window.ironPlus.checkMaintenanceMode();
-    if (isMaintenance && !window.location.href.includes('admin.html')) {
-        window.location.href = 'maintenance.html';
-    }
-    
-    console.log('Iron Plus Config v5.0: Systems fully operational. 🦾');
+    console.log('Iron Plus Config v5.5: Systems fully operational. 🦾');
 });
