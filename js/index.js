@@ -104,8 +104,8 @@ function mockUserStatus() {
 function updateUserUI(isLoggedIn, userPhone) {
     const userInfo = document.getElementById('userInfo');
     const loginButton = document.getElementById('loginButton');
+    const mobileLoginButton = document.getElementById('mobileLoginButton');
     const userPhoneDisplay = document.getElementById('userPhone');
-    const logoutBtn = document.getElementById('logoutBtn');
 
     if (isLoggedIn && userPhone) {
         // حالة تسجيل الدخول
@@ -114,28 +114,46 @@ function updateUserUI(isLoggedIn, userPhone) {
             userInfo.style.animation = 'slideInLeft 0.3s ease';
         }
         if (loginButton) loginButton.style.display = 'none';
+        if (mobileLoginButton) mobileLoginButton.style.display = 'none';
         if (userPhoneDisplay) userPhoneDisplay.textContent = userPhone;
         
-        // إضافة مستمع للخروج
-        if (logoutBtn) {
+        // تحديث زر الخروج في القائمة المتنقلة
+        const mobileMenu = document.getElementById('mobileMenu');
+        if (mobileMenu) {
+            const logoutBtn = document.createElement('button');
+            logoutBtn.className = 'btn-primary mt-4';
+            logoutBtn.innerHTML = '<i class="fas fa-power-off ml-2"></i> تسجيل الخروج';
             logoutBtn.addEventListener('click', async () => {
                 if (window.ironPlus && window.ironPlus.logout) {
                     await window.ironPlus.logout();
                 }
                 location.reload();
             });
+            
+            const existingLogoutBtn = mobileMenu.querySelector('.logout-btn');
+            if (!existingLogoutBtn) {
+                logoutBtn.classList.add('logout-btn');
+                mobileMenu.querySelector('.flex-col').appendChild(logoutBtn);
+            }
         }
     } else {
         // حالة الزائر
         if (userInfo) userInfo.style.display = 'none';
         if (loginButton) loginButton.style.display = 'block';
+        if (mobileLoginButton) mobileLoginButton.style.display = 'block';
+        
+        // إزالة زر الخروج من القائمة المتنقلة إذا كان موجوداً
+        const existingLogoutBtn = document.querySelector('.logout-btn');
+        if (existingLogoutBtn) {
+            existingLogoutBtn.remove();
+        }
     }
 }
 
 // --- [2] تحميل وعرض المنتجات ---
 async function loadProducts() {
     const container = document.getElementById('productsContainer');
-    const loading = document.querySelector('.loading-spinner');
+    const loading = container ? container.querySelector('.loading-spinner') : null;
     
     if (!container) {
         console.error('Products container not found');
@@ -164,7 +182,6 @@ async function loadProducts() {
         // عرض المنتجات
         if (products.length > 0) {
             renderProducts(products);
-            setupProductFilters(products);
         } else {
             showNoProductsMessage(container);
         }
@@ -185,67 +202,59 @@ function renderProducts(products) {
         const price = formatPrice(product.price);
         const stars = generateStars(product.rating || 5);
         
+        // تحديد الأيقونة المناسبة بناءً على الفئة
+        let iconClass = 'fas fa-mobile-alt';
+        let iconColor = '#FFD700';
+        
+        if (product.category === 'snap') {
+            iconClass = 'fab fa-snapchat-ghost';
+            iconColor = '#FFFC00';
+        } else if (product.category === 'tiktok') {
+            iconClass = 'fab fa-tiktok';
+            iconColor = '#000000';
+        } else if (product.category === 'youtube') {
+            iconClass = 'fab fa-youtube';
+            iconColor = '#FF0000';
+        } else if (product.name.includes('فك حظر')) {
+            iconClass = 'fas fa-unlock-alt';
+            iconColor = '#9B111E';
+        }
+        
         return `
-            <div class="col" data-category="${product.category}">
-                <div class="iron-card text-center p-6 product-card">
-                    <!-- شارة الخصم (إذا موجودة) -->
-                    ${product.discount ? `
-                        <div class="product-badge">
-                            <span class="badge-discount">${product.discount}% خصم</span>
-                        </div>
-                    ` : ''}
-                    
-                    <!-- صورة المنتج -->
-                    <div class="product-img-header mb-4">
-                        <img src="${product.image_url}" 
-                             alt="${product.name}" 
-                             class="product-image"
-                             onerror="this.src='https://cdn-icons-png.flaticon.com/512/891/891419.png'">
+            <div class="product-card">
+                <!-- Product Image -->
+                <div class="h-40 bg-gradient-to-br from-[#1A1A1A] to-[#2A2A2A] flex items-center justify-center">
+                    <div class="text-center">
+                        <i class="${iconClass} text-6xl" style="color: ${iconColor}"></i>
+                        <div class="mt-2 text-sm text-[#A0A0A0]">${product.category === 'snap' ? 'Snapchat Plus' : product.category === 'tiktok' ? 'TikTok Plus' : product.category === 'youtube' ? 'YouTube Premium' : product.name}</div>
                     </div>
+                </div>
+                
+                <!-- Product Info -->
+                <div class="p-6 flex-1 flex flex-col">
+                    <h3 class="font-bold text-xl mb-3">${product.name}</h3>
                     
-                    <!-- معلومات المنتج -->
-                    <div class="card-header mb-4">
-                        <h3 class="card-title text-lg font-bold text-white mb-2">
-                            ${product.name}
-                        </h3>
-                        <p class="text-gray-400 text-sm mb-3 line-clamp-2">
-                            ${product.description || 'باقة مميزة مع مزايا متقدمة'}
-                        </p>
-                    </div>
-                    
-                    <!-- التقييم -->
-                    <div class="product-rating mb-4">
+                    <!-- Rating -->
+                    <div class="rating-stars mb-4">
                         ${stars}
-                        <span class="text-gray-500 text-xs mr-2">(${product.rating || 5}.0)</span>
+                        <span class="text-sm text-[#A0A0A0] mr-2">(${product.rating || 5}.0)</span>
                     </div>
                     
-                    <!-- الميزات -->
-                    ${product.features ? `
-                        <div class="product-features mb-4 hidden md:block">
-                            ${product.features.slice(0, 2).map(feature => `
-                                <span class="feature-tag">${feature}</span>
-                            `).join('')}
+                    <!-- Description -->
+                    <p class="text-[#A0A0A0] text-sm mb-4 flex-grow">
+                        ${product.description || 'باقة مميزة مع مزايا متقدمة'}
+                    </p>
+                    
+                    <!-- Price -->
+                    <div class="mt-auto">
+                        <div class="flex items-baseline gap-2 mb-4">
+                            <span class="text-2xl font-bold text-[#FFD700]">${price}</span>
+                            <span class="text-[#A0A0A0]">ر.س</span>
                         </div>
-                    ` : ''}
-                    
-                    <!-- السعر -->
-                    <div class="price-display text-center mb-4">
-                        ${product.originalPrice ? `
-                            <div class="original-price text-gray-500 line-through text-sm">
-                                ${formatPrice(product.originalPrice)} ر.س
-                            </div>
-                        ` : ''}
-                        <span class="text-glow-red text-2xl font-bold">${price}</span>
-                        <small class="text-gray-400 text-sm mr-1">ر.س</small>
-                    </div>
-                    
-                    <!-- الزر -->
-                    <div class="card-footer">
-                        <button class="btn-iron btn-gold w-full buy-btn" 
-                                data-product-id="${product.id}"
-                                onclick="buyProduct('${product.id}')">
-                            <i class="fas fa-shopping-basket ml-2"></i>
-                            <span class="btn-text">أضف للسلة</span>
+                        
+                        <!-- Add to Cart Button -->
+                        <button class="btn-primary w-full py-3 buy-btn" data-product-id="${product.id}">
+                            <i class="fas fa-plus-circle ml-2"></i> أضف للسلة
                         </button>
                     </div>
                 </div>
@@ -253,8 +262,8 @@ function renderProducts(products) {
         `;
     }).join('');
     
-    // إضافة تأثيرات Hover للمنتجات
-    addProductHoverEffects();
+    // إضافة مستمعي الأحداث لأزرار الشراء
+    addBuyButtonListeners();
 }
 
 function generateStars(rating) {
@@ -266,20 +275,20 @@ function generateStars(rating) {
     
     // نجوم كاملة
     for (let i = 0; i < fullStars; i++) {
-        stars += '<i class="fas fa-star text-gold"></i>';
+        stars += '<i class="fas fa-star"></i>';
     }
     
     // نصف نجمة
     if (halfStar) {
-        stars += '<i class="fas fa-star-half-alt text-gold"></i>';
+        stars += '<i class="fas fa-star-half-alt"></i>';
     }
     
     // نجوم فارغة
     for (let i = 0; i < emptyStars; i++) {
-        stars += '<i class="far fa-star text-gold"></i>';
+        stars += '<i class="far fa-star"></i>';
     }
     
-    return `<div class="stars flex justify-center gap-1">${stars}</div>`;
+    return stars;
 }
 
 function formatPrice(price) {
@@ -287,80 +296,30 @@ function formatPrice(price) {
     return parseFloat(price).toFixed(2);
 }
 
-function setupProductFilters(products) {
-    const filterButtons = document.querySelectorAll('.filter-btn');
-    const productCards = document.querySelectorAll('.product-card');
-    
-    filterButtons.forEach(button => {
+function addBuyButtonListeners() {
+    document.querySelectorAll('.buy-btn').forEach(button => {
         button.addEventListener('click', function() {
-            const filter = this.getAttribute('data-filter');
-            
-            // تحديث حالة الأزرار
-            filterButtons.forEach(btn => btn.classList.remove('active'));
-            this.classList.add('active');
-            
-            // تصفية المنتجات
-            productCards.forEach(card => {
-                const productCard = card.closest('.col');
-                const category = productCard.getAttribute('data-category');
-                
-                if (filter === 'all' || category === filter) {
-                    productCard.style.display = 'block';
-                    setTimeout(() => {
-                        productCard.style.opacity = '1';
-                        productCard.style.transform = 'translateY(0)';
-                    }, 100);
-                } else {
-                    productCard.style.opacity = '0';
-                    productCard.style.transform = 'translateY(20px)';
-                    setTimeout(() => {
-                        productCard.style.display = 'none';
-                    }, 300);
-                }
-            });
+            const productId = this.getAttribute('data-product-id');
+            if (productId) {
+                buyProduct(productId);
+            }
         });
     });
 }
 
 function showNoProductsMessage(container) {
     container.innerHTML = `
-        <div class="col-span-full text-center py-12">
+        <div class="col-span-4 text-center py-12">
             <div class="no-products-icon mb-6">
                 <i class="fas fa-box-open text-4xl text-gray-600"></i>
             </div>
             <h3 class="text-xl font-bold text-gray-300 mb-2">لا توجد باقات متاحة حالياً</h3>
             <p class="text-gray-500 mb-6">نعمل على إضافة باقات جديدة قريباً</p>
-            <button onclick="location.reload()" class="btn-iron btn-outline">
+            <button onclick="location.reload()" class="btn-primary">
                 <i class="fas fa-sync-alt ml-2"></i> تحديث الصفحة
             </button>
         </div>
     `;
-}
-
-function addProductHoverEffects() {
-    const productCards = document.querySelectorAll('.product-card');
-    
-    productCards.forEach(card => {
-        card.addEventListener('mouseenter', function() {
-            this.style.transform = 'translateY(-10px)';
-            this.style.boxShadow = '0 20px 40px rgba(0,0,0,0.6), 0 0 30px rgba(155,17,30,0.4)';
-            
-            const image = this.querySelector('.product-image');
-            if (image) {
-                image.style.transform = 'scale(1.05)';
-            }
-        });
-        
-        card.addEventListener('mouseleave', function() {
-            this.style.transform = 'translateY(0)';
-            this.style.boxShadow = '';
-            
-            const image = this.querySelector('.product-image');
-            if (image) {
-                image.style.transform = 'scale(1)';
-            }
-        });
-    });
 }
 
 // --- [3] منطق الشراء ---
@@ -505,12 +464,6 @@ function updateCounters(stats) {
     if (orderCount) {
         animateCounter(orderCount, stats.totalOrders || 3101);
     }
-    
-    // تحديث التقييم
-    const ratingElement = document.querySelector('.stat-box:nth-child(3) h3');
-    if (ratingElement) {
-        ratingElement.textContent = stats.averageRating || '5.0';
-    }
 }
 
 function animateCounter(element, target) {
@@ -535,115 +488,56 @@ function animateCounter(element, target) {
 
 // --- [5] إعداد مستمعي الأحداث ---
 function setupEventListeners() {
-    // البحث عن المنتجات
-    const searchInput = document.getElementById('globalSearch');
-    if (searchInput) {
-        searchInput.addEventListener('input', debounce(searchProducts, 300));
+    // Mobile Menu
+    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    const closeMenuBtn = document.getElementById('closeMenuBtn');
+    const mobileMenu = document.getElementById('mobileMenu');
+    
+    if (mobileMenuBtn && mobileMenu) {
+        mobileMenuBtn.addEventListener('click', () => {
+            mobileMenu.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
     }
     
-    // زر تحميل المزيد
-    const loadMoreBtn = document.getElementById('loadMore');
-    if (loadMoreBtn) {
-        loadMoreBtn.addEventListener('click', loadMoreProducts);
+    if (closeMenuBtn && mobileMenu) {
+        closeMenuBtn.addEventListener('click', () => {
+            mobileMenu.classList.remove('active');
+            document.body.style.overflow = '';
+        });
     }
     
-    // قائمة التنقل للموبايل
-    const menuToggle = document.querySelector('.menu-toggle');
-    if (menuToggle) {
-        menuToggle.addEventListener('click', toggleMobileMenu);
-    }
+    // Accordion
+    document.querySelectorAll('.accordion-header').forEach(header => {
+        header.addEventListener('click', () => {
+            const content = header.nextElementSibling;
+            const icon = header.querySelector('i');
+            
+            // Close all other accordions
+            document.querySelectorAll('.accordion-content').forEach(item => {
+                if (item !== content) {
+                    item.classList.remove('active');
+                    item.previousElementSibling.querySelector('i').classList.remove('fa-chevron-up');
+                    item.previousElementSibling.querySelector('i').classList.add('fa-chevron-down');
+                }
+            });
+            
+            // Toggle current accordion
+            content.classList.toggle('active');
+            
+            // Toggle icon
+            if (content.classList.contains('active')) {
+                icon.classList.remove('fa-chevron-down');
+                icon.classList.add('fa-chevron-up');
+            } else {
+                icon.classList.remove('fa-chevron-up');
+                icon.classList.add('fa-chevron-down');
+            }
+        });
+    });
     
     // تحديث سلة المشتريات
     updateCartCount();
-}
-
-function searchProducts() {
-    const searchInput = document.getElementById('globalSearch');
-    const searchTerm = searchInput.value.toLowerCase().trim();
-    
-    const productCards = document.querySelectorAll('.product-card');
-    let visibleCount = 0;
-    
-    productCards.forEach(card => {
-        const title = card.querySelector('.card-title').textContent.toLowerCase();
-        const description = card.querySelector('.text-gray-400')?.textContent.toLowerCase() || '';
-        
-        if (title.includes(searchTerm) || description.includes(searchTerm)) {
-            card.closest('.col').style.display = 'block';
-            visibleCount++;
-        } else {
-            card.closest('.col').style.display = 'none';
-        }
-    });
-    
-    // إظهار رسالة إذا لم توجد نتائج
-    const noResults = document.getElementById('noResults');
-    if (visibleCount === 0 && searchTerm) {
-        if (!noResults) {
-            const container = document.getElementById('productsContainer');
-            const message = document.createElement('div');
-            message.id = 'noResults';
-            message.className = 'col-span-full text-center py-12';
-            message.innerHTML = `
-                <i class="fas fa-search text-4xl text-gray-600 mb-4"></i>
-                <h3 class="text-xl font-bold text-gray-300 mb-2">لا توجد نتائج</h3>
-                <p class="text-gray-500">لم نعثر على باقات تطابق "${searchTerm}"</p>
-            `;
-            container.appendChild(message);
-        }
-    } else if (noResults) {
-        noResults.remove();
-    }
-}
-
-function debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-        const later = () => {
-            clearTimeout(timeout);
-            func(...args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-    };
-}
-
-async function loadMoreProducts() {
-    const loadMoreBtn = document.getElementById('loadMore');
-    if (loadMoreBtn) {
-        loadMoreBtn.innerHTML = '<i class="fas fa-spinner fa-spin ml-2"></i> جاري التحميل...';
-        loadMoreBtn.disabled = true;
-        
-        try {
-            // محاكاة تأخير الشبكة
-            await new Promise(resolve => setTimeout(resolve, 1500));
-            
-            // هنا يمكنك إضافة منطق جلب المزيد من المنتجات من الخادم
-            showNotification('تم تحميل المزيد من المنتجات', 'success');
-        } catch (error) {
-            showNotification('حدث خطأ أثناء التحميل', 'error');
-        } finally {
-            loadMoreBtn.innerHTML = '<i class="fas fa-sync-alt ml-2"></i> تحميل المزيد';
-            loadMoreBtn.disabled = false;
-        }
-    }
-}
-
-function toggleMobileMenu() {
-    const navLinks = document.querySelector('.nav-links');
-    const menuIcon = document.querySelector('.menu-toggle i');
-    
-    navLinks.classList.toggle('active');
-    
-    if (navLinks.classList.contains('active')) {
-        menuIcon.classList.remove('fa-bars');
-        menuIcon.classList.add('fa-times');
-        document.body.style.overflow = 'hidden';
-    } else {
-        menuIcon.classList.remove('fa-times');
-        menuIcon.classList.add('fa-bars');
-        document.body.style.overflow = '';
-    }
 }
 
 function updateCartCount(additional = 0) {
@@ -671,47 +565,49 @@ function updateCartCount(additional = 0) {
 
 // --- [6] تأثيرات التمرير ---
 function setupScrollEffects() {
-    // تأثيرات fade-in عند التمرير
-    const fadeElements = document.querySelectorAll('.scroll-fade-in');
-    
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('visible');
-            }
-        });
-    }, {
-        threshold: 0.1,
-        rootMargin: '0px 0px -50px 0px'
-    });
-    
-    fadeElements.forEach(element => {
-        observer.observe(element);
-    });
-    
     // شريط التنقل عند التمرير
-    const nav = document.querySelector('.nav-iron-pro');
+    const nav = document.querySelector('.nav-container');
     let lastScroll = 0;
     
-    window.addEventListener('scroll', () => {
-        const currentScroll = window.pageYOffset;
-        
-        if (currentScroll > 100) {
-            nav.classList.add('scrolled');
+    if (nav) {
+        window.addEventListener('scroll', () => {
+            const currentScroll = window.pageYOffset;
             
-            if (currentScroll > lastScroll) {
-                // التمرير للأسفل
-                nav.style.transform = 'translateY(-100%)';
+            if (currentScroll > 100) {
+                nav.classList.add('scrolled');
+                
+                if (currentScroll > lastScroll) {
+                    // التمرير للأسفل
+                    nav.style.transform = 'translateY(-100%)';
+                } else {
+                    // التمرير للأعلى
+                    nav.style.transform = 'translateY(0)';
+                }
             } else {
-                // التمرير للأعلى
+                nav.classList.remove('scrolled');
                 nav.style.transform = 'translateY(0)';
             }
-        } else {
-            nav.classList.remove('scrolled');
-            nav.style.transform = 'translateY(0)';
-        }
-        
-        lastScroll = currentScroll;
+            
+            lastScroll = currentScroll;
+        });
+    }
+    
+    // Smooth scrolling for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            const targetId = this.getAttribute('href');
+            if (targetId === '#') return;
+            
+            const targetElement = document.querySelector(targetId);
+            if (targetElement) {
+                window.scrollTo({
+                    top: targetElement.offsetTop - 80,
+                    behavior: 'smooth'
+                });
+            }
+        });
     });
 }
 
@@ -726,15 +622,64 @@ async function recordVisit() {
     }
 }
 
-// --- [8] دوال مساعدة ---
-function showNotification(message, type = 'info', duration = 4000) {
-    // إزالة أي إشعارات سابقة
-    const existingNotifications = document.querySelectorAll('.custom-notification');
-    existingNotifications.forEach(notif => notif.remove());
+// --- [8] نظام الإشعارات الحية ---
+function setupLiveNotifications() {
+    const messages = [
+        { title: "مستخدم جديد اشترى الآن!", text: "خالد اشترى باقة سناب بلس" },
+        { title: "تحديث النظام", text: "تم تحديث جميع تطبيقات البلس" },
+        { title: "عرض خاص", text: "خصم ٣٠٪ على باقة تيك توك بلس" },
+        { title: "عملية ناجحة", text: "نورة حصلت على كود التفعيل" },
+        { title: "دعم فني", text: "فريق الدعم متاح الآن على الواتساب" }
+    ];
     
+    function showRandomNotification() {
+        const notification = document.getElementById('liveNotification');
+        const notifTitle = document.getElementById('notifTitle');
+        const notifText = document.getElementById('notifText');
+        
+        if (!notification || !notifTitle || !notifText) return;
+        
+        const randomMsg = messages[Math.floor(Math.random() * messages.length)];
+        notifTitle.textContent = randomMsg.title;
+        notifText.textContent = randomMsg.text;
+        
+        notification.classList.remove('hidden');
+        
+        // إخفاء تلقائي بعد 5 ثواني
+        setTimeout(() => {
+            notification.classList.add('hidden');
+        }, 5000);
+    }
+    
+    // عرض إشعار أولي بعد 3 ثواني
+    setTimeout(showRandomNotification, 3000);
+    
+    // عرض إشعارات عشوائية كل 15-30 ثانية
+    setInterval(() => {
+        if (Math.random() > 0.3) { // 70% فرصة
+            showRandomNotification();
+        }
+    }, 15000 + Math.random() * 15000);
+}
+
+// دالة إغلاق الإشعار
+window.closeNotification = function() {
+    const notification = document.getElementById('liveNotification');
+    if (notification) {
+        notification.classList.add('hidden');
+    }
+};
+
+// --- [9] دوال مساعدة ---
+function showNotification(message, type = 'info', duration = 4000) {
     // إنشاء الإشعار
     const notification = document.createElement('div');
-    notification.className = `custom-notification notification-${type}`;
+    notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg max-w-sm ${
+        type === 'success' ? 'bg-green-900/90 border-green-700' :
+        type === 'error' ? 'bg-red-900/90 border-red-700' :
+        type === 'warning' ? 'bg-yellow-900/90 border-yellow-700' :
+        'bg-blue-900/90 border-blue-700'
+    } border`;
     
     let icon = '';
     switch (type) {
@@ -752,436 +697,50 @@ function showNotification(message, type = 'info', duration = 4000) {
     }
     
     notification.innerHTML = `
-        <div class="notification-content">
-            <i class="fas ${icon} mr-3"></i>
-            <span>${message}</span>
+        <div class="flex items-center">
+            <i class="fas ${icon} mr-3 text-xl"></i>
+            <span class="flex-1">${message}</span>
+            <button class="ml-4 text-gray-300 hover:text-white" onclick="this.parentElement.parentElement.remove()">
+                <i class="fas fa-times"></i>
+            </button>
         </div>
-        <button class="notification-close">
-            <i class="fas fa-times"></i>
-        </button>
-    `;
-    
-    // إضافة الأنماط
-    notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        left: 20px;
-        right: 20px;
-        max-width: 400px;
-        background: rgba(26, 26, 26, 0.95);
-        backdrop-filter: blur(10px);
-        border: 2px solid ${type === 'success' ? '#2ecc71' : type === 'error' ? '#e74c3c' : type === 'warning' ? '#f39c12' : '#3498db'};
-        border-radius: 12px;
-        padding: 15px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        z-index: 9999;
-        animation: slideInDown 0.3s ease;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        border-right: 4px solid var(--iron-gold);
     `;
     
     // إضافة الإشعار للصفحة
     document.body.appendChild(notification);
     
-    // زر الإغلاق
-    const closeBtn = notification.querySelector('.notification-close');
-    closeBtn.addEventListener('click', () => {
-        notification.style.animation = 'slideOutUp 0.3s ease';
-        setTimeout(() => notification.remove(), 300);
-    });
-    
     // إخفاء تلقائي
     if (duration > 0) {
         setTimeout(() => {
             if (notification.parentNode) {
-                notification.style.animation = 'slideOutUp 0.3s ease';
-                setTimeout(() => notification.remove(), 300);
+                notification.remove();
             }
         }, duration);
     }
-    
-    // إضافة أنماط الحركة
-    const style = document.createElement('style');
-    style.textContent = `
-        @keyframes slideInDown {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        @keyframes slideOutUp {
-            from {
-                opacity: 1;
-                transform: translateY(0);
-            }
-            to {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-        }
-        
-        @keyframes bounce {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.3); }
-        }
-        
-        .notification-close {
-            background: none;
-            border: none;
-            color: #ccc;
-            cursor: pointer;
-            padding: 5px;
-            border-radius: 50%;
-            transition: all 0.3s ease;
-        }
-        
-        .notification-close:hover {
-            background: rgba(255,255,255,0.1);
-            color: var(--iron-red);
-        }
-    `;
-    document.head.appendChild(style);
 }
 
-// --- [9] دالة الأكورديون ---
-window.toggleFaq = function(element) {
-    const faqItem = element.closest('.faq-item');
-    const answer = faqItem.querySelector('.faq-answer');
-    const icon = element.querySelector('i');
+// --- [10] تهيئة النظام الكاملة ---
+document.addEventListener('DOMContentLoaded', function() {
+    // إضافة مستمعي الأحداث الأساسيين
+    setupEventListeners();
     
-    if (answer.classList.contains('hidden')) {
-        // إغلاق جميع الأسئلة المفتوحة
-        document.querySelectorAll('.faq-answer').forEach(ans => {
-            ans.classList.add('hidden');
-        });
-        document.querySelectorAll('.faq-question i').forEach(ic => {
-            ic.classList.remove('fa-minus');
-            ic.classList.add('fa-plus');
-        });
-        
-        // فتح السؤال الحالي
-        answer.classList.remove('hidden');
-        icon.classList.remove('fa-plus');
-        icon.classList.add('fa-minus');
-        
-        // تأثير سلس
-        setTimeout(() => {
-            answer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }, 100);
-    } else {
-        // إغلاق السؤال الحالي
-        answer.classList.add('hidden');
-        icon.classList.remove('fa-minus');
-        icon.classList.add('fa-plus');
-    }
-};
+    // إعداد الإشعارات الحية
+    setupLiveNotifications();
+    
+    // تحميل البيانات
+    setTimeout(async () => {
+        await checkUserStatus();
+        await loadProducts();
+        await loadStatistics();
+        await recordVisit();
+    }, 100);
+});
 
 // تصدير الوظائف للاستخدام العام
 window.ironHomepage = {
     buyProduct,
     showNotification,
-    toggleFaq,
-    updateCartCount,
-    loadMoreProducts,
-    searchProducts
+    updateCartCount
 };
 
 console.log('📦 IRON+ Homepage v4.6 loaded successfully!');
-// --- [10] إدارة التقييمات المتحركة ---
-function loadReviews() {
-    const reviewsData = [
-        {
-            id: 1,
-            name: "سعد العتيبي",
-            date: "منذ ساعتين",
-            rating: 5,
-            product: "سناب بلس",
-            comment: "أفضل متجر تعاملت معه، التفعيل فوري والسناب شغال معي زي الحلاوة. الدعم الفني سريع ومحترف. أنصح فيه الجميع!",
-            verified: true,
-            avatarColor: "#9b111e"
-        },
-        {
-            id: 2,
-            name: "نورة محمد",
-            date: "منذ يوم",
-            rating: 5,
-            product: "تيك توك بلس",
-            comment: "اشتريت باقة تيك توك بلس وكل شيء سلس. الكود وصل خلال ثواني والدعم رد علي حتى وقت متأخر من الليل. شكراً لكم!",
-            verified: true,
-            avatarColor: "#ff4757"
-        },
-        {
-            id: 3,
-            name: "خالد السبيعي",
-            date: "منذ ٣ أيام",
-            rating: 5,
-            product: "فك حظر سناب",
-            comment: "خدمة فك الحظر ساعدتني كثيراً. كنت محظور من سناب ومكثت ٣ شهور، وبعد ما جربت خدمتهم رجع لي الحساب خلال ١٠ دقائق!",
-            verified: true,
-            avatarColor: "#ffd700"
-        },
-        {
-            id: 4,
-            name: "فهد القحطاني",
-            date: "منذ أسبوع",
-            rating: 4,
-            product: "يوتيوب بريميوم",
-            comment: "خدمة ممتازة، السعر مناسب جداً مقارنة بالجودة. الدعم الفني متجاوب ويحل المشاكل بسرعة. أنصح بالتجربة.",
-            verified: true,
-            avatarColor: "#00a8ff"
-        },
-        {
-            id: 5,
-            name: "لينا الغامدي",
-            date: "منذ ١٠ أيام",
-            rating: 5,
-            product: "سناب بلس",
-            comment: "اشتريت أكثر من باقة وماقصرت معاي أبداً. التفعيل فوري والجودة ممتازة. راح أتعامل معكم دايماً.",
-            verified: true,
-            avatarColor: "#9b111e"
-        },
-        {
-            id: 6,
-            name: "تركي الحربي",
-            date: "منذ أسبوعين",
-            rating: 5,
-            product: "نيتفليكس بريميوم",
-            comment: "النيتفليكس شغال زي الفل، الدقة 4K والشاشات الأربعة كلها شغالة. سعر ممتاز جداً مقابل الخدمة.",
-            verified: true,
-            avatarColor: "#e50914"
-        }
-    ];
-
-    const reviewsTrack = document.getElementById('reviewsTrack');
-    const dotsContainer = document.querySelector('.review-dots');
-    
-    if (!reviewsTrack) return;
-    
-    // مسح المحتوى القديم
-    reviewsTrack.innerHTML = '';
-    if (dotsContainer) dotsContainer.innerHTML = '';
-    
-    // إضافة التقييمات الجديدة
-    reviewsData.forEach((review, index) => {
-        const reviewCard = document.createElement('div');
-        reviewCard.className = `review-card hud-effect p-6 min-w-[350px] flex-shrink-0 ${index === 0 ? 'active' : ''}`;
-        reviewCard.setAttribute('data-index', index);
-        reviewCard.style.animationDelay = `${index * 0.1}s`;
-        
-        // توليد النجوم
-        const stars = Array(5).fill(0).map((_, i) => 
-            i < review.rating ? 
-            '<i class="fas fa-star text-gold"></i>' : 
-            '<i class="far fa-star text-gold"></i>'
-        ).join('');
-        
-        reviewCard.innerHTML = `
-            <div class="review-header flex justify-between items-start mb-4">
-                <div class="reviewer-info flex items-center gap-3">
-                    <div class="reviewer-avatar" style="background: ${review.avatarColor}20; border-color: ${review.avatarColor}50">
-                        <i class="fas fa-user-circle text-xl" style="color: ${review.avatarColor}"></i>
-                    </div>
-                    <div>
-                        <strong class="block text-white">${review.name}</strong>
-                        <span class="${review.verified ? 'text-green-400' : 'text-gray-500'} text-xs flex items-center gap-1">
-                            <i class="fas fa-${review.verified ? 'check-circle' : 'user'}"></i> 
-                            ${review.verified ? 'مشترك مؤكد' : 'مستخدم'}
-                        </span>
-                    </div>
-                </div>
-                <div class="review-date text-xs text-gray-500">
-                    <i class="fas fa-clock mr-1"></i>${review.date}
-                </div>
-            </div>
-            <p class="text-sm text-gray-300 mb-4 leading-relaxed">
-                "${review.comment}"
-            </p>
-            <div class="review-footer flex justify-between items-center mt-4 pt-4 border-t border-gray-800">
-                <div class="stars text-sm">
-                    ${stars}
-                    <span class="text-gray-500 text-xs mr-2">${review.rating}.0</span>
-                </div>
-                <span class="text-xs text-gray-400 flex items-center gap-1">
-                    <i class="fas fa-tag"></i>
-                    ${review.product}
-                </span>
-            </div>
-        `;
-        
-        reviewsTrack.appendChild(reviewCard);
-        
-        // إضافة نقطة التنقل
-        if (dotsContainer) {
-            const dot = document.createElement('button');
-            dot.className = `review-dot ${index === 0 ? 'active' : ''}`;
-            dot.setAttribute('data-index', index);
-            dot.setAttribute('aria-label', `التقييم ${index + 1}`);
-            dotsContainer.appendChild(dot);
-        }
-    });
-    
-    // إعداد التنقل
-    setupReviewNavigation();
-}
-
-function setupReviewNavigation() {
-    const track = document.getElementById('reviewsTrack');
-    const cards = track.querySelectorAll('.review-card');
-    const dots = document.querySelectorAll('.review-dot');
-    const prevBtn = document.querySelector('.review-prev');
-    const nextBtn = document.querySelector('.review-next');
-    
-    if (!cards.length || !track) return;
-    
-    let currentIndex = 0;
-    const cardWidth = cards[0].offsetWidth + 24; // عرض الكارت + الجاب
-    const containerWidth = track.parentElement.offsetWidth;
-    const visibleCards = Math.floor(containerWidth / cardWidth);
-    const totalCards = cards.length;
-    
-    // دالة تحديث الموضع
-    function updatePosition() {
-        const maxIndex = Math.max(0, totalCards - visibleCards);
-        currentIndex = Math.min(currentIndex, maxIndex);
-        
-        track.style.transform = `translateX(${-currentIndex * cardWidth}px)`;
-        
-        // تحديث النقاط النشطة
-        dots.forEach((dot, index) => {
-            dot.classList.toggle('active', index === currentIndex);
-        });
-        
-        // تحديث حالة الأزرار
-        if (prevBtn) {
-            prevBtn.disabled = currentIndex === 0;
-            prevBtn.style.opacity = currentIndex === 0 ? '0.5' : '1';
-        }
-        
-        if (nextBtn) {
-            nextBtn.disabled = currentIndex >= maxIndex;
-            nextBtn.style.opacity = currentIndex >= maxIndex ? '0.5' : '1';
-        }
-    }
-    
-    // زر التالي
-    if (nextBtn) {
-        nextBtn.addEventListener('click', () => {
-            const maxIndex = Math.max(0, totalCards - visibleCards);
-            if (currentIndex < maxIndex) {
-                currentIndex++;
-                updatePosition();
-            }
-        });
-    }
-    
-    // زر السابق
-    if (prevBtn) {
-        prevBtn.addEventListener('click', () => {
-            if (currentIndex > 0) {
-                currentIndex--;
-                updatePosition();
-            }
-        });
-    }
-    
-    // النقاط
-    dots.forEach((dot, index) => {
-        dot.addEventListener('click', () => {
-            currentIndex = index;
-            updatePosition();
-        });
-    });
-    
-    // حركة تلقائية
-    let autoScrollInterval = setInterval(() => {
-        const maxIndex = Math.max(0, totalCards - visibleCards);
-        
-        if (currentIndex < maxIndex) {
-            currentIndex++;
-        } else {
-            currentIndex = 0;
-        }
-        updatePosition();
-    }, 4000);
-    
-    // إيقاف الحركة التلقائية عند التفاعل
-    const stopAutoScroll = () => {
-        clearInterval(autoScrollInterval);
-    };
-    
-    const startAutoScroll = () => {
-        autoScrollInterval = setInterval(() => {
-            const maxIndex = Math.max(0, totalCards - visibleCards);
-            
-            if (currentIndex < maxIndex) {
-                currentIndex++;
-            } else {
-                currentIndex = 0;
-            }
-            updatePosition();
-        }, 4000);
-    };
-    
-    track.addEventListener('mouseenter', stopAutoScroll);
-    track.addEventListener('touchstart', stopAutoScroll);
-    
-    track.addEventListener('mouseleave', startAutoScroll);
-    track.addEventListener('touchend', startAutoScroll);
-    
-    // سحب بالإصبع للهواتف
-    let touchStartX = 0;
-    let touchEndX = 0;
-    
-    track.addEventListener('touchstart', (e) => {
-        touchStartX = e.changedTouches[0].screenX;
-        stopAutoScroll();
-    });
-    
-    track.addEventListener('touchend', (e) => {
-        touchEndX = e.changedTouches[0].screenX;
-        handleSwipe();
-        startAutoScroll();
-    });
-    
-    function handleSwipe() {
-        const swipeThreshold = 50;
-        const swipeDistance = touchStartX - touchEndX;
-        
-        if (Math.abs(swipeDistance) > swipeThreshold) {
-            if (swipeDistance > 0) {
-                // سحب لليسار - التالي
-                const maxIndex = Math.max(0, totalCards - visibleCards);
-                if (currentIndex < maxIndex) {
-                    currentIndex++;
-                }
-            } else {
-                // سحب لليمين - السابق
-                if (currentIndex > 0) {
-                    currentIndex--;
-                }
-            }
-            updatePosition();
-        }
-    }
-    
-    // تهيئة الحركة
-    track.style.transition = 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
-    updatePosition();
-    
-    // تحديث عند تغيير حجم النافذة
-    window.addEventListener('resize', () => {
-        updatePosition();
-    });
-}
-
-// إضافة استدعاء loadReviews في DOMContentLoaded
-// داخل document.addEventListener('DOMContentLoaded', function() {
-// إضافة هذا السطر بعد loadProducts();
-loadReviews();
