@@ -3,37 +3,161 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>إدارة Iron Plus | Command Center v5.0</title>
+    <title>إدارة Iron Plus | Command Center v5.5</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/admin.css">
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .tab-btn { 
-            padding: 10px 20px; 
-            border-radius: 5px; 
-            background: var(--metal-gray); 
-            color: #ccc; 
-            border: none; 
-            cursor: pointer; 
+        /* أنماط إضافية للوحة التحكم */
+        .admin-nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 1px solid var(--metal-gray);
+            padding-bottom: 15px;
+        }
+        .admin-nav button {
+            background: var(--metal-gray);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            color: var(--light-text);
             transition: all 0.3s;
-            margin: 0 5px;
         }
-        .tab-btn.active { 
-            background: var(--iron-red); 
-            color: white; 
-            box-shadow: 0 0 10px rgba(155, 17, 30, 0.5);
-        }
-        .admin-section { display: none; }
-        .admin-section.active { display: block; }
-        .text-editor { 
-            min-height: 200px; 
-            background: #1a1a1a; 
-            border: 1px solid #333; 
-            border-radius: 5px; 
-            padding: 15px;
+        .admin-nav button:hover {
+            background: var(--iron-red);
             color: white;
+        }
+        .admin-nav button.active {
+            background: var(--iron-red);
+            color: white;
+        }
+        .admin-section {
+            display: none;
+        }
+        .admin-section.active {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .setting-group {
+            background: var(--dark-bg);
+            border: 1px solid var(--metal-gray);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .setting-group h4 {
+            color: var(--gold);
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--metal-gray);
+        }
+        .setting-row {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 15px;
+            margin-bottom: 15px;
+            align-items: center;
+        }
+        @media (max-width: 768px) {
+            .setting-row {
+                grid-template-columns: 1fr;
+            }
+        }
+        .setting-label {
+            color: var(--light-text);
+            font-weight: bold;
+        }
+        .setting-value input, .setting-value textarea, .setting-value select {
+            width: 100%;
+            padding: 10px;
+            background: var(--input-bg);
+            border: 1px solid var(--metal-gray);
+            border-radius: 5px;
+            color: white;
+        }
+        .setting-value textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 30px;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--metal-gray);
+            transition: .4s;
+            border-radius: 34px;
+        }
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .toggle-slider {
+            background-color: var(--iron-red);
+        }
+        input:checked + .toggle-slider:before {
+            transform: translateX(30px);
+        }
+        .editor-toolbar {
+            background: var(--metal-gray);
+            padding: 10px;
+            border-radius: 5px 5px 0 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        .editor-toolbar button {
+            background: var(--dark-bg);
+            border: none;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .editor-toolbar button:hover {
+            background: var(--iron-red);
+        }
+        .editor-content {
+            min-height: 200px;
+            padding: 15px;
+            background: var(--input-bg);
+            border: 1px solid var(--metal-gray);
+            border-radius: 0 0 5px 5px;
+            color: white;
+        }
+        .editor-content:focus {
+            outline: none;
+            border-color: var(--gold);
         }
     </style>
 </head>
@@ -41,7 +165,7 @@
     
     <div id="adminLoginScreen" class="auth-overlay">
         <div class="hud-card login-box text-center">
-            <h2 class="tech-font text-glow-red">ADMIN LOGIN v5.0</h2>
+            <h2 class="tech-font text-glow-red">ADMIN LOGIN</h2>
             <form id="adminLoginForm">
                 <input type="text" id="adminUsername" class="input-iron" placeholder="اسم المستخدم" required>
                 <input type="password" id="adminPassword" class="input-iron" placeholder="كلمة المرور" required>
@@ -52,43 +176,25 @@
     </div>
 
     <div id="adminDashboard" class="container" style="display:none; padding: 40px 20px;">
-        <div class="dashboard-header flex justify-between items-center mb-8">
-            <div>
-                <h1 class="tech-font text-glow-gold">IRON+ COMMAND CENTER v5.0</h1>
-                <p class="text-gray-400 text-sm">نظام الإدارة الشامل للمحتوى والإعدادات</p>
-            </div>
+        <div class="dashboard-header flex justify-between items-center">
+            <h1 class="tech-font text-glow-gold">IRON+ COMMAND CENTER v5.5</h1>
             <div class="flex items-center gap-4">
                 <span id="adminName" class="text-gold"></span>
                 <button onclick="logoutAdmin()" class="btn-iron" style="background:var(--metal-gray)">خروج</button>
             </div>
         </div>
 
-        <!-- التنقل بين الأقسام -->
-        <div class="flex flex-wrap gap-2 mb-6 border-b border-gray-800 pb-4">
-            <button class="tab-btn active" data-section="dashboard">
-                <i class="fas fa-tachometer-alt ml-2"></i>لوحة التحكم
-            </button>
-            <button class="tab-btn" data-section="products">
-                <i class="fas fa-box ml-2"></i>المنتجات
-            </button>
-            <button class="tab-btn" data-section="orders">
-                <i class="fas fa-shopping-cart ml-2"></i>الطلبات
-            </button>
-            <button class="tab-btn" data-section="settings">
-                <i class="fas fa-cog ml-2"></i>إعدادات الموقع
-            </button>
-            <button class="tab-btn" data-section="banners">
-                <i class="fas fa-images ml-2"></i>الإعلانات
-            </button>
-            <button class="tab-btn" data-section="pages">
-                <i class="fas fa-file-alt ml-2"></i>الصفحات
-            </button>
-            <button class="tab-btn" data-section="seo">
-                <i class="fas fa-search ml-2"></i>تحسين محركات البحث
-            </button>
-            <button class="tab-btn" data-section="security">
-                <i class="fas fa-shield-alt ml-2"></i>الأمان
-            </button>
+        <!-- شريط التنقل بين الأقسام -->
+        <div class="admin-nav">
+            <button class="active" data-section="dashboard">لوحة التحكم</button>
+            <button data-section="settings">إعدادات الموقع</button>
+            <button data-section="products">إدارة المنتجات</button>
+            <button data-section="codes">شحن الأكواد</button>
+            <button data-section="orders">الطلبات</button>
+            <button data-section="coupons">الكوبونات</button>
+            <button data-section="banners">البانرات</button>
+            <button data-section="pages">الصفحات</button>
+            <button data-section="security">الأمان</button>
         </div>
 
         <!-- قسم لوحة التحكم -->
@@ -107,123 +213,13 @@
                     <h2 id="totalCustomers">0</h2>
                 </div>
                 <div class="hud-card text-center">
-                    <small>الزيارات اليوم</small>
-                    <h2 id="dailyVisits" class="text-glow-blue">0</h2>
+                    <small>الطلبات النشطة</small>
+                    <h2 id="activeOrders">0</h2>
                 </div>
             </div>
 
-            <div class="grid-layout mt-6">
-                <div class="hud-card">
-                    <h3 class="text-gold"><i class="fas fa-chart-line"></i> الإحصائيات السريعة</h3>
-                    <div class="mt-4">
-                        <div class="flex justify-between mb-2">
-                            <span>الطلبات المعلقة:</span>
-                            <span id="pendingOrders" class="text-yellow-400">0</span>
-                        </div>
-                        <div class="flex justify-between mb-2">
-                            <span>الطلبات المكتملة:</span>
-                            <span id="completedOrders" class="text-green-400">0</span>
-                        </div>
-                        <div class="flex justify-between mb-2">
-                            <span>المنتجات النشطة:</span>
-                            <span id="activeProducts" class="text-blue-400">0</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span>نسبة التحويل:</span>
-                            <span id="conversionRate" class="text-purple-400">0%</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="hud-card">
-                    <h3 class="text-gold"><i class="fas fa-bell"></i> الإشعارات السريعة</h3>
-                    <div id="quickAlerts" class="mt-4 space-y-2">
-                        <div class="alert-item bg-yellow-900/30 p-3 rounded border border-yellow-700/30">
-                            <i class="fas fa-exclamation-triangle text-yellow-400 ml-2"></i>
-                            <span>لا توجد أكواد متاحة لـ "سناب بلس"</span>
-                        </div>
-                        <div class="alert-item bg-blue-900/30 p-3 rounded border border-blue-700/30">
-                            <i class="fas fa-info-circle text-blue-400 ml-2"></i>
-                            <span>5 طلبات جديدة تنتظر المراجعة</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- قسم المنتجات -->
-        <div id="productsSection" class="admin-section">
-            <div class="hud-card">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-gold"><i class="fas fa-dollar-sign"></i> التحكم بالباقات</h3>
-                    <button onclick="adminPanel.showProductModal()" class="btn-iron btn-small">
-                        <i class="fas fa-plus ml-2"></i> إضافة منتج
-                    </button>
-                </div>
-                <div style="overflow-x:auto">
-                    <table class="admin-table">
-                        <thead>
-                            <tr>
-                                <th>الصورة</th>
-                                <th>الاسم</th>
-                                <th>السعر</th>
-                                <th>المدة</th>
-                                <th>الحالة</th>
-                                <th>العمليات</th>
-                            </tr>
-                        </thead>
-                        <tbody id="productsTableBody"></tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div class="hud-card mt-6">
-                <h3 class="text-gold"><i class="fas fa-key"></i> شحن المخزن (Bulk)</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label>اختر المنتج:</label>
-                        <select id="productForCodes" class="input-iron w-full"></select>
-                    </div>
-                    <div>
-                        <label>عدد الأكواد المراد إنشاؤها:</label>
-                        <div class="flex gap-2">
-                            <input type="number" id="codesCount" class="input-iron" value="10" min="1" max="1000">
-                            <button onclick="adminPanel.generateRandomCodes()" class="btn-iron">
-                                <i class="fas fa-bolt ml-2"></i> توليد
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                <label class="mt-4">الأكواد (كود في كل سطر):</label>
-                <textarea id="bulkCodesText" class="input-iron" rows="6" placeholder="مثال:
-IRON-XXXX-YYYY
-IRON-ZZZZ-AAAA"></textarea>
-                <div class="flex gap-4 mt-4">
-                    <button onclick="adminPanel.uploadCodes()" class="btn-iron flex-1">
-                        <i class="fas fa-upload ml-2"></i> تحديث المخزون
-                    </button>
-                    <button onclick="adminPanel.clearCodesText()" class="btn-iron" style="background:var(--metal-gray)">
-                        <i class="fas fa-trash ml-2"></i> مسح
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- قسم الطلبات -->
-        <div id="ordersSection" class="admin-section">
-            <div class="hud-card">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-gold"><i class="fas fa-list"></i> سجل المبيعات والعمليات</h3>
-                    <div class="flex gap-2">
-                        <select id="orderFilterStatus" class="input-iron" onchange="adminPanel.filterOrders()">
-                            <option value="">جميع الحالات</option>
-                            <option value="pending">معلق</option>
-                            <option value="completed">مكتمل</option>
-                            <option value="failed">فاشل</option>
-                        </select>
-                        <input type="text" id="orderFilterPhone" class="input-iron" placeholder="بحث برقم الجوال" onkeyup="adminPanel.filterOrders()">
-                    </div>
-                </div>
+            <div class="hud-card" style="margin-top: 30px;">
+                <h3 class="text-gold"><i class="fas fa-list"></i> سجل المبيعات والعمليات</h3>
                 <div style="overflow-x:auto">
                     <table class="admin-table">
                         <thead>
@@ -232,9 +228,8 @@ IRON-ZZZZ-AAAA"></textarea>
                                 <th>العميل</th>
                                 <th>المنتج</th>
                                 <th>المبلغ</th>
-                                <th>التاريخ</th>
                                 <th>الحالة</th>
-                                <th>العمليات</th>
+                                <th>واتساب</th>
                             </tr>
                         </thead>
                         <tbody id="ordersTableBody"></tbody>
@@ -245,80 +240,272 @@ IRON-ZZZZ-AAAA"></textarea>
 
         <!-- قسم إعدادات الموقع -->
         <div id="settingsSection" class="admin-section">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- الإعدادات العامة -->
-                <div class="hud-card">
-                    <h3 class="text-gold mb-4"><i class="fas fa-globe"></i> الإعدادات العامة</h3>
-                    <form id="generalSettingsForm">
-                        <div class="space-y-4">
-                            <div>
-                                <label>نص الشعار:</label>
-                                <input type="text" id="site_logo_text" class="input-iron" placeholder="IRON+">
-                            </div>
-                            <div>
-                                <label>الشعار الفرعي:</label>
-                                <input type="text" id="site_tagline" class="input-iron" placeholder="متجر تطبيقات البلس">
-                            </div>
-                            <div>
-                                <label>نص الإشعارات الحية:</label>
-                                <input type="text" id="live_notification_text" class="input-iron" placeholder="مستخدم جديد اشترى الآن!">
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <input type="checkbox" id="maintenance_mode" class="w-4 h-4">
-                                <label>وضع الصيانة</label>
-                            </div>
-                            <div>
-                                <label>نسبة الضريبة (%):</label>
-                                <input type="number" id="tax_rate" class="input-iron" step="0.1" min="0" max="100">
+            <div class="hud-card">
+                <h3 class="text-gold"><i class="fas fa-cogs"></i> إعدادات الموقع العامة</h3>
+                <form id="siteSettingsForm">
+                    <!-- المجموعة الأولى: الهوية والشعار -->
+                    <div class="setting-group">
+                        <h4><i class="fas fa-palette"></i> الهوية والشعار</h4>
+                        <div class="setting-row">
+                            <div class="setting-label">نص الشعار (Logo Text)</div>
+                            <div class="setting-value">
+                                <input type="text" id="site_logo_text" placeholder="IRON+">
                             </div>
                         </div>
-                        <button type="button" onclick="adminPanel.saveGeneralSettings()" class="btn-iron w-full mt-6">
-                            <i class="fas fa-save ml-2"></i> حفظ التغييرات
-                        </button>
-                    </form>
-                </div>
+                        <div class="setting-row">
+                            <div class="setting-label">رابط صورة الشعار</div>
+                            <div class="setting-value">
+                                <input type="text" id="site_logo_url" placeholder="https://example.com/logo.png">
+                            </div>
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-label">أيقونة الموقع (Favicon)</div>
+                            <div class="setting-value">
+                                <input type="text" id="site_favicon" placeholder="https://example.com/favicon.ico">
+                            </div>
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-label">اللون الرئيسي</div>
+                            <div class="setting-value">
+                                <input type="color" id="site_primary_color" value="#9B111E">
+                            </div>
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-label">اللون الثانوي</div>
+                            <div class="setting-value">
+                                <input type="color" id="site_secondary_color" value="#FFD700">
+                            </div>
+                        </div>
+                    </div>
 
-                <!-- روابط التواصل الاجتماعي -->
-                <div class="hud-card">
-                    <h3 class="text-gold mb-4"><i class="fas fa-hashtag"></i> روابط التواصل الاجتماعي</h3>
-                    <form id="socialSettingsForm">
-                        <div class="space-y-4">
-                            <div>
-                                <label>رقم الواتساب:</label>
-                                <input type="text" id="whatsapp_number" class="input-iron" placeholder="966500000000">
-                            </div>
-                            <div>
-                                <label>اسم Snapchat:</label>
-                                <input type="text" id="snapchat_username" class="input-iron" placeholder="ironplus">
-                            </div>
-                            <div>
-                                <label>اسم TikTok:</label>
-                                <input type="text" id="tiktok_username" class="input-iron" placeholder="ironplus">
-                            </div>
-                            <div>
-                                <label>اسم Twitter:</label>
-                                <input type="text" id="twitter_username" class="input-iron" placeholder="ironplus">
+                    <!-- المجموعة الثانية: التواصل الاجتماعي -->
+                    <div class="setting-group">
+                        <h4><i class="fas fa-hashtag"></i> وسائل التواصل الاجتماعي</h4>
+                        <div class="setting-row">
+                            <div class="setting-label">رابط الواتساب</div>
+                            <div class="setting-value">
+                                <input type="text" id="social_whatsapp" placeholder="https://wa.me/966500000000">
                             </div>
                         </div>
-                        <button type="button" onclick="adminPanel.saveSocialSettings()" class="btn-iron w-full mt-6">
-                            <i class="fas fa-save ml-2"></i> حفظ التغييرات
-                        </button>
-                    </form>
+                        <div class="setting-row">
+                            <div class="setting-label">يوزر سناب شات</div>
+                            <div class="setting-value">
+                                <input type="text" id="social_snapchat" placeholder="username">
+                            </div>
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-label">يوزر تيك توك</div>
+                            <div class="setting-value">
+                                <input type="text" id="social_tiktok" placeholder="username">
+                            </div>
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-label">يوزر تويتر (X)</div>
+                            <div class="setting-value">
+                                <input type="text" id="social_twitter" placeholder="username">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- المجموعة الثالثة: SEO -->
+                    <div class="setting-group">
+                        <h4><i class="fas fa-search"></i> إعدادات SEO</h4>
+                        <div class="setting-row">
+                            <div class="setting-label">Meta Title الافتراضي</div>
+                            <div class="setting-value">
+                                <input type="text" id="seo_default_title" placeholder="IRON+ | متجر تطبيقات البلس">
+                            </div>
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-label">Meta Description الافتراضي</div>
+                            <div class="setting-value">
+                                <textarea id="seo_default_description" placeholder="وصف الموقع"></textarea>
+                            </div>
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-label">الكلمات المفتاحية</div>
+                            <div class="setting-value">
+                                <textarea id="seo_keywords" placeholder="سناب بلس, تيك توك بلس, تطبيقات بلس"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- المجموعة الرابعة: التحليلات -->
+                    <div class="setting-group">
+                        <h4><i class="fas fa-chart-line"></i> أدوات التحليلات</h4>
+                        <div class="setting-row">
+                            <div class="setting-label">Google Analytics ID</div>
+                            <div class="setting-value">
+                                <input type="text" id="analytics_ga" placeholder="G-XXXXXXXXXX">
+                            </div>
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-label">Snapchat Pixel ID</div>
+                            <div class="setting-value">
+                                <input type="text" id="analytics_snapchat" placeholder="XXXXXXXXXX">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- المجموعة الخامسة: الإعدادات العامة -->
+                    <div class="setting-group">
+                        <h4><i class="fas fa-sliders-h"></i> إعدادات عامة</h4>
+                        <div class="setting-row">
+                            <div class="setting-label">شريط الإعلانات المتحرك</div>
+                            <div class="setting-value">
+                                <input type="text" id="announcement_text" placeholder="عرض خاص: خصم 20% على جميع الباقات">
+                            </div>
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-label">تفعيل وضع الصيانة</div>
+                            <div class="setting-value">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="maintenance_mode">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-label">رسالة الصيانة</div>
+                            <div class="setting-value">
+                                <textarea id="maintenance_message" placeholder="جاري تطوير الموقع، سنعود قريباً..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-4 mt-8">
+                        <button type="submit" class="btn-iron w-full">حفظ الإعدادات</button>
+                        <button type="button" onclick="loadSiteSettings()" class="btn-iron w-full" style="background:var(--metal-gray)">استعادة الإعدادات</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- قسم إدارة المنتجات -->
+        <div id="productsSection" class="admin-section">
+            <div class="hud-card">
+                <div class="flex justify-between items-center" style="margin-bottom: 20px;">
+                    <h3 class="text-gold"><i class="fas fa-dollar-sign"></i> التحكم بالباقات</h3>
+                    <button onclick="adminPanel.showProductModal()" class="btn-iron btn-small">+ جديد</button>
+                </div>
+                <div style="overflow-x:auto">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>الصورة</th>
+                                <th>الاسم</th>
+                                <th>السعر</th>
+                                <th>المدة</th>
+                                <th>العمليات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productsTableBody"></tbody>
+                    </table>
                 </div>
             </div>
         </div>
 
-        <!-- قسم الإعلانات -->
+        <!-- قسم شحن الأكواد -->
+        <div id="codesSection" class="admin-section">
+            <div class="grid-layout">
+                <div class="hud-card">
+                    <h3 class="text-gold"><i class="fas fa-key"></i> شحن المخزن (Bulk)</h3>
+                    <label>اختر المنتج:</label>
+                    <select id="productForCodes" class="input-iron"></select>
+                    <label>الأكواد (كود في كل سطر):</label>
+                    <textarea id="bulkCodesText" class="input-iron" rows="6" placeholder="مثال:
+IRON-XXXX-YYYY
+IRON-ZZZZ-AAAA"></textarea>
+                    <button onclick="adminPanel.uploadCodes()" class="btn-iron w-full">تحديث المخزون</button>
+                </div>
+
+                <div class="hud-card">
+                    <h3 class="text-gold"><i class="fas fa-list"></i> الأكواد المتاحة</h3>
+                    <div style="overflow-x:auto; max-height: 400px;">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>المنتج</th>
+                                    <th>الكود</th>
+                                    <th>الحالة</th>
+                                </tr>
+                            </thead>
+                            <tbody id="codesTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- قسم الطلبات -->
+        <div id="ordersSection" class="admin-section">
+            <div class="hud-card">
+                <h3 class="text-gold"><i class="fas fa-shopping-cart"></i> إدارة الطلبات</h3>
+                <div class="flex gap-4 mb-4">
+                    <input type="text" id="orderSearch" class="input-iron" placeholder="بحث برقم الهاتف أو ID..." style="flex-grow:1">
+                    <select id="orderStatusFilter" class="input-iron" style="width:200px">
+                        <option value="">جميع الحالات</option>
+                        <option value="pending">معلق</option>
+                        <option value="completed">مكتمل</option>
+                        <option value="failed">فاشل</option>
+                    </select>
+                    <button onclick="filterOrders()" class="btn-iron">بحث</button>
+                </div>
+                <div style="overflow-x:auto">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>العميل</th>
+                                <th>المنتج</th>
+                                <th>المبلغ</th>
+                                <th>الحالة</th>
+                                <th>التاريخ</th>
+                                <th>العمليات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="allOrdersTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- قسم الكوبونات -->
+        <div id="couponsSection" class="admin-section">
+            <div class="hud-card">
+                <div class="flex justify-between items-center" style="margin-bottom: 20px;">
+                    <h3 class="text-gold"><i class="fas fa-tag"></i> إدارة كوبونات الخصم</h3>
+                    <button onclick="adminPanel.showCouponModal()" class="btn-iron btn-small">+ كوبون جديد</button>
+                </div>
+                <div style="overflow-x:auto">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>الكود</th>
+                                <th>نوع الخصم</th>
+                                <th>القيمة</th>
+                                <th>المنتج</th>
+                                <th>من</th>
+                                <th>إلى</th>
+                                <th>الحالة</th>
+                                <th>العمليات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="couponsTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- قسم البانرات -->
         <div id="bannersSection" class="admin-section">
             <div class="hud-card">
-                <div class="flex justify-between items-center mb-6">
+                <div class="flex justify-between items-center" style="margin-bottom: 20px;">
                     <h3 class="text-gold"><i class="fas fa-images"></i> إدارة البانرات الإعلانية</h3>
-                    <button onclick="adminPanel.showBannerModal()" class="btn-iron btn-small">
-                        <i class="fas fa-plus ml-2"></i> إضافة بانر
-                    </button>
+                    <button onclick="adminPanel.showBannerModal()" class="btn-iron btn-small">+ بانر جديد</button>
                 </div>
-                <div id="bannersList" class="space-y-4">
-                    <!-- البانرات سيتم تحميلها هنا -->
+                <div class="grid-layout" style="grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));" id="bannersContainer">
+                    <!-- البانرات ستظهر هنا -->
                 </div>
             </div>
         </div>
@@ -326,137 +513,68 @@ IRON-ZZZZ-AAAA"></textarea>
         <!-- قسم الصفحات -->
         <div id="pagesSection" class="admin-section">
             <div class="hud-card">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-gold"><i class="fas fa-file-alt"></i> إدارة المحتوى والصفحات</h3>
-                    <div class="flex gap-2">
-                        <select id="pageSelector" class="input-iron" onchange="adminPanel.loadPageContent()">
-                            <option value="">اختر صفحة للتعديل</option>
-                            <option value="privacy-policy">سياسة الخصوصية</option>
-                            <option value="terms-conditions">الشروط والأحكام</option>
-                            <option value="refund-policy">سياسة الاسترجاع</option>
-                            <option value="about-us">من نحن</option>
-                        </select>
-                    </div>
+                <div class="flex justify-between items-center" style="margin-bottom: 20px;">
+                    <h3 class="text-gold"><i class="fas fa-file-alt"></i> إدارة الصفحات</h3>
+                    <button onclick="adminPanel.showPageModal()" class="btn-iron btn-small">+ صفحة جديدة</button>
                 </div>
-                <div id="pageEditorSection" style="display: none;">
-                    <div class="mb-4">
-                        <label>عنوان الصفحة:</label>
-                        <input type="text" id="pageTitle" class="input-iron">
-                    </div>
-                    <div class="mb-4">
-                        <label>محتوى الصفحة:</label>
-                        <div class="text-editor" id="pageContent" contenteditable="true"></div>
-                    </div>
-                    <div class="grid grid-cols-2 gap-4 mb-4">
-                        <div>
-                            <label>Meta Title:</label>
-                            <input type="text" id="pageMetaTitle" class="input-iron">
-                        </div>
-                        <div>
-                            <label>Meta Description:</label>
-                            <textarea id="pageMetaDescription" class="input-iron" rows="2"></textarea>
-                        </div>
-                    </div>
-                    <div class="flex gap-4">
-                        <button onclick="adminPanel.savePageContent()" class="btn-iron flex-1">
-                            <i class="fas fa-save ml-2"></i> حفظ الصفحة
-                        </button>
-                        <button onclick="adminPanel.cancelPageEdit()" class="btn-iron" style="background:var(--metal-gray)">
-                            إلغاء
-                        </button>
-                    </div>
-                </div>
-                <div id="pagePlaceholder" class="text-center py-12 text-gray-500">
-                    <i class="fas fa-file-alt text-4xl mb-4"></i>
-                    <p>اختر صفحة من القائمة لبدء التعديل</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- قسم تحسين محركات البحث -->
-        <div id="seoSection" class="admin-section">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="hud-card">
-                    <h3 class="text-gold mb-4"><i class="fas fa-search"></i> إعدادات SEO العامة</h3>
-                    <form id="seoSettingsForm">
-                        <div class="space-y-4">
-                            <div>
-                                <label>عنوان الموقع (Title):</label>
-                                <input type="text" id="meta_title" class="input-iron">
-                            </div>
-                            <div>
-                                <label>وصف الموقع (Description):</label>
-                                <textarea id="meta_description" class="input-iron" rows="3"></textarea>
-                            </div>
-                            <div>
-                                <label>الكلمات المفتاحية (Keywords):</label>
-                                <textarea id="meta_keywords" class="input-iron" rows="3" placeholder="مفصولة بفواصل"></textarea>
-                            </div>
-                        </div>
-                        <button type="button" onclick="adminPanel.saveSeoSettings()" class="btn-iron w-full mt-6">
-                            <i class="fas fa-save ml-2"></i> حفظ إعدادات SEO
-                        </button>
-                    </form>
-                </div>
-
-                <div class="hud-card">
-                    <h3 class="text-gold mb-4"><i class="fas fa-chart-bar"></i> أدوات التحليل</h3>
-                    <form id="analyticsSettingsForm">
-                        <div class="space-y-4">
-                            <div>
-                                <label>Google Analytics ID:</label>
-                                <input type="text" id="google_analytics_id" class="input-iron" placeholder="UA-XXXXXXXXX-X">
-                            </div>
-                            <div>
-                                <label>Snapchat Pixel ID:</label>
-                                <input type="text" id="snapchat_pixel_id" class="input-iron">
-                            </div>
-                        </div>
-                        <button type="button" onclick="adminPanel.saveAnalyticsSettings()" class="btn-iron w-full mt-6">
-                            <i class="fas fa-save ml-2"></i> حفظ إعدادات التحليل
-                        </button>
-                    </form>
+                <div style="overflow-x:auto">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>العنوان</th>
+                                <th>الرابط</th>
+                                <th>تاريخ الإنشاء</th>
+                                <th>العمليات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pagesTableBody"></tbody>
+                    </table>
                 </div>
             </div>
         </div>
 
         <!-- قسم الأمان -->
         <div id="securitySection" class="admin-section">
-            <div class="hud-card max-w-2xl mx-auto">
-                <h3 class="text-gold mb-6"><i class="fas fa-shield-alt"></i> إدارة بيانات الدخول</h3>
+            <div class="hud-card">
+                <h3 class="text-gold"><i class="fas fa-shield-alt"></i> إعدادات الأمان</h3>
                 <form id="securityForm">
-                    <div class="space-y-4">
-                        <div>
-                            <label>اسم المستخدم الحالي:</label>
-                            <input type="text" value="admin" class="input-iron" disabled>
+                    <div class="setting-group">
+                        <h4><i class="fas fa-user-shield"></i> تغيير بيانات المسؤول</h4>
+                        <div class="setting-row">
+                            <div class="setting-label">اسم المستخدم الحالي</div>
+                            <div class="setting-value">
+                                <input type="text" id="currentUsername" value="admin" disabled>
+                            </div>
                         </div>
-                        <div>
-                            <label>اسم المستخدم الجديد:</label>
-                            <input type="text" id="new_username" class="input-iron" placeholder="اسم المستخدم الجديد">
+                        <div class="setting-row">
+                            <div class="setting-label">اسم المستخدم الجديد</div>
+                            <div class="setting-value">
+                                <input type="text" id="newUsername" placeholder="أدخل اسم المستخدم الجديد">
+                            </div>
                         </div>
-                        <div>
-                            <label>كلمة المرور الحالية:</label>
-                            <input type="password" id="current_password" class="input-iron" required>
+                        <div class="setting-row">
+                            <div class="setting-label">كلمة المرور الجديدة</div>
+                            <div class="setting-value">
+                                <input type="password" id="newPassword" placeholder="أدخل كلمة المرور الجديدة">
+                            </div>
                         </div>
-                        <div>
-                            <label>كلمة المرور الجديدة:</label>
-                            <input type="password" id="new_password" class="input-iron" required>
+                        <div class="setting-row">
+                            <div class="setting-label">تأكيد كلمة المرور</div>
+                            <div class="setting-value">
+                                <input type="password" id="confirmPassword" placeholder="أعد إدخال كلمة المرور">
+                            </div>
                         </div>
-                        <div>
-                            <label>تأكيد كلمة المرور الجديدة:</label>
-                            <input type="password" id="confirm_password" class="input-iron" required>
+                        <div class="flex gap-4 mt-4">
+                            <button type="submit" class="btn-iron">تحديث بيانات المسؤول</button>
                         </div>
                     </div>
-                    <div id="securityMessage" class="mt-4 text-sm"></div>
-                    <button type="button" onclick="adminPanel.updateAdminCredentials()" class="btn-iron w-full mt-6">
-                        <i class="fas fa-key ml-2"></i> تحديث بيانات الدخول
-                    </button>
                 </form>
             </div>
         </div>
+
     </div>
 
-    <!-- Modal المنتجات -->
+    <!-- نافذة المنتج (معدلة) -->
     <div id="productModal" class="auth-overlay" style="display:none;">
         <div class="hud-card" style="max-width: 500px; width: 90%;">
             <h2 id="modalTitle" class="tech-font text-gold">إضافة منتج</h2>
@@ -476,23 +594,84 @@ IRON-ZZZZ-AAAA"></textarea>
         </div>
     </div>
 
-    <!-- Modal البانرات -->
+    <!-- نافذة الكوبون -->
+    <div id="couponModal" class="auth-overlay" style="display:none;">
+        <div class="hud-card" style="max-width: 500px; width: 90%;">
+            <h2 id="couponModalTitle" class="tech-font text-gold">إضافة كوبون خصم</h2>
+            <form id="couponForm">
+                <input type="hidden" id="couponId">
+                <input type="text" id="couponCode" class="input-iron" placeholder="كود الخصم (مثال: IRON50)" required>
+                <select id="couponType" class="input-iron" required>
+                    <option value="">اختر نوع الخصم</option>
+                    <option value="percentage">نسبة مئوية %</option>
+                    <option value="fixed">قيمة ثابتة</option>
+                </select>
+                <input type="number" id="couponValue" class="input-iron" placeholder="قيمة الخصم" step="0.01" required>
+                <select id="couponProduct" class="input-iron">
+                    <option value="">جميع المنتجات (عام)</option>
+                    <!-- سيتم ملء خيارات المنتجات عبر JS -->
+                </select>
+                <label>تاريخ البدء:</label>
+                <input type="datetime-local" id="couponValidFrom" class="input-iron" required>
+                <label>تاريخ الانتهاء:</label>
+                <input type="datetime-local" id="couponValidTo" class="input-iron" required>
+                <label>تفعيل الكوبون:</label>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="couponIsActive" checked>
+                    <span class="toggle-slider"></span>
+                </label>
+                <div class="flex gap-4 mt-4">
+                    <button type="submit" class="btn-iron w-full">حفظ</button>
+                    <button type="button" onclick="adminPanel.closeModal()" class="btn-iron w-full" style="background:var(--metal-gray)">إلغاء</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- نافذة البانر -->
     <div id="bannerModal" class="auth-overlay" style="display:none;">
         <div class="hud-card" style="max-width: 500px; width: 90%;">
             <h2 id="bannerModalTitle" class="tech-font text-gold">إضافة بانر إعلاني</h2>
             <form id="bannerForm">
                 <input type="hidden" id="bannerId">
-                <input type="text" id="bannerTitle" class="input-iron" placeholder="عنوان البانر">
-                <input type="text" id="bannerImage" class="input-iron" placeholder="رابط الصورة" required>
-                <input type="text" id="bannerLink" class="input-iron" placeholder="رابط التحويل (اختياري)">
-                <input type="number" id="bannerOrder" class="input-iron" placeholder="ترتيب العرض" value="0">
-                <div class="flex items-center gap-2 mt-4">
-                    <input type="checkbox" id="bannerActive" checked>
-                    <label>نشط</label>
+                <input type="text" id="bannerTitle" class="input-iron" placeholder="عنوان البانر" required>
+                <input type="text" id="bannerImage" class="input-iron" placeholder="رابط صورة البانر" required>
+                <input type="text" id="bannerLink" class="input-iron" placeholder="رابط البانر (اختياري)">
+                <input type="number" id="bannerOrder" class="input-iron" placeholder="ترتيب العرض" value="1">
+                <label>تفعيل البانر:</label>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="bannerIsActive" checked>
+                    <span class="toggle-slider"></span>
+                </label>
+                <div class="flex gap-4 mt-4">
+                    <button type="submit" class="btn-iron w-full">حفظ</button>
+                    <button type="button" onclick="adminPanel.closeModal()" class="btn-iron w-full" style="background:var(--metal-gray)">إلغاء</button>
                 </div>
-                <div class="flex gap-4 mt-6">
-                    <button type="button" onclick="adminPanel.saveBanner()" class="btn-iron w-full">حفظ</button>
-                    <button type="button" onclick="adminPanel.closeBannerModal()" class="btn-iron w-full" style="background:var(--metal-gray)">إلغاء</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- نافذة الصفحة -->
+    <div id="pageModal" class="auth-overlay" style="display:none;">
+        <div class="hud-card" style="max-width: 700px; width: 90%;">
+            <h2 id="pageModalTitle" class="tech-font text-gold">إدارة الصفحة</h2>
+            <form id="pageForm">
+                <input type="hidden" id="pageId">
+                <input type="text" id="pageTitle" class="input-iron" placeholder="عنوان الصفحة" required>
+                <input type="text" id="pageSlug" class="input-iron" placeholder="رابط الصفحة (مثال: about)" required>
+                <div class="editor-toolbar">
+                    <button type="button" onclick="formatText('bold')"><i class="fas fa-bold"></i></button>
+                    <button type="button" onclick="formatText('italic')"><i class="fas fa-italic"></i></button>
+                    <button type="button" onclick="formatText('underline')"><i class="fas fa-underline"></i></button>
+                    <button type="button" onclick="formatText('insertUnorderedList')"><i class="fas fa-list-ul"></i></button>
+                    <button type="button" onclick="formatText('insertOrderedList')"><i class="fas fa-list-ol"></i></button>
+                    <button type="button" onclick="formatText('createLink')"><i class="fas fa-link"></i></button>
+                </div>
+                <div id="pageContent" class="editor-content" contenteditable="true" placeholder="محتوى الصفحة..."></div>
+                <textarea id="pageContentHidden" style="display:none;"></textarea>
+                <div class="flex gap-4 mt-4">
+                    <button type="submit" class="btn-iron w-full">حفظ</button>
+                    <button type="button" onclick="adminPanel.closeModal()" class="btn-iron w-full" style="background:var(--metal-gray)">إلغاء</button>
                 </div>
             </form>
         </div>
