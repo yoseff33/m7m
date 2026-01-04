@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سلة المشتريات | IRON+</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* أنماط HUD */
+        :root {
+            --iron-red: #9B111E;
+            --gold: #FFD700;
+            --dark-bg: #0A0A0A;
+            --card-bg: #1A1A1A;
+            --metal-gray: #333333;
+            --light-text: #E0E0E0;
+        }
+        
+        body {
+            background: var(--dark-bg);
+            color: var(--light-text);
+            font-family: 'Cairo', 'Inter', sans-serif;
+            min-height: 100vh;
+        }
+        
+        .tech-font {
+            font-family: 'Orbitron', sans-serif;
+        }
+        
+        .hud-card {
+            background: var(--card-bg);
+            border: 1px solid var(--metal-gray);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+        
+        .text-gold {
+            color: var(--gold);
+        }
+        
+        .text-glow-gold {
+            color: var(--gold);
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+        
+        .text-glow-red {
+            color: var(--iron-red);
+            text-shadow: 0 0 10px rgba(155, 17, 30, 0.5);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--iron-red), #B22222);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            display: inline-block;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(155, 17, 30, 0.4);
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            color: var(--light-text);
+            border: 1px solid var(--metal-gray);
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            display: inline-block;
+        }
+        
+        .btn-secondary:hover {
+            border-color: var(--gold);
+            color: var(--gold);
+        }
+        
+        .input-iron {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--metal-gray);
+            border-radius: 5px;
+            padding: 12px 15px;
+            color: white;
+            width: 100%;
+            margin-bottom: 15px;
+        }
+        
+        .input-iron:focus {
+            outline: none;
+            border-color: var(--gold);
+        }
+        
+        .cart-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid var(--metal-gray);
+        }
+        
+        .cart-item:last-child {
+            border-bottom: none;
+        }
+        
+        .quantity-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .quantity-btn {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: var(--metal-gray);
+            border: none;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .quantity-btn:hover {
+            background: var(--iron-red);
+        }
+        
+        .delete-btn {
+            color: #ff6b6b;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+        
+        .delete-btn:hover {
+            color: #ff3838;
+        }
+        
+        .empty-cart {
+            text-align: center;
+            padding: 60px 20px;
+        }
+        
+        .empty-cart-icon {
+            font-size: 4rem;
+            color: var(--metal-gray);
+            margin-bottom: 20px;
+        }
+        
+        .summary-box {
+            background: rgba(255, 215, 0, 0.05);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            border-radius: 10px;
+            padding: 20px;
+        }
+        
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .summary-row.total {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--gold);
+            border-bottom: none;
+            padding-top: 10px;
+            margin-top: 10px;
+            border-top: 2px solid rgba(255, 215, 0, 0.3);
+        }
+        
+        .coupon-success {
+            color: #4CAF50;
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+        
+        .coupon-error {
+            color: #ff6b6b;
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--gold);
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            z-index: 1000;
+            padding: 15px;
+            border-radius: 5px;
+            color: white;
+            font-weight: bold;
+            text-align: center;
+            animation: slideIn 0.3s ease;
+        }
+        
+        .notification.success {
+            background: rgba(76, 175, 80, 0.9);
+        }
+        
+        .notification.error {
+            background: rgba(244, 67, 54, 0.9);
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateY(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        /* تحسينات للهواتف */
+        @media (max-width: 768px) {
+            .cart-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            
+            .cart-item > div {
+                width: 100%;
+            }
+            
+            .quantity-control {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav style="background: rgba(10, 10, 10, 0.95); border-bottom: 1px solid #333; padding: 15px 20px;">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="tech-font text-2xl">
+                    <span style="color: #9B111E;">IRON</span>
+                    <span style="color: #FFD700;">+</span>
+                </div>
+                <span style="font-size: 0.8rem; padding: 2px 8px; border-radius: 12px; background: rgba(155, 17, 30, 0.1); color: #9B111E; border: 1px solid rgba(155, 17, 30, 0.2);">
+                    v5.5
+                </span>
+            </div>
+            <div class="flex items-center gap-4">
+                <a href="index.html" class="btn-secondary" style="padding: 8px 16px; font-size: 0.9rem;">
+                    <i class="fas fa-home ml-2"></i> العودة للمتجر
+                </a>
+                <a href="profile.html" style="color: #FFD700; font-size: 1.2rem;">
+                    <i class="fas fa-user"></i>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="tech-font text-3xl md:text-4xl mb-8 text-center text-glow-gold">
+            <i class="fas fa-shopping-cart ml-2"></i> سلة المشتريات
+        </h1>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- قائمة المنتجات -->
+            <div class="lg:col-span-2">
+                <div class="hud-card">
+                    <h2 class="text-xl font-bold mb-6 text-gold">المنتجات المضافة</h2>
+                    
+                    <div id="cartItemsContainer">
+                        <!-- المنتجات ستظهر هنا -->
+                        <div class="empty-cart">
+                            <div class="empty-cart-icon">
+                                <i class="fas fa-shopping-basket"></i>
+                            </div>
+                            <h3 class="text-xl font-bold mb-4">سلة المشتريات فارغة</h3>
+                            <p class="text-gray-400 mb-6">لم تقم بإضافة أي منتجات إلى السلة بعد</p>
+                            <a href="index.html" class="btn-primary">
+                                <i class="fas fa-shopping-bag ml-2"></i> تصفح المنتجات
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- ملخص الطلب -->
+            <div class="lg:col-span-1">
+                <div class="hud-card">
+                    <h2 class="text-xl font-bold mb-6 text-gold">ملخص الطلب</h2>
+                    
+                    <div class="summary-box">
+                        <div class="summary-row">
+                            <span>المجموع الجزئي:</span>
+                            <span id="subtotal">0.00 ر.س</span>
+                        </div>
+                        
+                        <div class="summary-row">
+                            <span>الضريبة (15%):</span>
+                            <span id="tax">0.00 ر.س</span>
+                        </div>
+                        
+                        <!-- قسم الكوبون -->
+                        <div class="summary-row" style="border-bottom: none; padding-bottom: 0;">
+                            <div style="width: 100%;">
+                                <label class="block mb-2">كود الخصم</label>
+                                <div class="flex gap-2">
+                                    <input type="text" id="couponCode" class="input-iron" placeholder="أدخل الكوبون" style="margin-bottom: 0;">
+                                    <button onclick="applyCoupon()" id="applyCouponBtn" class="btn-secondary" style="white-space: nowrap;">تطبيق</button>
+                                </div>
+                                <div id="couponMessage"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="summary-row" id="discountRow" style="display: none;">
+                            <span>الخصم:</span>
+                            <span id="discountAmount" style="color: #4CAF50;">0.00 ر.س</span>
+                        </div>
+                        
+                        <div class="summary-row total">
+                            <span>الإجمالي النهائي:</span>
+                            <span id="total">0.00 ر.س</span>
+                        </div>
+                    </div>
+                    
+                    <button onclick="checkout()" id="checkoutBtn" class="btn-primary w-full mt-6 py-4 text-lg" disabled>
+                        <i class="fas fa-lock ml-2"></i> اتمام الشراء
+                    </button>
+                    
+                    <div class="mt-6 text-center text-sm text-gray-400">
+                        <p><i class="fas fa-shield-alt ml-2"></i> عملية الدفع آمنة ومشفرة</p>
+                        <p class="mt-2"><i class="fas fa-bolt ml-2"></i> التفعيل الفوري بعد الدفع</p>
+                    </div>
+                </div>
+                
+                <!-- معلومات الدعم -->
+                <div class="hud-card mt-6">
+                    <h3 class="text-lg font-bold mb-4 text-gold"><i class="fas fa-headset ml-2"></i> الدعم الفني</h3>
+                    <p class="text-sm text-gray-400 mb-4">لديك استفسار أو تحتاج مساعدة؟ فريق الدعم متاح 24/7</p>
+                    <a href="https://wa.me/966500000000" target="_blank" class="btn-secondary w-full">
+                        <i class="fab fa-whatsapp ml-2"></i> تواصل عبر واتساب
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- الاشعارات -->
+    <div id="notificationContainer"></div>
+
+    <!-- مكتبات JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
+    
+    <script>
+        // تخزين بيانات السلة
+        let cart = JSON.parse(localStorage.getItem('iron_cart')) || [];
+        let couponApplied = null;
+        
+        // تهيئة الصفحة
+        document.addEventListener('DOMContentLoaded', function() {
+            loadCartItems();
+            updateSummary();
+            checkUserStatus();
+        });
+        
+        // تحميل عناصر السلة
+        function loadCartItems() {
+            const container = document.getElementById('cartItemsContainer');
+            
+            if (cart.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-cart">
+                        <div class="empty-cart-icon">
+                            <i class="fas fa-shopping-basket"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-4">سلة المشتريات فارغة</h3>
+                        <p class="text-gray-400 mb-6">لم تقم بإضافة أي منتجات إلى السلة بعد</p>
+                        <a href="index.html" class="btn-primary">
+                            <i class="fas fa-shopping-bag ml-2"></i> تصفح المنتجات
+                        </a>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            
+            cart.forEach((item, index) => {
+                const price = (item.price / 100).toFixed(2);
+                const total = (item.price * item.quantity / 100).toFixed(2);
+                
+                html += `
+                    <div class="cart-item">
+                        <div style="flex: 1;">
+                            <h4 class="font-bold mb-2">${item.name}</h4>
+                            <p class="text-sm text-gray-400">${item.description || 'باقة مميزة مع مزايا متقدمة'}</p>
+                        </div>
+                        
+                        <div style="width: 120px; text-align: center;">
+                            <div class="text-lg font-bold text-gold">${price} ر.س</div>
+                            <div class="text-sm text-gray-400">للمرة الواحدة</div>
+                        </div>
+                        
+                        <div style="width: 150px;">
+                            <div class="quantity-control">
+                                <button class="quantity-btn" onclick="updateQuantity(${index}, -1)">
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                                <span class="font-bold" style="min-width: 30px; text-align: center;">${item.quantity}</span>
+                                <button class="quantity-btn" onclick="updateQuantity(${index}, 1)">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div style="width: 100px; text-align: center;">
+                            <div class="text-lg font-bold">${total} ر.س</div>
+                        </div>
+                        
+                        <div style="width: 50px; text-align: center;">
+                            <button class="delete-btn" onclick="removeFromCart(${index})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        // تحديث الكمية
+        function updateQuantity(index, change) {
+            if (cart[index]) {
+                cart[index].quantity += change;
+                
+                if (cart[index].quantity < 1) {
+                    cart.splice(index, 1);
+                }
+                
+                saveCart();
+                loadCartItems();
+                updateSummary();
+            }
+        }
+        
+        // حذف منتج
+        function removeFromCart(index) {
+            if (confirm('هل تريد إزالة هذا المنتج من السلة؟')) {
+                cart.splice(index, 1);
+                saveCart();
+                loadCartItems();
+                updateSummary();
+                showNotification('تم إزالة المنتج من السلة', 'success');
+            }
+        }
+        
+        // حفظ السلة
+        function saveCart() {
+            localStorage.setItem('iron_cart', JSON.stringify(cart));
+            updateCartCount();
+        }
+        
+        // تحديث عدد العناصر في السلة
+        function updateCartCount() {
+            const count = cart.reduce((total, item) => total + item.quantity, 0);
+            const cartCount = document.querySelector('.cart-count');
+            if (cartCount) {
+                cartCount.textContent = count;
+                cartCount.style.display = count > 0 ? 'flex' : 'none';
+            }
+        }
+        
+        // تحديث الملخص
+        function updateSummary() {
+            const subtotal = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+            const tax = subtotal * 0.15;
+            let total = subtotal + tax;
+            
+            // تطبيق الخصم إذا كان موجوداً
+            let discount = 0;
+            if (couponApplied) {
+                if (couponApplied.discount_type === 'percentage') {
+                    discount = subtotal * (couponApplied.discount_value / 100);
+                } else if (couponApplied.discount_type === 'fixed') {
+                    discount = couponApplied.discount_value * 100; // تحويل من ريال إلى هللة
+                }
+                total = Math.max(0, total - discount);
+            }
+            
+            // تحديث العرض
+            document.getElementById('subtotal').textContent = (subtotal / 100).toFixed(2) + ' ر.س';
+            document.getElementById('tax').textContent = (tax / 100).toFixed(2) + ' ر.س';
+            document.getElementById('total').textContent = (total / 100).toFixed(2) + ' ر.س';
+            
+            // عرض/إخفاء صف الخصم
+            const discountRow = document.getElementById('discountRow');
+            const discountAmount = document.getElementById('discountAmount');
+            
+            if (discount > 0) {
+                discountRow.style.display = 'flex';
+                discountAmount.textContent = '-' + (discount / 100).toFixed(2) + ' ر.س';
+            } else {
+                discountRow.style.display = 'none';
+            }
+            
+            // تفعيل/تعطيل زر اتمام الشراء
+            const checkoutBtn = document.getElementById('checkoutBtn');
+            checkoutBtn.disabled = cart.length === 0;
+        }
+        
+        // تطبيق الكوبون
+        async function applyCoupon() {
+            const couponCode = document.getElementById('couponCode').value.trim();
+            const messageDiv = document.getElementById('couponMessage');
+            const applyBtn = document.getElementById('applyCouponBtn');
+            
+            if (!couponCode) {
+                showCouponMessage('يرجى إدخال كود الخصم', 'error');
+                return;
+            }
+            
+            // التحقق من أن السلة غير فارغة
+            if (cart.length === 0) {
+                showCouponMessage('السلة فارغة، أضف منتجات أولاً', 'error');
+                return;
+            }
+            
+            // عرض حالة التحميل
+            applyBtn.innerHTML = '<span class="loading"></span>';
+            applyBtn.disabled = true;
+            
+            try {
+                // نتحقق من الكوبون للمنتج الأول (يمكن تطوير هذا ليدعم كوبونات لكل منتج)
+                const productId = cart[0].id;
+                const validation = await window.ironPlus.validateCoupon(couponCode, productId);
+                
+                if (validation.success) {
+                    couponApplied = {
+                        code: couponCode,
+                        discount_type: validation.discountType || 'percentage',
+                        discount_value: validation.discountValue || 0,
+                        couponId: validation.couponId
+                    };
+                    
+                    showCouponMessage(`تم تطبيق الخصم بنجاح!`, 'success');
+                    updateSummary();
+                } else {
+                    couponApplied = null;
+                    showCouponMessage(validation.message || 'كود الخصم غير صالح', 'error');
+                }
+            } catch (error) {
+                console.error('Error applying coupon:', error);
+                showCouponMessage('حدث خطأ في التحقق من الكوبون', 'error');
+            } finally {
+                applyBtn.innerHTML = 'تطبيق';
+                applyBtn.disabled = false;
+            }
+        }
+        
+        // عرض رسالة الكوبون
+        function showCouponMessage(message, type) {
+            const messageDiv = document.getElementById('couponMessage');
+            messageDiv.innerHTML = `
+                <div class="${type === 'success' ? 'coupon-success' : 'coupon-error'}">
+                    <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'} ml-2"></i>
+                    ${message}
+                </div>
+            `;
+        }
+        
+        // اتمام الشراء
+        async function checkout() {
+            if (cart.length === 0) {
+                showNotification('السلة فارغة، أضف منتجات أولاً', 'error');
+                return;
+            }
+            
+            // التحقق من تسجيل الدخول
+            if (!window.ironPlus || !window.ironPlus.isLoggedIn()) {
+                localStorage.setItem('pending_cart', JSON.stringify(cart));
+                localStorage.setItem('pending_coupon', JSON.stringify(couponApplied));
+                
+                showNotification('يرجى تسجيل الدخول لإتمام الطلب', 'warning');
+                
+                setTimeout(() => {
+                    window.location.href = 'login.html?redirect=' + encodeURIComponent('cart.html');
+                }, 1500);
+                return;
+            }
+            
+            const checkoutBtn = document.getElementById('checkoutBtn');
+            checkoutBtn.innerHTML = '<span class="loading"></span> جاري تجهيز الطلب...';
+            checkoutBtn.disabled = true;
+            
+            try {
+                // حساب المبلغ الإجمالي
+                const subtotal = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+                const tax = subtotal * 0.15;
+                let total = subtotal + tax;
+                
+                let discount = 0;
+                if (couponApplied) {
+                    if (couponApplied.discount_type === 'percentage') {
+                        discount = subtotal * (couponApplied.discount_value / 100);
+                    } else if (couponApplied.discount_type === 'fixed') {
+                        discount = couponApplied.discount_value * 100;
+                    }
+                    total = Math.max(0, total - discount);
+                }
+                
+                // للمبساطة، سنتعامل مع المنتج الأول فقط (يمكن تطوير هذا ليدعم عدة منتجات)
+                const product = cart[0];
+                const phone = window.ironPlus.getUserPhone();
+                
+                // إنشاء الطلب
+                const orderRes = await window.ironPlus.createOrder(
+                    product.id,
+                    phone,
+                    total,
+                    couponApplied?.code
+                );
+                
+                if (orderRes.success) {
+                    if (total === 0) {
+                        // إذا كان المبلغ النهائي 0 (خصم 100%)
+                        showNotification('تم إنشاء طلبك بنجاح! جاري تحويلك لصفحة الكود...', 'success');
+                        
+                        // تنظيف السلة
+                        cart = [];
+                        saveCart();
+                        
+                        // التوجيه لصفحة النجاح مع الكود
+                        setTimeout(() => {
+                            window.location.href = `success.html?order_id=${orderRes.order.id}&code=${orderRes.order.activation_code || ''}`;
+                        }, 2000);
+                    } else {
+                        // إذا كان هناك مبلغ للدفع
+                        const paymentRes = await window.ironPlus.createPayment(
+                            product.id,
+                            phone,
+                            total
+                        );
+                        
+                        if (paymentRes.success && paymentRes.data.url) {
+                            // تنظيف السلة
+                            cart = [];
+                            saveCart();
+                            
+                            // التوجيه لبوابة الدفع
+                            window.location.href = paymentRes.data.url;
+                        } else {
+                            throw new Error('فشل في إنشاء رابط الدفع');
+                        }
+                    }
+                } else {
+                    throw new Error(orderRes.message || 'فشل في إنشاء الطلب');
+                }
+            } catch (error) {
+                console.error('Checkout error:', error);
+                showNotification(error.message || 'حدث خطأ أثناء معالجة الطلب', 'error');
+            } finally {
+                checkoutBtn.innerHTML = '<i class="fas fa-lock ml-2"></i> اتمام الشراء';
+                checkoutBtn.disabled = false;
+            }
+        }
+        
+        // التحقق من حالة المستخدم
+        async function checkUserStatus() {
+            try {
+                if (window.ironPlus && window.ironPlus.isLoggedIn()) {
+                    // تحميل أي طلب معلق
+                    const pendingCart = localStorage.getItem('pending_cart');
+                    const pendingCoupon = localStorage.getItem('pending_coupon');
+                    
+                    if (pendingCart) {
+                        cart = JSON.parse(pendingCart);
+                        if (pendingCoupon) {
+                            couponApplied = JSON.parse(pendingCoupon);
+                        }
+                        
+                        localStorage.removeItem('pending_cart');
+                        localStorage.removeItem('pending_coupon');
+                        
+                        saveCart();
+                        loadCartItems();
+                        updateSummary();
+                    }
+                }
+            } catch (error) {
+                console.error('Error checking user status:', error);
+            }
+        }
+        
+        // عرض الإشعارات
+        function showNotification(message, type = 'info') {
+            const container = document.getElementById('notificationContainer');
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `
+                <div class="flex items-center justify-center">
+                    <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-times-circle' : 'fa-info-circle'} ml-2"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            container.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 5000);
+        }
+        
+        // جعل الدوال متاحة عالمياً
+        window.updateQuantity = updateQuantity;
+        window.removeFromCart = removeFromCart;
+        window.applyCoupon = applyCoupon;
+        window.checkout = checkout;
+    </script>
+</body>
+</html>
