@@ -1124,3 +1124,33 @@ a:hover {
     body { background: white; color: black; }
     .iron-card { border: 1px solid #ccc; box-shadow: none; }
 }
+/* تأثير HUD للأسئلة الشائعة */
+.faq-item.hud-effect {
+    background: rgba(26, 26, 26, 0.8);
+    border: 1px solid rgba(255, 215, 0, 0.2);
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+.faq-item.hud-effect:hover {
+    border-color: var(--iron-gold);
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.1);
+}
+
+/* تعديل عرض الكروت لتناسب ترتيب الفيديو */
+.iron-card {
+    background: linear-gradient(135deg, #121212 0%, #1a1a1a 100%);
+    border: 2px solid #2a2a2a;
+    border-radius: 20px;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.iron-card:hover {
+    border-color: var(--iron-red);
+    transform: translateY(-8px);
+}
+
+/* الخطوط المستخدمة في الفيديو */
+body {
+    font-family: 'Cairo', 'Rajdhani', sans-serif;
+}
