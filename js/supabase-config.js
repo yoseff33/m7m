@@ -558,7 +558,8 @@ window.ironPlus = {
                 .insert([{ 
                     page_visited: page, 
                     ip_address: ipData.ip,
-                    user_agent: navigator.userAgent
+                    user_agent: navigator.userAgent,
+                    created_at: new Date().toISOString()
                 }]);
         } catch (e) { 
             console.error('Record visit error:', e);
@@ -590,7 +591,8 @@ window.ironPlus = {
                     username: username,
                     status: success ? 'success' : 'failed',
                     ip_address: ipData.ip,
-                    user_agent: navigator.userAgent
+                    user_agent: navigator.userAgent,
+                    created_at: new Date().toISOString()
                 }]);
         } catch (e) {
             console.error('Record admin login error:', e);
@@ -851,7 +853,7 @@ window.ironPlus = {
             const { data, error } = await window.supabaseClient
                 .from('banners')
                 .select('*')
-                .order('order', { ascending: true })
+                .order('sort_order', { ascending: true })  // ✅ تم التصحيح هنا
                 .order('created_at', { ascending: false });
             
             if (error) throw error;
@@ -922,7 +924,84 @@ window.ironPlus = {
         }
     },
 
-    // --- [10] سجل الدخول (Login Logs) ---
+    // --- [10] إدارة الصفحات (Pages) ---
+
+    async getPages() {
+        try {
+            const { data, error } = await window.supabaseClient
+                .from('pages')
+                .select('*')
+                .order('created_at', { ascending: false });
+            
+            if (error) throw error;
+            return { success: true, pages: data || [] };
+        } catch (error) {
+            console.error('Get pages error:', error);
+            return { success: false, message: error.message, pages: [] };
+        }
+    },
+
+    async getPage(pageId) {
+        try {
+            const { data, error } = await window.supabaseClient
+                .from('pages')
+                .select('*')
+                .eq('id', pageId)
+                .single();
+            
+            if (error) throw error;
+            return { success: true, page: data };
+        } catch (error) {
+            return { success: false, message: error.message };
+        }
+    },
+
+    async addPage(pageData) {
+        try {
+            const { data, error } = await window.supabaseClient
+                .from('pages')
+                .insert([pageData])
+                .select()
+                .single();
+            
+            if (error) throw error;
+            return { success: true, page: data, message: 'تم إنشاء الصفحة بنجاح' };
+        } catch (error) {
+            return { success: false, message: error.message };
+        }
+    },
+
+    async updatePage(pageId, updates) {
+        try {
+            const { data, error } = await window.supabaseClient
+                .from('pages')
+                .update(updates)
+                .eq('id', pageId)
+                .select()
+                .single();
+            
+            if (error) throw error;
+            return { success: true, page: data, message: 'تم تحديث الصفحة بنجاح' };
+        } catch (error) {
+            return { success: false, message: error.message };
+        }
+    },
+
+    async deletePage(pageId) {
+        try {
+            const { error } = await window.supabaseClient
+                .from('pages')
+                .delete()
+                .eq('id', pageId);
+            
+            if (error) throw error;
+            return { success: true, message: 'تم حذف الصفحة بنجاح' };
+        } catch (error) {
+            return { success: false, message: error.message };
+        }
+    },
+
+    // --- [11] سجل الدخول (Login Logs) ---
 
     async getLoginLogs(limit = 20) {
         try {
@@ -940,7 +1019,7 @@ window.ironPlus = {
         }
     },
 
-    // --- [11] نظام السلة (Cart System) ---
+    // --- [12] نظام السلة (Cart System) ---
 
     async addToCart(productId) {
         try {
@@ -1164,7 +1243,7 @@ window.ironPlus = {
         }
     },
 
-    // --- [12] أدوات مساعدة (Utils) ---
+    // --- [13] أدوات مساعدة (Utils) ---
 
     formatPrice: (amount) => {
         if (!amount && amount !== 0) return '0.00';
@@ -1186,7 +1265,7 @@ window.ironPlus = {
         });
     },
 
-    // --- [13] تسجيل الأخطاء (Error Logging) ---
+    // --- [14] تسجيل الأخطاء (Error Logging) ---
 
     async logError(error, context = '') {
         try {
@@ -1197,7 +1276,8 @@ window.ironPlus = {
                     error_stack: error.stack,
                     context: context,
                     user_agent: navigator.userAgent,
-                    page_url: window.location.href
+                    page_url: window.location.href,
+                    created_at: new Date().toISOString()
                 }]);
         } catch (e) {
             console.error('Failed to log error:', e);
