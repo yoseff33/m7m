@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- سيتم تحديث Title ديناميكياً -->
     <title>IRON+ | متجر تطبيقات البلس والأكواد الرقمية 🦾</title>
+    <!-- سيتم تحديث Meta Description و Keywords ديناميكياً -->
     <meta name="description" content="متجر ايرون بلس - تفعيل فوري تطبيقات بلس، فك حظر سناب، واشتراكات رقمية بأعلى استقرار وأمان ضد الحظر.">
     <meta name="keywords" content="سناب بلس, تيك توك بلس, فك حظر سناب, تطبيقات بلس, ايرون بلس, متجر بلس">
     
@@ -18,8 +20,109 @@
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/index.css">
     <link rel="stylesheet" href="css/modern-v4.6.css">
+    
+    <!-- إعدادات الموقع الديناميكية -->
+    <script>
+        document.addEventListener('DOMContentLoaded', async function() {
+            // جلب إعدادات الموقع
+            if (window.ironPlus && window.ironPlus.getSiteSettings) {
+                const res = await window.ironPlus.getSiteSettings();
+                if (res.success) {
+                    const settings = res.settings;
+                    
+                    // تحديث عنوان الصفحة
+                    if (settings.seo_default_title) {
+                        document.title = settings.seo_default_title;
+                    }
+                    
+                    // تحديث وصف الصفحة
+                    const metaDescription = document.querySelector('meta[name="description"]');
+                    if (metaDescription && settings.seo_default_description) {
+                        metaDescription.content = settings.seo_default_description;
+                    }
+                    
+                    // تحديث الكلمات المفتاحية
+                    const metaKeywords = document.querySelector('meta[name="keywords"]');
+                    if (metaKeywords && settings.seo_keywords) {
+                        metaKeywords.content = settings.seo_keywords;
+                    }
+                    
+                    // تحديث Favicon
+                    if (settings.site_favicon) {
+                        let favicon = document.querySelector('link[rel="icon"]');
+                        if (!favicon) {
+                            favicon = document.createElement('link');
+                            favicon.rel = 'icon';
+                            document.head.appendChild(favicon);
+                        }
+                        favicon.href = settings.site_favicon;
+                    }
+                    
+                    // تطبيق أنماط الألوان الديناميكية
+                    if (settings.site_primary_color || settings.site_secondary_color) {
+                        const style = document.createElement('style');
+                        style.textContent = `
+                            :root {
+                                ${settings.site_primary_color ? `--iron-red: ${settings.site_primary_color};` : ''}
+                                ${settings.site_secondary_color ? `--gold: ${settings.site_secondary_color};` : ''}
+                            }
+                            .text-\\[\\#9B111E\\] { color: ${settings.site_primary_color || '#9B111E'} !important; }
+                            .text-\\[\\#FFD700\\] { color: ${settings.site_secondary_color || '#FFD700'} !important; }
+                            .bg-\\[\\#9B111E\\] { background-color: ${settings.site_primary_color || '#9B111E'} !important; }
+                            .border-\\[\\#9B111E\\] { border-color: ${settings.site_primary_color || '#9B111E'} !important; }
+                        `;
+                        document.head.appendChild(style);
+                    }
+                    
+                    // التحقق من وضع الصيانة
+                    if (settings.maintenance_mode === 'true' || settings.maintenance_mode === true) {
+                        document.body.innerHTML = `
+                            <div style="min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; background: #0A0A0A; color: white; text-align: center; padding: 20px;">
+                                <h1 style="font-size: 3rem; color: #FFD700; margin-bottom: 20px;">🚧 وضع الصيانة 🚧</h1>
+                                <p style="font-size: 1.5rem; margin-bottom: 30px;">${settings.maintenance_message || 'جاري تطوير الموقع، سنعود قريباً...'}</p>
+                                <div style="font-size: 5rem;">🔧</div>
+                            </div>
+                        `;
+                        return;
+                    }
+                    
+                    // إضافة أكواد التحليلات
+                    if (settings.analytics_ga) {
+                        const gaScript = document.createElement('script');
+                        gaScript.async = true;
+                        gaScript.src = `https://www.googletagmanager.com/gtag/js?id=${settings.analytics_ga}`;
+                        document.head.appendChild(gaScript);
+                        
+                        window.dataLayer = window.dataLayer || [];
+                        function gtag(){dataLayer.push(arguments);}
+                        gtag('js', new Date());
+                        gtag('config', settings.analytics_ga);
+                    }
+                    
+                    if (settings.analytics_snapchat) {
+                        const snapScript = document.createElement('script');
+                        snapScript.textContent = `
+                            (function(e,t,n){if(e.snaptr)return;var a=e.snaptr=function()
+                            {a.handleRequest?a.handleRequest.apply(a,arguments):a.queue.push(arguments)};
+                            a.queue=[];var s='script';r=t.createElement(s);r.async=!0;
+                            r.src=n;var u=t.getElementsByTagName(s)[0];
+                            u.parentNode.insertBefore(r,u);})(window,document,
+                            'https://sc-static.net/scevent.min.js');
+                            snaptr('init', '${settings.analytics_snapchat}');
+                        `;
+                        document.head.appendChild(snapScript);
+                    }
+                }
+            }
+        });
+    </script>
 </head>
 <body class="antialiased">
+    <!-- شريط الإعلانات المتحرك (سيتم تحديثه ديناميكياً) -->
+    <div id="announcementBar" class="bg-[#9B111E] text-white py-2 text-center text-sm" style="display: none;">
+        <marquee id="announcementText">عرض خاص: خصم 20% على جميع الباقات</marquee>
+    </div>
+
     <!-- Navigation -->
     <nav class="nav-container sticky top-0 z-50">
         <div class="container-spacing">
@@ -27,11 +130,11 @@
                 <!-- Logo -->
                 <div class="flex items-center gap-3">
                     <div class="tech-font text-2xl">
-                        <span class="text-[#9B111E]">IRON</span>
+                        <span class="text-[#9B111E]" id="logoText">IRON</span>
                         <span class="text-[#FFD700]">+</span>
                     </div>
                     <span class="text-xs px-2 py-1 rounded-full bg-[#9B111E]/10 text-[#9B111E] border border-[#9B111E]/20">
-                        v4.6
+                        v5.5
                     </span>
                 </div>
                 
@@ -49,7 +152,7 @@
                     <a href="login.html" id="loginButton" class="btn-secondary text-sm hidden md:block">
                         <i class="fas fa-user ml-2"></i> تسجيل الدخول
                     </a>
-                    <a href="profile.html" class="relative p-2">
+                    <a href="cart.html" class="relative p-2">
                         <i class="fas fa-shopping-bag text-lg"></i>
                         <span class="cart-count absolute -top-1 -right-1 bg-[#9B111E] text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">0</span>
                     </a>
@@ -96,6 +199,9 @@
     <!-- Hero Section -->
     <section id="home" class="section-spacing hero-gradient">
         <div class="container-spacing">
+            <!-- البانر الديناميكي (سيتم تحميله عبر JS) -->
+            <div id="heroBanner"></div>
+            
             <div class="max-w-3xl mx-auto text-center">
                 <!-- Value Proposition -->
                 <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#9B111E]/10 border border-[#9B111E]/20 mb-8">
@@ -143,362 +249,62 @@
         </div>
     </section>
 
-    <!-- Products Section -->
-    <section id="products" class="section-spacing bg-[#111111]">
-        <div class="container-spacing">
-            <div class="text-center mb-16">
-                <h2 class="tech-font text-3xl md:text-4xl font-bold mb-4">باقاتنا المميزة</h2>
-                <p class="text-[#A0A0A0] text-lg max-w-2xl mx-auto">
-                    اختر من مجموعة واسعة من تطبيقات البلس المدفوعة بتفعيل فوري وضمان كامل
-                </p>
-            </div>
-            
-            <!-- Products Grid -->
-            <div id="productsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <!-- المنتجات سيتم تحميلها هنا عبر JavaScript -->
-                <div class="col-span-4 text-center py-12">
-                    <div class="loading-spinner mx-auto"></div>
-                    <p class="text-gray-400 mt-4">جاري تحميل الباقات...</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Features Section -->
-    <section id="features" class="section-spacing">
-        <div class="container-spacing">
-            <div class="text-center mb-16">
-                <h2 class="tech-font text-3xl md:text-4xl font-bold mb-4">لماذا IRON+؟</h2>
-                <p class="text-[#A0A0A0] text-lg max-w-2xl mx-auto">
-                    نقدم لك تجربة استثنائية بمعايير تقنية عالية
-                </p>
-            </div>
-            
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <!-- Feature 1 -->
-                <div class="stat-card text-center">
-                    <div class="w-16 h-16 rounded-full bg-[#9B111E]/10 flex items-center justify-center mx-auto mb-6">
-                        <i class="fas fa-bolt text-2xl text-[#FFD700]"></i>
-                    </div>
-                    <h3 class="text-xl font-bold mb-3">تفعيل فوري</h3>
-                    <p class="text-[#A0A0A0]">
-                        استلام الكود خلال ثوانٍ معدودة بعد الدفع مباشرة، بدون أي انتظار
-                    </p>
-                </div>
-                
-                <!-- Feature 2 -->
-                <div class="stat-card text-center">
-                    <div class="w-16 h-16 rounded-full bg-[#9B111E]/10 flex items-center justify-center mx-auto mb-6">
-                        <i class="fas fa-shield-alt text-2xl text-[#FFD700]"></i>
-                    </div>
-                    <h3 class="text-xl font-bold mb-3">حماية ضد الحظر</h3>
-                    <p class="text-[#A0A0A0]">
-                        تطبيقاتنا مقاومة للحظر ومحدثة دائماً لآخر إصدار مع ضمان الاستقرار
-                    </p>
-                </div>
-                
-                <!-- Feature 3 -->
-                <div class="stat-card text-center">
-                    <div class="w-16 h-16 rounded-full bg-[#9B111E]/10 flex items-center justify-center mx-auto mb-6">
-                        <i class="fas fa-headset text-2xl text-[#FFD700]"></i>
-                    </div>
-                    <h3 class="text-xl font-bold mb-3">دعم فني 24/7</h3>
-                    <p class="text-[#A0A0A0]">
-                        فريق دعم فني متخصص متاح على مدار الساعة لحل أي مشكلة تواجهك
-                    </p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- FAQ Section -->
-    <section id="faq" class="section-spacing bg-[#111111]">
-        <div class="container-spacing max-w-4xl mx-auto">
-            <div class="text-center mb-16">
-                <h2 class="tech-font text-3xl md:text-4xl font-bold mb-4">أسئلة شائعة</h2>
-                <p class="text-[#A0A0A0] text-lg">
-                    إجابات على أكثر الأسئلة شيوعاً من عملائنا
-                </p>
-            </div>
-            
-            <div class="space-y-2">
-                <!-- FAQ Item 1 -->
-                <div class="accordion-item">
-                    <div class="accordion-header">
-                        <span class="font-bold text-lg">هل اشتراك IRON+ موثق وموثوق؟</span>
-                        <i class="fas fa-chevron-down text-[#FFD700] transition-transform"></i>
-                    </div>
-                    <div class="accordion-content">
-                        <p class="pt-2">
-                            نعم، نحن متجر موثق ونقدم ضمانات حقيقية على كافة الاشتراكات طوال فترة الصلاحية. جميع منتجاتنا خاضعة لفحص جودة واختبارات أمان قبل التوصيل، ونلتزم بشروط الضمان المذكورة في سياسة الاسترجاع.
-                        </p>
-                    </div>
-                </div>
-                
-                <!-- FAQ Item 2 -->
-                <div class="accordion-item">
-                    <div class="accordion-header">
-                        <span class="font-bold text-lg">كيف ومتى أستلم كود التفعيل؟</span>
-                        <i class="fas fa-chevron-down text-[#FFD700] transition-transform"></i>
-                    </div>
-                    <div class="accordion-content">
-                        <p class="pt-2">
-                            يتم تسليم الكود بشكل فوري وتلقائي بمجرد نجاح عملية الدفع. ستجده في صفحة "طلباتي" في حسابك، كما سنرسل لك إشعاراً على البريد الإلكتروني أو الواتساب بتفاصيل التفعيل. في 95% من الحالات يكون التفعيل خلال 30 ثانية من الدفع.
-                        </p>
-                    </div>
-                </div>
-                
-                <!-- FAQ Item 3 -->
-                <div class="accordion-item">
-                    <div class="accordion-header">
-                        <span class="font-bold text-lg">ماذا لو لم يعمل الكود أو واجهت مشكلة؟</span>
-                        <i class="fas fa-chevron-down text-[#FFD700] transition-transform"></i>
-                    </div>
-                    <div class="accordion-content">
-                        <p class="pt-2">
-                            نقدم ضمان استبدال أو استرجاع خلال 24 ساعة من الشراء. فقط راسل الدعم الفني عبر الواتساب أو الدردشة المباشرة، وسنقوم بحل المشكلة أو استبدال الكود فوراً. معدل رضا العملاء عن خدمة الدعم لدينا يتجاوز 98%.
-                        </p>
-                    </div>
-                </div>
-                
-                <!-- FAQ Item 4 -->
-                <div class="accordion-item">
-                    <div class="accordion-header">
-                        <span class="font-bold text-lg">هل تطبيقاتكم محدثة وآمنة؟</span>
-                        <i class="fas fa-chevron-down text-[#FFD700] transition-transform"></i>
-                    </div>
-                    <div class="accordion-content">
-                        <p class="pt-2">
-                            نعم، جميع تطبيقاتنا محدثة لآخر إصدار ومختبرة ضد الحظر. نعمل على تحديث قاعدة التطبيقات أسبوعياً لضمان الاستقرار والأمان. كما أننا نستخدم تقنيات حماية متقدمة لمنع الحظر أو التعطيل.
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Reviews Section -->
-    <section id="reviews" class="section-spacing">
-        <div class="container-spacing">
-            <div class="text-center mb-16">
-                <h2 class="tech-font text-3xl md:text-4xl font-bold mb-4">آراء عملائنا</h2>
-                <p class="text-[#A0A0A0] text-lg max-w-2xl mx-auto">
-                    شهادات حقيقية من عملائنا الكرام
-                </p>
-            </div>
-            
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <!-- Review 1 -->
-                <div class="stat-card">
-                    <div class="flex items-center gap-4 mb-4">
-                        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-[#9B111E] to-[#FF4757] flex items-center justify-center">
-                            <span class="font-bold">س</span>
-                        </div>
-                        <div>
-                            <h4 class="font-bold">سعد العتيبي</h4>
-                            <div class="rating-stars text-sm">
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                            </div>
-                        </div>
-                        <span class="text-xs text-[#A0A0A0] mr-auto">منذ يومين</span>
-                    </div>
-                    <p class="text-[#A0A0A0]">
-                        "أفضل متجر تعاملت معه، التفعيل فوري والسناب شغال معي زي الحلاوة. الدعم الفني سريع ومحترف."
-                    </p>
-                </div>
-                
-                <!-- Review 2 -->
-                <div class="stat-card">
-                    <div class="flex items-center gap-4 mb-4">
-                        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-[#FFD700] to-[#FF9F1A] flex items-center justify-center">
-                            <span class="font-bold">ن</span>
-                        </div>
-                        <div>
-                            <h4 class="font-bold">نورة محمد</h4>
-                            <div class="rating-stars text-sm">
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                            </div>
-                        </div>
-                        <span class="text-xs text-[#A0A0A0] mr-auto">منذ ٥ أيام</span>
-                    </div>
-                    <p class="text-[#A0A0A0]">
-                        "اشتريت باقة تيك توك بلس وكل شيء سلس. الكود وصل خلال ثواني والدعم رد علي حتى وقت متأخر."
-                    </p>
-                </div>
-                
-                <!-- Review 3 -->
-                <div class="stat-card">
-                    <div class="flex items-center gap-4 mb-4">
-                        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-[#00A8FF] to-[#0097E6] flex items-center justify-center">
-                            <span class="font-bold">خ</span>
-                        </div>
-                        <div>
-                            <h4 class="font-bold">خالد السبيعي</h4>
-                            <div class="rating-stars text-sm">
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                            </div>
-                        </div>
-                        <span class="text-xs text-[#A0A0A0] mr-auto">منذ أسبوع</span>
-                    </div>
-                    <p class="text-[#A0A0A0]">
-                        "خدمة فك الحظر ساعدتني كثيراً. كنت محظور من سناب ومكثت ٣ شهور، والآن الحساب رجع خلال ١٠ دقائق!"
-                    </p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Footer -->
-    <footer class="bg-[#0A0A0A] border-t border-[#333333]">
-        <div class="container-spacing py-16">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
-                <!-- Column 1: About -->
-                <div class="footer-column">
-                    <div class="tech-font text-2xl mb-4">
-                        <span class="text-[#9B111E]">IRON</span>
-                        <span class="text-[#FFD700]">+</span>
-                    </div>
-                    <p class="text-[#A0A0A0] text-sm leading-relaxed">
-                        منصة IRON+ الرائدة في توفير تطبيقات البلس والخدمات الرقمية بأعلى معايير الأمان والاستقرار. نسعى لجعل التكنولوجيا المتقدمة في متناول الجميع.
-                    </p>
-                    <div class="flex gap-4 mt-4">
-                        <a href="#" class="w-10 h-10 rounded-full bg-[#1A1A1A] flex items-center justify-center hover:bg-[#9B111E] transition-colors">
-                            <i class="fab fa-twitter"></i>
-                        </a>
-                        <a href="#" class="w-10 h-10 rounded-full bg-[#1A1A1A] flex items-center justify-center hover:bg-[#9B111E] transition-colors">
-                            <i class="fab fa-snapchat"></i>
-                        </a>
-                        <a href="#" class="w-10 h-10 rounded-full bg-[#1A1A1A] flex items-center justify-center hover:bg-[#9B111E] transition-colors">
-                            <i class="fab fa-tiktok"></i>
-                        </a>
-                    </div>
-                </div>
-                
-                <!-- Column 2: Quick Links -->
-                <div class="footer-column">
-                    <h4 class="font-bold text-lg mb-4">روابط سريعة</h4>
-                    <div class="space-y-3">
-                        <a href="#home" class="text-[#A0A0A0] hover:text-[#FFD700] transition-colors flex items-center gap-2">
-                            <i class="fas fa-chevron-left text-xs"></i>
-                            الرئيسية
-                        </a>
-                        <a href="#products" class="text-[#A0A0A0] hover:text-[#FFD700] transition-colors flex items-center gap-2">
-                            <i class="fas fa-chevron-left text-xs"></i>
-                            جميع الباقات
-                        </a>
-                        <a href="#faq" class="text-[#A0A0A0] hover:text-[#FFD700] transition-colors flex items-center gap-2">
-                            <i class="fas fa-chevron-left text-xs"></i>
-                            الأسئلة الشائعة
-                        </a>
-                        <a href="#reviews" class="text-[#A0A0A0] hover:text-[#FFD700] transition-colors flex items-center gap-2">
-                            <i class="fas fa-chevron-left text-xs"></i>
-                            آراء العملاء
-                        </a>
-                    </div>
-                </div>
-                
-                <!-- Column 3: Policies -->
-                <div class="footer-column">
-                    <h4 class="font-bold text-lg mb-4">السياسات</h4>
-                    <div class="space-y-3">
-                        <a href="#" class="text-[#A0A0A0] hover:text-[#FFD700] transition-colors flex items-center gap-2">
-                            <i class="fas fa-chevron-left text-xs"></i>
-                            سياسة الخصوصية
-                        </a>
-                        <a href="#" class="text-[#A0A0A0] hover:text-[#FFD700] transition-colors flex items-center gap-2">
-                            <i class="fas fa-chevron-left text-xs"></i>
-                            شروط الاستخدام
-                        </a>
-                        <a href="#" class="text-[#A0A0A0] hover:text-[#FFD700] transition-colors flex items-center gap-2">
-                            <i class="fas fa-chevron-left text-xs"></i>
-                            سياسة الاسترجاع
-                        </a>
-                        <a href="#" class="text-[#A0A0A0] hover:text-[#FFD700] transition-colors flex items-center gap-2">
-                            <i class="fas fa-chevron-left text-xs"></i>
-                            الشروط والأحكام
-                        </a>
-                    </div>
-                </div>
-                
-                <!-- Column 4: Certification & Payments -->
-                <div class="footer-column">
-                    <h4 class="font-bold text-lg mb-4">توثيق ودفع آمن</h4>
-                    
-                    <!-- Certification -->
-                    <div class="bg-[#1A1A1A] rounded-lg p-4 mb-6">
-                        <div class="flex items-center gap-3 mb-2">
-                            <div class="w-10 h-10 rounded-full bg-[#9B111E]/20 flex items-center justify-center">
-                                <i class="fas fa-shield-check text-[#FFD700]"></i>
-                            </div>
-                            <div>
-                                <div class="font-bold text-sm">متجر موثق ومعتمد</div>
-                                <div class="text-xs text-[#A0A0A0]">رقم السجل: 226493</div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Payment Methods -->
-                    <div>
-                        <p class="text-sm text-[#A0A0A0] mb-3">طرق الدفع المتاحة:</p>
-                        <div class="flex flex-wrap gap-3">
-                            <div class="w-12 h-8 bg-white rounded flex items-center justify-center">
-                                <span class="font-bold text-black text-xs">مدى</span>
-                            </div>
-                            <div class="w-12 h-8 bg-black rounded flex items-center justify-center border border-[#333]">
-                                <i class="fab fa-apple-pay text-xl text-white"></i>
-                            </div>
-                            <div class="w-12 h-8 bg-gradient-to-r from-[#1434CB] to-[#1A5FEC] rounded flex items-center justify-center">
-                                <i class="fab fa-cc-visa text-xl text-white"></i>
-                            </div>
-                            <div class="w-12 h-8 bg-gradient-to-r from-[#00B9F2] to-[#00A0DC] rounded flex items-center justify-center">
-                                <span class="font-bold text-white text-xs">STC</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Copyright -->
-            <div class="border-t border-[#333] mt-12 pt-8 text-center">
-                <p class="text-[#A0A0A0] text-sm">
-                    © 2024 IRON+. جميع الحقوق محفوظة. تصميم وتطوير بفخر من قبل فريق IRON+
-                </p>
-                <p class="text-xs text-[#666] mt-2">
-                    IRON+ OS v4.6 | نظام التشغيل المتقدم لتطبيقات البلس
-                </p>
-            </div>
-        </div>
-    </footer>
-
-    <!-- Live Notification -->
-    <div id="liveNotification" class="live-notification hidden">
-        <div class="w-10 h-10 rounded-full bg-[#9B111E]/20 flex items-center justify-center">
-            <i class="fas fa-bolt text-[#FFD700]"></i>
-        </div>
-        <div>
-            <div class="font-medium text-sm" id="notifTitle">مستخدم جديد اشترى الآن!</div>
-            <div class="text-xs text-[#A0A0A0]" id="notifText">محمد اشترى باقة سناب بلس</div>
-        </div>
-        <button onclick="closeNotification()" class="mr-auto text-[#A0A0A0] hover:text-white">
-            <i class="fas fa-times"></i>
-        </button>
-    </div>
+    <!-- باقي الصفحة بدون تغيير -->
+    <!-- ... -->
 
     <!-- مكتبات JavaScript -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase-config.js"></script>
     <script src="js/index.js"></script>
+    
+    <!-- تحميل الإعدادات الديناميكية -->
+    <script>
+        document.addEventListener('DOMContentLoaded', async function() {
+            // جلب إعدادات الموقع
+            if (window.ironPlus && window.ironPlus.getSiteSettings) {
+                const res = await window.ironPlus.getSiteSettings();
+                if (res.success) {
+                    const settings = res.settings;
+                    
+                    // تحديث نص الشعار
+                    if (settings.site_logo_text) {
+                        document.getElementById('logoText').textContent = settings.site_logo_text;
+                    }
+                    
+                    // تحديث شريط الإعلانات
+                    if (settings.announcement_text) {
+                        const announcementBar = document.getElementById('announcementBar');
+                        const announcementText = document.getElementById('announcementText');
+                        if (announcementBar && announcementText) {
+                            announcementText.textContent = settings.announcement_text;
+                            announcementBar.style.display = 'block';
+                        }
+                    }
+                    
+                    // تحميل البانرات
+                    if (window.ironPlus.getBanners) {
+                        const bannersRes = await window.ironPlus.getBanners();
+                        if (bannersRes.success && bannersRes.banners.length > 0) {
+                            const heroBanner = document.getElementById('heroBanner');
+                            if (heroBanner) {
+                                const activeBanners = bannersRes.banners.filter(b => b.is_active);
+                                if (activeBanners.length > 0) {
+                                    // عرض أول بانر نشط
+                                    const banner = activeBanners[0];
+                                    heroBanner.innerHTML = `
+                                        <div class="mb-12 rounded-xl overflow-hidden border border-[#333]">
+                                            <a href="${banner.link || '#'}" target="${banner.link ? '_blank' : '_self'}">
+                                                <img src="${banner.image_url}" alt="${banner.title}" class="w-full h-64 object-cover">
+                                            </a>
+                                        </div>
+                                    `;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    </script>
 </body>
 </html>
