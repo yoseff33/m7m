@@ -293,7 +293,8 @@ function generateStars(rating) {
 
 function formatPrice(price) {
     if (!price) return '0.00';
-    return parseFloat(price).toFixed(2);
+    // لازم نقسم السعر على 100 عشان نحول من هللة إلى ريال
+    return (parseFloat(price) / 100).toFixed(2); 
 }
 
 function addBuyButtonListeners() {
