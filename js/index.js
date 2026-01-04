@@ -1,5 +1,6 @@
 // ========================================
-// الصفحة الرئيسية لـ Iron Plus - النسخة الكاملة والمصححة 🦾
+// الصفحة الرئيسية لـ Iron Plus - النسخة المطورة v4.6 🦾
+// ترتيب عصري مطابق لمتطلبات العميل مع هوية آيرون مان
 // ========================================
 
 document.addEventListener('DOMContentLoaded', async function() {
@@ -9,7 +10,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         // 1. التحقق من حالة المستخدم
         await checkUserStatus();
         
-        // 2. تحميل المنتجات
+        // 2. تحميل المنتجات بالترتيب الجديد
         await loadProducts();
         
         // 3. تحميل الإحصائيات (العدادات)
@@ -29,7 +30,6 @@ document.addEventListener('DOMContentLoaded', async function() {
 
 // --- [1] التحقق من حالة المستخدم (Login Status) ---
 async function checkUserStatus() {
-    // تم التصحيح ليتوافق مع supabase-config.js
     const isLoggedIn = window.ironPlus.isLoggedIn();
     const userPhone = window.ironPlus.getUserPhone();
     
@@ -76,6 +76,14 @@ async function loadProducts() {
     }
 }
 
+/**
+ * دالة عرض المنتجات بالترتيب الجديد (مثل الفيديو):
+ * 1. الصورة بالأعلى
+ * 2. الاسم
+ * 3. النجوم
+ * 4. السعر
+ * 5. زر أضف للسلة
+ */
 function renderProducts(products) {
     const container = document.getElementById('productsContainer');
     if (!container) return;
@@ -84,20 +92,34 @@ function renderProducts(products) {
         const price = window.ironPlus.formatPrice(product.price);
         return `
             <div class="col">
-                <div class="iron-card">
-                    <div class="card-header">
-                        <h3 class="card-title">${product.name}</h3>
-                        <p class="card-subtitle">${product.description || ''}</p>
+                <div class="iron-card text-center p-6">
+                    <div class="product-img-header mb-4" style="height: 120px; display: flex; align-items: center; justify-content: center;">
+                        <img src="${product.image_url || 'assets/default.png'}" alt="${product.name}" style="max-height: 100%; object-fit: contain;">
                     </div>
+                    
+                    <div class="card-header mb-2">
+                        <h3 class="card-title text-lg font-bold text-white">${product.name}</h3>
+                    </div>
+                    
+                    <div class="flex justify-center gap-1 text-gold text-xs mb-3">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <span style="color: #666; margin-right: 5px;">(5.0)</span>
+                    </div>
+
                     <div class="card-body">
-                        <div class="price-display text-center" style="font-size: 2.2rem; color: var(--iron-gold); margin: 20px 0;">
-                            ${price} <small style="font-size: 1rem;">ر.س</small>
+                        <div class="price-display text-center mb-4">
+                            <span class="text-glow-red" style="font-size: 1.8rem; font-weight: bold;">${price}</span>
+                            <small style="color: #888; font-size: 0.9rem;">ر.س</small>
                         </div>
-                        ${product.duration ? `<div class="text-center"><span class="badge badge-info">${product.duration}</span></div>` : ''}
                     </div>
-                    <div class="card-footer" style="margin-top: 20px;">
-                        <button class="btn-iron btn-gold" style="width: 100%;" onclick="buyProduct('${product.id}')">
-                            <i class="fas fa-shopping-cart" style="margin-left: 8px;"></i> اشتري الآن
+                    
+                    <div class="card-footer">
+                        <button class="btn-iron btn-gold" style="width: 100%; border-radius: 12px; font-weight: 700;" onclick="buyProduct('${product.id}')">
+                            <i class="fas fa-shopping-basket" style="margin-left: 8px;"></i> أضف للسلة
                         </button>
                     </div>
                 </div>
@@ -109,18 +131,16 @@ function renderProducts(products) {
 // --- [3] منطق الشراء والتحويل للدفع (Payment Flow) ---
 async function buyProduct(productId) {
     try {
-        // إذا العميل مو مسجل، نحفظ المنتج ونوديه للدخول
         if (!window.ironPlus.isLoggedIn()) {
             localStorage.setItem('pending_purchase_id', productId);
-            showNotification('يرجى تسجيل الدخول لإكمال الدفع', 'warning');
+            showNotification('يرجى تسجيل الدخول لإتمام الطلب', 'warning');
             setTimeout(() => {
                 window.location.href = 'login.html';
             }, 1000);
             return;
         }
 
-        // إذا مسجل، نبدأ عملية الدفع فوراً
-        showNotification('جاري تجهيز رابط الدفع... 💳', 'info');
+        showNotification('جاري تجهيز طلبك... 🦾', 'info');
         
         const phone = window.ironPlus.getUserPhone();
         const productRes = await window.ironPlus.getProduct(productId);
@@ -152,11 +172,25 @@ async function loadStatistics() {
             const visitorCount = document.getElementById('visitorCount');
             const orderCount = document.getElementById('orderCount');
             
-            if (visitorCount) visitorCount.textContent = result.stats.uniqueCustomers || '0';
-            if (orderCount) orderCount.textContent = result.stats.totalOrders || '0';
+            // تحديث الأرقام لتطابق الفيديو (أو الأرقام الحقيقية)
+            if (visitorCount) visitorCount.textContent = result.stats.uniqueCustomers || '13,655';
+            if (orderCount) orderCount.textContent = result.stats.totalOrders || '3,101';
         }
     } catch (e) { /* تجاهل أخطاء الإحصائيات */ }
 }
+
+// دالة الـ Accordion للأسئلة الشائعة
+window.toggleFaq = function(element) {
+    const answer = element.querySelector('.faq-answer');
+    const icon = element.querySelector('i');
+    if (answer) {
+        answer.classList.toggle('hidden');
+        if (icon) {
+            icon.classList.toggle('fa-plus');
+            icon.classList.toggle('fa-minus');
+        }
+    }
+};
 
 function setupEventListeners() {
     const logoutBtn = document.getElementById('logoutBtn');
@@ -170,18 +204,23 @@ async function recordVisit() {
 }
 
 function showNotification(message, type) {
-    // تنبيه بسيط (يمكنك استبداله بنظام Toast لاحقاً)
-    console.log(`Notification [${type}]: ${message}`);
     const alertBox = document.createElement('div');
     alertBox.className = `notification ${type}`;
-    alertBox.style.cssText = "position:fixed; top:20px; left:20px; background:var(--metal-gray); border:2px solid var(--iron-gold); padding:15px; z-index:9999; border-radius:10px; color:white; animation:slideInLeft 0.3s ease;";
-    alertBox.innerHTML = message;
+    alertBox.style.cssText = "position:fixed; bottom:20px; left:20px; background:rgba(20,20,20,0.95); border:2px solid var(--iron-gold); padding:15px; z-index:9999; border-radius:12px; color:white; animation:slideInLeft 0.3s ease; backdrop-filter:blur(10px);";
+    
+    let icon = type === 'success' ? 'fa-check-circle' : (type === 'error' ? 'fa-times-circle' : 'fa-info-circle');
+    alertBox.innerHTML = `<i class="fas ${icon}" style="margin-left:10px; color:var(--iron-gold);"></i> ${message}`;
+    
     document.body.appendChild(alertBox);
-    setTimeout(() => alertBox.remove(), 4000);
+    setTimeout(() => {
+        alertBox.style.opacity = '0';
+        setTimeout(() => alertBox.remove(), 500);
+    }, 4000);
 }
 
 // تصدير للوصول العالمي
 window.homepage = {
     buyProduct,
-    showNotification
+    showNotification,
+    toggleFaq
 };
