@@ -1,821 +1,961 @@
 // ========================================
-// لوحة تحكم Iron Plus v5.0 - النظام الإداري الشامل
+// الصفحة الرئيسية لـ Iron Plus v5.5 🦾
+// النسخة الديناميكية مع نظام الإدارة الشامل
 // ========================================
 
-// 1. تشغيل النظام عند تحميل الصفحة
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('Jarvis: Admin Systems Initializing v5.0... 🦾');
+// بيانات المنتجات الافتراضية (للتنمية)
+const DEFAULT_PRODUCTS = [
+    {
+        id: 'snap-plus-3m',
+        name: 'سناب بلس - ٣ أشهر',
+        description: 'باقة سناب بلس المميزة مع مزايا متقدمة وضد الحظر',
+        price: 8999, // بالهللة
+        category: 'snap',
+        image_url: 'https://cdn-icons-png.flaticon.com/512/2111/2111646.png',
+        rating: 5,
+        features: ['ضد الحظر', 'مزايا متقدمة', 'دعم فني 24/7', 'تحديثات مستمرة'],
+        stock: 10
+    },
+    {
+        id: 'tiktok-plus-6m',
+        name: 'تيك توك بلس - ٦ أشهر',
+        description: 'باقة تيك توك بلس الشاملة مع أدوات تحليل متقدمة',
+        price: 14999, // بالهللة
+        category: 'tiktok',
+        image_url: 'https://cdn-icons-png.flaticon.com/512/3046/3046121.png',
+        rating: 5,
+        features: ['أدوات تحليل', 'تحميل مباشر', 'لا إعلانات', 'دعم فني'],
+        stock: 8
+    },
+    {
+        id: 'youtube-premium-1y',
+        name: 'يوتيوب بريميوم - سنة',
+        description: 'يوتيوب بريميوم مع تحميل الفيديوهات واستماع في الخلفية',
+        price: 19999, // بالهللة
+        category: 'youtube',
+        image_url: 'https://cdn-icons-png.flaticon.com/512/1384/1384060.png',
+        rating: 4.5,
+        features: ['لا إعلانات', 'تحميل الفيديوهات', 'استماع خلفي', 'يوتيوب ميوزك'],
+        stock: 5
+    },
+    {
+        id: 'netflix-premium',
+        name: 'نيتفليكس بريميوم',
+        description: 'اشتراك نيتفليكس بريميوم مع ٤ شاشات ودقة 4K',
+        price: 24999, // بالهللة
+        category: 'other',
+        image_url: 'https://cdn-icons-png.flaticon.com/512/5977/5977590.png',
+        rating: 5,
+        features: ['٤ شاشات', 'دقة 4K', 'محتوى حصري', 'تحميل للمشاهدة لاحقاً'],
+        stock: 3
+    }
+];
+
+// متغيرات النظام
+let siteSettings = null;
+let liveNotificationsInterval = null;
+
+document.addEventListener('DOMContentLoaded', async function() {
+    console.log('🚀 IRON+ Homepage v5.5 Initializing...');
+    console.log('🦾 J.A.R.V.I.S Systems: ONLINE');
     
-    setTimeout(async () => {
-        if (!window.ironPlus || !window.ironPlus.isAdminLoggedIn()) {
-            console.log('Access Denied. Showing Login Screen...');
-            showLoginScreen();
-            return;
-        }
-        await initializeAdminPanel();
-    }, 200);
-});
-
-// --- أولاً: إدارة شاشات الدخول والواجهة ---
-
-function showLoginScreen() {
-    const loginScreen = document.getElementById('adminLoginScreen');
-    const dashboard = document.getElementById('adminDashboard');
-    if (loginScreen) loginScreen.style.display = 'flex';
-    if (dashboard) dashboard.style.display = 'none';
-    setupLoginListeners();
-}
-
-function setupLoginListeners() {
-    const loginForm = document.getElementById('adminLoginForm');
-    if (!loginForm) return;
-    
-    loginForm.onsubmit = async function(e) {
-        e.preventDefault();
-        const username = document.getElementById('adminUsername').value.trim();
-        const password = document.getElementById('adminPassword').value;
-        const messageDiv = document.getElementById('loginMessage');
-        
-        clearMessage(messageDiv);
-        
-        if (!username || !password) {
-            showMessage(messageDiv, 'يرجى ملء جميع الحقول يا بطل', 'error');
-            return;
-        }
-        
-        showMessage(messageDiv, 'جاري فحص الشفرات الأمنية...', 'info');
-        
-        try {
-            const result = await window.ironPlus.adminLogin(username, password);
-            if (result.success) {
-                showMessage(messageDiv, 'تم التحقق بنجاح! جاري الإقلاع 🚀', 'success');
-                setTimeout(() => { window.location.reload(); }, 1000);
-            } else {
-                showMessage(messageDiv, result.message || 'بيانات الدخول خاطئة', 'error');
-            }
-        } catch (error) {
-            console.error('Login error:', error);
-            showMessage(messageDiv, 'خطأ في الاتصال بالسيرفر المركزي', 'error');
-        }
-    };
-}
-
-// --- ثانياً: تهيئة الأنظمة (Initialization) ---
-
-async function initializeAdminPanel() {
     try {
-        document.getElementById('adminLoginScreen').style.display = 'none';
-        document.getElementById('adminDashboard').style.display = 'block';
+        // 1. تحميل إعدادات الموقع
+        await loadSiteSettings();
         
-        updateElement('adminName', `مرحباً، ${window.ironPlus.getAdminUsername()}`);
+        // 2. التحقق من حالة المستخدم
+        await checkUserStatus();
         
-        await loadDashboardData();
-        await loadQuickStats();
-        await loadRecentActivity();
+        // 3. تحميل وعرض المنتجات
         await loadProducts();
-        await loadOrders();
-        await loadProductsForCodes();
-        await loadSettings();
-        await loadCoupons();
+        
+        // 4. تحميل البانرات الديناميكية
         await loadBanners();
-        await loadLoginLogs();
+        
+        // 5. تحميل الإحصائيات
+        await loadStatistics();
+        
+        // 6. إعداد مستمعي الأحداث
         setupEventListeners();
         
-        console.log('Systems Online: Admin panel fully operational v5.0.');
+        // 7. تسجيل الزيارة
+        await recordVisit();
+        
+        // 8. إعداد تأثيرات التمرير
+        setupScrollEffects();
+        
+        // 9. إعداد الإشعارات الحية
+        setupLiveNotifications();
+        
+        // 10. تحديث عداد السلة
+        updateCartCount();
+        
+        console.log('✅ All systems operational - Dynamic Mode');
     } catch (error) {
-        console.error('Boot error:', error);
-        showNotification('حدث خطأ في تحميل اللوحة', 'error');
+        console.error('❌ Failed to initialize homepage:', error);
+        showNotification('حدث خطأ في تحميل الصفحة. جرب تحديث الصفحة.', 'error');
     }
-}
+});
 
-// --- ثالثاً: إدارة التبويبات (Tabs) ---
-
-function switchTab(tabName) {
-    // إخفاء جميع التبويبات
-    const tabs = ['dashboard', 'products', 'settings', 'marketing', 'content', 'coupons', 'banners', 'security', 'orders'];
-    tabs.forEach(tab => {
-        document.getElementById(tab + 'Tab')?.classList.remove('active');
-        document.querySelector(`.admin-tab[onclick="switchTab('${tab}')"]`)?.classList.remove('active');
-    });
-    
-    // إظهار التبويب المطلوب
-    document.getElementById(tabName + 'Tab')?.classList.add('active');
-    document.querySelector(`.admin-tab[onclick="switchTab('${tabName}')"]`)?.classList.add('active');
-    
-    // تحميل بيانات التبويب إذا لزم
-    switch(tabName) {
-        case 'dashboard':
-            loadQuickStats();
-            loadRecentActivity();
-            break;
-        case 'coupons':
-            loadCoupons();
-            break;
-        case 'banners':
-            loadBanners();
-            break;
-        case 'security':
-            loadLoginLogs();
-            break;
-    }
-}
-
-// --- رابعاً: إدارة البيانات (Dashboard & Lists) ---
-
-async function loadDashboardData() {
-    const res = await window.ironPlus.getSiteStats();
-    if (res.success) {
-        updateElement('totalSales', `${window.ironPlus.formatPrice(res.stats.totalSales)} ر.س`);
-        updateElement('availableCodes', res.stats.availableCodes);
-        updateElement('totalCustomers', res.stats.uniqueCustomers);
-        updateElement('dailyVisits', res.stats.dailyVisits || 0);
-    }
-}
-
-async function loadQuickStats() {
-    const res = await window.ironPlus.getQuickStats();
-    if (res.success) {
-        const stats = res.stats;
-        updateElement('salesToday', `${window.ironPlus.formatPrice(stats.salesToday)} ر.س`);
-        updateElement('ordersToday', stats.ordersToday);
-        updateElement('customersToday', stats.customersToday);
-        updateElement('avgOrderToday', `${window.ironPlus.formatPrice(stats.avgOrderToday)} ر.س`);
-        updateElement('salesWeek', `${window.ironPlus.formatPrice(stats.salesWeek)} ر.س`);
-        updateElement('ordersWeek', stats.ordersWeek);
-        updateElement('customersWeek', stats.customersWeek);
-        updateElement('avgOrderWeek', `${window.ironPlus.formatPrice(stats.avgOrderWeek)} ر.س`);
-    }
-}
-
-async function loadRecentActivity() {
-    const res = await window.ironPlus.getRecentActivity();
-    const container = document.getElementById('recentActivity');
-    if (res.success && container) {
-        const activities = res.activities;
-        if (activities.length === 0) {
-            container.innerHTML = '<div class="text-center py-8 text-gray-400">لا يوجد نشاط حديث</div>';
+// --- [1] تحميل إعدادات الموقع ---
+async function loadSiteSettings() {
+    try {
+        if (!window.ironPlus) {
+            console.warn('ironPlus library not found, using default settings');
+            siteSettings = window.ironPlus?.getDefaultSettings?.() || {};
             return;
         }
         
-        container.innerHTML = activities.map(activity => `
-            <div class="activity-item mb-4 p-3 border-b border-gray-800 last:border-0">
-                <div class="flex items-start gap-3">
-                    <div class="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center">
-                        <i class="fas fa-${activity.icon || 'bell'} text-xs text-${activity.type === 'success' ? 'green' : activity.type === 'warning' ? 'yellow' : 'red'}-500"></i>
+        const res = await window.ironPlus.getSiteSettings();
+        if (res.success) {
+            siteSettings = res.settings;
+            applySiteSettings();
+        } else {
+            siteSettings = window.ironPlus.getDefaultSettings();
+            applySiteSettings();
+        }
+    } catch (error) {
+        console.error('Error loading site settings:', error);
+        siteSettings = window.ironPlus?.getDefaultSettings?.() || {};
+        applySiteSettings();
+    }
+}
+
+function applySiteSettings() {
+    if (!siteSettings) return;
+    
+    // تحديث عنوان الصفحة
+    if (siteSettings.meta_title) {
+        document.title = siteSettings.meta_title;
+        document.getElementById('pageTitle').textContent = siteSettings.meta_title;
+    }
+    
+    // تحديث meta description
+    if (siteSettings.meta_description) {
+        document.getElementById('metaDescription').setAttribute('content', siteSettings.meta_description);
+    }
+    
+    // تحديث meta keywords
+    if (siteSettings.meta_keywords) {
+        document.getElementById('metaKeywords').setAttribute('content', siteSettings.meta_keywords);
+    }
+    
+    // تحديث Favicon
+    if (siteSettings.site_favicon) {
+        document.getElementById('favicon').href = siteSettings.site_favicon;
+    }
+    
+    // تحديث شريط الإعلانات
+    if (siteSettings.announcement_bar) {
+        const announcementBar = document.getElementById('announcementBar');
+        const announcementText = document.getElementById('announcementText');
+        if (announcementBar && announcementText) {
+            announcementText.textContent = siteSettings.announcement_bar;
+            announcementBar.classList.remove('hidden');
+        }
+    }
+    
+    // تحديث وسائل التواصل في الفوتر
+    updateSocialLinks();
+    
+    // تحديث روابط السياسات
+    updatePolicyLinks();
+    
+    // إضافة أكواد التتبع
+    setupTrackingCodes();
+}
+
+function updateSocialLinks() {
+    if (!siteSettings) return;
+    
+    // واتساب
+    if (siteSettings.whatsapp_number) {
+        const whatsappLink = document.getElementById('whatsappLink');
+        if (whatsappLink) {
+            whatsappLink.href = `https://wa.me/${siteSettings.whatsapp_number}`;
+        }
+    }
+    
+    // سناب شات
+    if (siteSettings.snapchat_username) {
+        const snapchatLink = document.getElementById('snapchatLink');
+        if (snapchatLink) {
+            snapchatLink.href = `https://snapchat.com/add/${siteSettings.snapchat_username}`;
+        }
+    }
+    
+    // تيك توك
+    if (siteSettings.tiktok_username) {
+        const tiktokLink = document.getElementById('tiktokLink');
+        if (tiktokLink) {
+            tiktokLink.href = `https://tiktok.com/${siteSettings.tiktok_username}`;
+        }
+    }
+    
+    // تويتر
+    if (siteSettings.twitter_username) {
+        const twitterLink = document.getElementById('twitterLink');
+        if (twitterLink) {
+            twitterLink.href = `https://twitter.com/${siteSettings.twitter_username}`;
+        }
+    }
+}
+
+function updatePolicyLinks() {
+    if (!siteSettings) return;
+    
+    // سياسة الاسترجاع
+    const refundPolicyLink = document.getElementById('refundPolicyLink');
+    if (refundPolicyLink && siteSettings.refund_policy_active) {
+        refundPolicyLink.href = `policy.html?type=refund`;
+    }
+    
+    // الشروط والأحكام
+    const termsLink = document.getElementById('termsLink');
+    if (termsLink && siteSettings.terms_active) {
+        termsLink.href = `policy.html?type=terms`;
+    }
+    
+    // سياسة الخصوصية
+    const privacyLink = document.getElementById('privacyLink');
+    if (privacyLink) {
+        privacyLink.href = `policy.html?type=privacy`;
+    }
+    
+    // من نحن
+    const aboutLink = document.getElementById('aboutLink');
+    if (aboutLink && siteSettings.about_active) {
+        aboutLink.href = `policy.html?type=about`;
+    }
+}
+
+function setupTrackingCodes() {
+    if (!siteSettings) return;
+    
+    // Google Analytics
+    if (siteSettings.google_analytics_id && siteSettings.conversion_tracking) {
+        const script = document.getElementById('googleAnalyticsScript');
+        script.innerHTML = `
+            (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+            })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+            ga('create', '${siteSettings.google_analytics_id}', 'auto');
+            ga('send', 'pageview');
+        `;
+    }
+    
+    // Snapchat Pixel
+    if (siteSettings.snapchat_pixel_id && siteSettings.conversion_tracking) {
+        const script = document.getElementById('snapchatPixelScript');
+        script.innerHTML = `
+            (function(e,t,n){if(e.snaptr)return;var a=e.snaptr=function()
+            {a.handleRequest?a.handleRequest.apply(a,arguments):a.queue.push(arguments)};
+            a.queue=[];var s='script';r=t.createElement(s);r.async=!0;
+            r.src=n;var u=t.getElementsByTagName(s)[0];
+            u.parentNode.insertBefore(r,u);})(window,document,
+            'https://sc-static.net/scevent.min.js');
+            snaptr('init', '${siteSettings.snapchat_pixel_id}');
+            snaptr('track', 'PAGE_VIEW');
+        `;
+    }
+}
+
+// --- [2] التحقق من حالة المستخدم ---
+async function checkUserStatus() {
+    try {
+        if (!window.ironPlus) {
+            console.warn('ironPlus library not found, using mock data');
+            return mockUserStatus();
+        }
+        
+        const isLoggedIn = window.ironPlus.isLoggedIn();
+        const userPhone = window.ironPlus.getUserPhone();
+        
+        updateUserUI(isLoggedIn, userPhone);
+    } catch (error) {
+        console.error('Error checking user status:', error);
+        mockUserStatus();
+    }
+}
+
+function mockUserStatus() {
+    updateUserUI(false, null);
+}
+
+function updateUserUI(isLoggedIn, userPhone) {
+    const userInfo = document.getElementById('userInfo');
+    const loginButton = document.getElementById('loginButton');
+    const mobileLoginButton = document.getElementById('mobileLoginButton');
+    const userPhoneDisplay = document.getElementById('userPhone');
+
+    if (isLoggedIn && userPhone) {
+        if (userInfo) {
+            userInfo.style.display = 'flex';
+            userInfo.style.animation = 'slideInLeft 0.3s ease';
+        }
+        if (loginButton) loginButton.style.display = 'none';
+        if (mobileLoginButton) mobileLoginButton.style.display = 'none';
+        if (userPhoneDisplay) userPhoneDisplay.textContent = userPhone;
+        
+        const mobileMenu = document.getElementById('mobileMenu');
+        if (mobileMenu) {
+            const logoutBtn = document.createElement('button');
+            logoutBtn.className = 'btn-primary mt-4';
+            logoutBtn.innerHTML = '<i class="fas fa-power-off ml-2"></i> تسجيل الخروج';
+            logoutBtn.addEventListener('click', async () => {
+                if (window.ironPlus && window.ironPlus.logout) {
+                    await window.ironPlus.logout();
+                }
+                location.reload();
+            });
+            
+            const existingLogoutBtn = mobileMenu.querySelector('.logout-btn');
+            if (!existingLogoutBtn) {
+                logoutBtn.classList.add('logout-btn');
+                mobileMenu.querySelector('.flex-col').appendChild(logoutBtn);
+            }
+        }
+    } else {
+        if (userInfo) userInfo.style.display = 'none';
+        if (loginButton) loginButton.style.display = 'block';
+        if (mobileLoginButton) mobileLoginButton.style.display = 'block';
+        
+        const existingLogoutBtn = document.querySelector('.logout-btn');
+        if (existingLogoutBtn) {
+            existingLogoutBtn.remove();
+        }
+    }
+}
+
+// --- [3] تحميل وعرض المنتجات ---
+async function loadProducts() {
+    const container = document.getElementById('productsContainer');
+    const loading = container ? container.querySelector('.loading-spinner') : null;
+    
+    if (!container) {
+        console.error('Products container not found');
+        return;
+    }
+    
+    try {
+        if (loading) loading.style.display = 'block';
+        
+        let products = [];
+        
+        if (window.ironPlus && window.ironPlus.getProducts) {
+            const result = await window.ironPlus.getProducts();
+            if (result.success) {
+                products = result.products;
+            } else {
+                throw new Error('Failed to fetch products');
+            }
+        } else {
+            console.log('Using mock products data');
+            products = DEFAULT_PRODUCTS;
+        }
+        
+        if (products.length > 0) {
+            renderProducts(products);
+        } else {
+            showNoProductsMessage(container);
+        }
+    } catch (error) {
+        console.error('Error loading products:', error);
+        showNoProductsMessage(container);
+        showNotification('حدث خطأ في تحميل المنتجات', 'error');
+    } finally {
+        if (loading) loading.style.display = 'none';
+    }
+}
+
+function renderProducts(products) {
+    const container = document.getElementById('productsContainer');
+    if (!container) return;
+    
+    container.innerHTML = products.map(product => {
+        const price = formatPrice(product.price);
+        const stars = generateStars(product.rating || 5);
+        
+        let iconClass = 'fas fa-mobile-alt';
+        let iconColor = '#FFD700';
+        
+        if (product.category === 'snap') {
+            iconClass = 'fab fa-snapchat-ghost';
+            iconColor = '#FFFC00';
+        } else if (product.category === 'tiktok') {
+            iconClass = 'fab fa-tiktok';
+            iconColor = '#000000';
+        } else if (product.category === 'youtube') {
+            iconClass = 'fab fa-youtube';
+            iconColor = '#FF0000';
+        } else if (product.name.includes('فك حظر')) {
+            iconClass = 'fas fa-unlock-alt';
+            iconColor = '#9B111E';
+        }
+        
+        // تحويل المميزات إلى قائمة
+        let featuresList = '';
+        if (product.features && Array.isArray(product.features)) {
+            featuresList = product.features.slice(0, 3).map(feature => 
+                `<li class="flex items-center gap-2 text-sm text-gray-400">
+                    <i class="fas fa-check text-green-500 text-xs"></i>
+                    <span>${feature}</span>
+                </li>`
+            ).join('');
+        }
+        
+        return `
+            <div class="product-card group">
+                <!-- Product Image -->
+                <div class="h-40 bg-gradient-to-br from-[#1A1A1A] to-[#2A2A2A] flex items-center justify-center relative overflow-hidden">
+                    <div class="text-center relative z-10">
+                        <i class="${iconClass} text-6xl" style="color: ${iconColor}"></i>
+                        <div class="mt-2 text-sm text-[#A0A0A0]">${product.category === 'snap' ? 'Snapchat Plus' : product.category === 'tiktok' ? 'TikTok Plus' : product.category === 'youtube' ? 'YouTube Premium' : product.name}</div>
                     </div>
-                    <div class="flex-1">
-                        <div class="font-medium">${activity.title}</div>
-                        <div class="text-sm text-gray-400">${activity.description}</div>
-                        <div class="text-xs text-gray-500 mt-1">${window.ironPlus.formatDate(activity.created_at)}</div>
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+                </div>
+                
+                <!-- Product Info -->
+                <div class="p-6 flex-1 flex flex-col">
+                    <h3 class="font-bold text-xl mb-3">${product.name}</h3>
+                    
+                    <!-- Rating -->
+                    <div class="rating-stars mb-4">
+                        ${stars}
+                        <span class="text-sm text-[#A0A0A0] mr-2">(${product.rating || 5}.0)</span>
+                    </div>
+                    
+                    <!-- Features -->
+                    ${featuresList ? `
+                        <ul class="space-y-2 mb-4">
+                            ${featuresList}
+                        </ul>
+                    ` : ''}
+                    
+                    <!-- Description -->
+                    <p class="text-[#A0A0A0] text-sm mb-4 flex-grow line-clamp-2">
+                        ${product.description || 'باقة مميزة مع مزايا متقدمة'}
+                    </p>
+                    
+                    <!-- Stock -->
+                    ${product.stock ? `
+                        <div class="mb-4">
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-gray-400">المخزون:</span>
+                                <span class="${product.stock < 5 ? 'text-red-500' : 'text-green-500'} font-medium">
+                                    ${product.stock} متبقي
+                                </span>
+                            </div>
+                            <div class="w-full bg-gray-800 rounded-full h-2 mt-1">
+                                <div class="bg-green-500 h-2 rounded-full" style="width: ${Math.min((product.stock / 10) * 100, 100)}%"></div>
+                            </div>
+                        </div>
+                    ` : ''}
+                    
+                    <!-- Price -->
+                    <div class="mt-auto">
+                        <div class="flex items-baseline gap-2 mb-4">
+                            <span class="text-2xl font-bold text-[#FFD700]">${price}</span>
+                            <span class="text-[#A0A0A0]">ر.س</span>
+                            ${product.duration ? `
+                                <span class="text-xs bg-gray-800 text-gray-300 px-2 py-1 rounded">
+                                    ${product.duration}
+                                </span>
+                            ` : ''}
+                        </div>
+                        
+                        <!-- Add to Cart Button -->
+                        <button class="btn-primary w-full py-3 add-to-cart-btn" data-product-id="${product.id}" data-product-name="${product.name}" data-product-price="${product.price}">
+                            <i class="fas fa-cart-plus ml-2"></i> أضف للسلة
+                        </button>
                     </div>
                 </div>
             </div>
-        `).join('');
+        `;
+    }).join('');
+    
+    addCartButtonListeners();
+}
+
+function generateStars(rating) {
+    const fullStars = Math.floor(rating);
+    const halfStar = rating % 1 >= 0.5;
+    const emptyStars = 5 - fullStars - (halfStar ? 1 : 0);
+    
+    let stars = '';
+    
+    for (let i = 0; i < fullStars; i++) {
+        stars += '<i class="fas fa-star"></i>';
+    }
+    
+    if (halfStar) {
+        stars += '<i class="fas fa-star-half-alt"></i>';
+    }
+    
+    for (let i = 0; i < emptyStars; i++) {
+        stars += '<i class="far fa-star"></i>';
+    }
+    
+    return stars;
+}
+
+function formatPrice(price) {
+    if (!price && price !== 0) return '0.00';
+    return (parseFloat(price) / 100).toLocaleString('ar-SA', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+}
+
+function addCartButtonListeners() {
+    document.querySelectorAll('.add-to-cart-btn').forEach(button => {
+        button.addEventListener('click', async function() {
+            const productId = this.getAttribute('data-product-id');
+            const productName = this.getAttribute('data-product-name');
+            const productPrice = this.getAttribute('data-product-price');
+            
+            if (productId) {
+                await addToCart(productId, productName, productPrice);
+            }
+        });
+    });
+}
+
+async function addToCart(productId, productName, productPrice) {
+    try {
+        if (!window.ironPlus || !window.ironPlus.addToCart) {
+            // استخدام localStorage مباشرة إذا لم تكن الدالة متاحة
+            let cart = JSON.parse(localStorage.getItem('iron_cart')) || [];
+            const existingIndex = cart.findIndex(item => item.id === productId);
+            
+            if (existingIndex > -1) {
+                cart[existingIndex].quantity += 1;
+            } else {
+                cart.push({
+                    id: productId,
+                    name: productName,
+                    price: parseInt(productPrice),
+                    quantity: 1
+                });
+            }
+            
+            localStorage.setItem('iron_cart', JSON.stringify(cart));
+            updateCartCount();
+            showNotification(`تمت إضافة ${productName} إلى السلة 🛒`, 'success');
+            return;
+        }
+        
+        const res = await window.ironPlus.addToCart(productId);
+        if (res.success) {
+            showNotification(`تمت إضافة ${productName} إلى السلة 🛒`, 'success');
+            updateCartCount();
+            
+            // تأثير على زر السلة
+            const cartIcon = document.querySelector('.fa-shopping-bag');
+            if (cartIcon) {
+                cartIcon.style.transform = 'scale(1.2)';
+                setTimeout(() => {
+                    cartIcon.style.transform = 'scale(1)';
+                }, 300);
+            }
+        } else {
+            showNotification(res.message || 'حدث خطأ أثناء إضافة المنتج', 'error');
+        }
+    } catch (error) {
+        console.error('Add to cart error:', error);
+        showNotification('حدث خطأ أثناء إضافة المنتج إلى السلة', 'error');
     }
 }
 
-async function loadProducts() {
-    const res = await window.ironPlus.getProducts();
-    const tbody = document.getElementById('productsTableBody');
-    if (res.success && tbody) {
-        tbody.innerHTML = res.products.map(p => `
-            <tr>
-                <td><img src="${p.image_url || 'assets/default.png'}" style="width:40px; border-radius:5px;" onerror="this.src='assets/default.png'"></td>
-                <td><strong>${p.name}</strong><br><small class="text-gray-400">${p.description?.substring(0, 50) || ''}</small></td>
-                <td><div class="text-gold">${window.ironPlus.formatPrice(p.price)} ر.س</div></td>
-                <td>${p.duration || '-'}</td>
-                <td>${p.stock || '∞'}</td>
-                <td>
-                    <div class="action-buttons">
-                        <button onclick="adminPanel.showProductModal('${p.id}')" class="btn-action"><i class="fas fa-edit"></i></button>
-                        <button onclick="adminPanel.deleteProduct('${p.id}', '${p.name}')" class="btn-action btn-delete"><i class="fas fa-trash"></i></button>
-                    </div>
-                </td>
-            </tr>
-        `).join('');
-    }
+function showNoProductsMessage(container) {
+    container.innerHTML = `
+        <div class="col-span-4 text-center py-12">
+            <div class="no-products-icon mb-6">
+                <i class="fas fa-box-open text-4xl text-gray-600"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-300 mb-2">لا توجد باقات متاحة حالياً</h3>
+            <p class="text-gray-500 mb-6">نعمل على إضافة باقات جديدة قريباً</p>
+            <button onclick="location.reload()" class="btn-primary">
+                <i class="fas fa-sync-alt ml-2"></i> تحديث الصفحة
+            </button>
+        </div>
+    `;
 }
 
-async function loadOrders(filter = 'all') {
-    const res = await window.ironPlus.getAllOrders({status: filter === 'all' ? null : filter});
-    const tbody = document.getElementById('ordersTableBody');
-    if (res.success && tbody) {
-        tbody.innerHTML = res.orders.map(o => `
-            <tr>
-                <td><small>${o.id.substring(0,8)}</small></td>
-                <td>${o.customer_phone}</td>
-                <td>${o.products?.name || 'N/A'}</td>
-                <td>${window.ironPlus.formatPrice(o.amount)} ر.س</td>
-                <td>${o.discount ? `${window.ironPlus.formatPrice(o.discount)} ر.س` : '-'}</td>
-                <td><strong>${window.ironPlus.formatPrice(o.total || o.amount)} ر.س</strong></td>
-                <td>${window.ironPlus.formatDate(o.created_at)}</td>
-                <td><span class="status-badge status-${o.status}">${getStatusText(o.status)}</span></td>
-                <td><small>${o.activation_code || 'لم يسلم بعد'}</small></td>
-                <td>
-                    <div class="action-buttons">
-                        <button onclick="adminPanel.deliverOrder('${o.id}', '${o.product_id}')" class="btn-action btn-success" title="تسليم الكود"><i class="fas fa-key"></i></button>
-                        <button onclick="adminPanel.contactCustomer('${o.customer_phone}')" class="btn-action"><i class="fab fa-whatsapp"></i></button>
-                        <button onclick="adminPanel.viewOrder('${o.id}')" class="btn-action" title="تفاصيل"><i class="fas fa-eye"></i></button>
-                    </div>
-                </td>
-            </tr>
-        `).join('');
-    }
-}
-
-async function loadSettings() {
-    const res = await window.ironPlus.getSiteSettings();
-    if (res.success && res.settings) {
-        const settings = res.settings;
-        
-        // الإعدادات العامة
-        if (document.getElementById('siteName')) document.getElementById('siteName').value = settings.site_name || '';
-        if (document.getElementById('siteLogo')) document.getElementById('siteLogo').value = settings.site_logo || '';
-        if (document.getElementById('siteFavicon')) document.getElementById('siteFavicon').value = settings.site_favicon || '';
-        if (document.getElementById('announcementBar')) document.getElementById('announcementBar').value = settings.announcement_bar || '';
-        if (document.getElementById('maintenanceMode')) document.getElementById('maintenanceMode').checked = settings.maintenance_mode || false;
-        
-        // وسائل التواصل
-        if (document.getElementById('whatsappNumber')) document.getElementById('whatsappNumber').value = settings.whatsapp_number || '';
-        if (document.getElementById('snapchatUsername')) document.getElementById('snapchatUsername').value = settings.snapchat_username || '';
-        if (document.getElementById('tiktokUsername')) document.getElementById('tiktokUsername').value = settings.tiktok_username || '';
-        if (document.getElementById('twitterUsername')) document.getElementById('twitterUsername').value = settings.twitter_username || '';
-        if (document.getElementById('contactEmail')) document.getElementById('contactEmail').value = settings.contact_email || '';
-        
-        // إعدادات الدفع
-        if (document.getElementById('taxRate')) document.getElementById('taxRate').value = settings.tax_rate || 15;
-        if (document.getElementById('minOrderAmount')) document.getElementById('minOrderAmount').value = settings.min_order_amount || 0;
-        if (document.getElementById('deliveryFee')) document.getElementById('deliveryFee').value = settings.delivery_fee || 0;
-        if (document.getElementById('currency')) document.getElementById('currency').value = settings.currency || 'SAR';
-        
-        // إعدادات SEO
-        if (document.getElementById('metaTitle')) document.getElementById('metaTitle').value = settings.meta_title || '';
-        if (document.getElementById('metaDescription')) document.getElementById('metaDescription').value = settings.meta_description || '';
-        if (document.getElementById('metaKeywords')) document.getElementById('metaKeywords').value = settings.meta_keywords || '';
-        if (document.getElementById('canonicalUrl')) document.getElementById('canonicalUrl').value = settings.canonical_url || '';
-        
-        // أدوات التتبع
-        if (document.getElementById('googleAnalyticsId')) document.getElementById('googleAnalyticsId').value = settings.google_analytics_id || '';
-        if (document.getElementById('snapchatPixelId')) document.getElementById('snapchatPixelId').value = settings.snapchat_pixel_id || '';
-        if (document.getElementById('facebookPixelId')) document.getElementById('facebookPixelId').value = settings.facebook_pixel_id || '';
-        if (document.getElementById('twitterPixelId')) document.getElementById('twitterPixelId').value = settings.twitter_pixel_id || '';
-        if (document.getElementById('conversionTracking')) document.getElementById('conversionTracking').checked = settings.conversion_tracking || false;
-        
-        // إشعارات حية
-        if (document.getElementById('liveNotifications')) document.getElementById('liveNotifications').checked = settings.live_notifications || false;
-        if (document.getElementById('notificationDuration')) document.getElementById('notificationDuration').value = settings.notification_duration || 10;
-        if (document.getElementById('notificationTexts')) document.getElementById('notificationTexts').value = settings.notification_texts || '';
-        if (document.getElementById('realOrderNotifications')) document.getElementById('realOrderNotifications').checked = settings.real_order_notifications || false;
-        
-        // المحتوى القانوني
-        if (document.getElementById('refundPolicyTitle')) document.getElementById('refundPolicyTitle').value = settings.refund_policy_title || 'سياسة الاسترجاع والإستبدال';
-        if (document.getElementById('refundPolicyContent')) document.getElementById('refundPolicyContent').value = settings.refund_policy_content || '';
-        if (document.getElementById('refundPolicyActive')) document.getElementById('refundPolicyActive').checked = settings.refund_policy_active || true;
-        
-        if (document.getElementById('termsTitle')) document.getElementById('termsTitle').value = settings.terms_title || 'الشروط والأحكام';
-        if (document.getElementById('termsContent')) document.getElementById('termsContent').value = settings.terms_content || '';
-        if (document.getElementById('termsActive')) document.getElementById('termsActive').checked = settings.terms_active || true;
-        
-        if (document.getElementById('aboutTitle')) document.getElementById('aboutTitle').value = settings.about_title || 'من نحن';
-        if (document.getElementById('aboutContent')) document.getElementById('aboutContent').value = settings.about_content || '';
-        if (document.getElementById('aboutActive')) document.getElementById('aboutActive').checked = settings.about_active || true;
-        
-        // إعدادات الأمان
-        if (document.getElementById('twoFactorAuth')) document.getElementById('twoFactorAuth').checked = settings.two_factor_auth || false;
-        if (document.getElementById('maxLoginAttempts')) document.getElementById('maxLoginAttempts').value = settings.max_login_attempts || 5;
-        if (document.getElementById('blockDuration')) document.getElementById('blockDuration').value = settings.block_duration || 15;
-        if (document.getElementById('userActivityLogging')) document.getElementById('userActivityLogging').checked = settings.user_activity_logging || true;
-        if (document.getElementById('forceHTTPS')) document.getElementById('forceHTTPS').checked = settings.force_https || true;
-    }
-}
-
-async function loadCoupons() {
-    const res = await window.ironPlus.getCoupons();
-    const tbody = document.getElementById('couponsTableBody');
-    if (res.success && tbody) {
-        tbody.innerHTML = res.coupons.map(c => `
-            <tr>
-                <td><strong>${c.code}</strong></td>
-                <td>${c.discount_type === 'percentage' ? 'نسبة %' : 'مبلغ ثابت'}</td>
-                <td>${c.discount_type === 'percentage' ? c.discount_value + '%' : window.ironPlus.formatPrice(c.discount_value) + ' ر.س'}</td>
-                <td>${c.min_order ? window.ironPlus.formatPrice(c.min_order) + ' ر.س' : 'لا يوجد'}</td>
-                <td>${c.max_uses || '∞'}</td>
-                <td>${c.used_count || 0}</td>
-                <td>${c.expiry_date ? new Date(c.expiry_date).toLocaleDateString('ar-SA') : 'لا نهائي'}</td>
-                <td><span class="status-badge ${c.is_active ? 'status-completed' : 'status-failed'}">${c.is_active ? 'نشط' : 'غير نشط'}</span></td>
-                <td>
-                    <div class="action-buttons">
-                        <button onclick="adminPanel.editCoupon('${c.id}')" class="btn-action"><i class="fas fa-edit"></i></button>
-                        <button onclick="adminPanel.deleteCoupon('${c.id}', '${c.code}')" class="btn-action btn-delete"><i class="fas fa-trash"></i></button>
-                    </div>
-                </td>
-            </tr>
-        `).join('');
-    }
-}
-
+// --- [4] تحميل البانرات الديناميكية ---
 async function loadBanners() {
-    const res = await window.ironPlus.getBanners();
-    const tbody = document.getElementById('bannersTableBody');
-    if (res.success && tbody) {
-        tbody.innerHTML = res.banners.map(b => `
-            <tr>
-                <td><img src="${b.image_url}" style="width:60px; height:40px; object-fit:cover; border-radius:5px;" onerror="this.src='assets/default-banner.png'"></td>
-                <td>${b.title}</td>
-                <td>${getBannerPositionText(b.position)}</td>
-                <td><a href="${b.link || '#'}" target="_blank" class="text-blue-400 hover:underline">${b.link ? 'رابط' : 'لا يوجد'}</a></td>
-                <td>${b.order || 1}</td>
-                <td><span class="status-badge ${b.is_active ? 'status-completed' : 'status-failed'}">${b.is_active ? 'نشط' : 'غير نشط'}</span></td>
-                <td>
-                    <div class="action-buttons">
-                        <button onclick="adminPanel.editBanner('${b.id}')" class="btn-action"><i class="fas fa-edit"></i></button>
-                        <button onclick="adminPanel.deleteBanner('${b.id}', '${b.title}')" class="btn-action btn-delete"><i class="fas fa-trash"></i></button>
+    try {
+        if (!window.ironPlus || !window.ironPlus.getBanners) {
+            console.log('Banners system not available');
+            return;
+        }
+        
+        const res = await window.ironPlus.getBanners();
+        if (!res.success || !res.banners || res.banners.length === 0) {
+            return;
+        }
+        
+        const activeBanners = res.banners.filter(b => b.is_active);
+        
+        // Hero Banner
+        const heroBanner = activeBanners.find(b => b.position === 'hero');
+        if (heroBanner) {
+            const heroContainer = document.getElementById('heroBanner');
+            if (heroContainer) {
+                heroContainer.innerHTML = `
+                    <a href="${heroBanner.link || '#'}" ${heroBanner.link ? 'target="_blank"' : ''}>
+                        <img src="${heroBanner.image_url}" 
+                             alt="${heroBanner.alt_text || heroBanner.title}" 
+                             class="w-full h-64 md:h-96 object-cover"
+                             onerror="this.src='assets/default-banner.jpg'">
+                    </a>
+                `;
+            }
+        }
+        
+        // Middle Banner
+        const middleBanner = activeBanners.find(b => b.position === 'middle');
+        if (middleBanner) {
+            const middleContainer = document.getElementById('middleBanner');
+            if (middleContainer) {
+                middleContainer.innerHTML = `
+                    <div class="banner-wrapper">
+                        <a href="${middleBanner.link || '#'}" ${middleBanner.link ? 'target="_blank"' : ''}>
+                            <img src="${middleBanner.image_url}" 
+                                 alt="${middleBanner.alt_text || middleBanner.title}" 
+                                 class="w-full h-48 object-cover rounded-xl shadow-lg"
+                                 onerror="this.src='assets/default-banner.jpg'">
+                        </a>
                     </div>
-                </td>
-            </tr>
-        `).join('');
+                `;
+            }
+        }
+        
+        // Bottom Banner
+        const bottomBanner = activeBanners.find(b => b.position === 'bottom');
+        if (bottomBanner) {
+            const bottomContainer = document.getElementById('bottomBanner');
+            if (bottomContainer) {
+                bottomContainer.innerHTML = `
+                    <div class="banner-wrapper">
+                        <a href="${bottomBanner.link || '#'}" ${bottomBanner.link ? 'target="_blank"' : ''}>
+                            <img src="${bottomBanner.image_url}" 
+                                 alt="${bottomBanner.alt_text || bottomBanner.title}" 
+                                 class="w-full h-48 object-cover rounded-xl shadow-lg"
+                                 onerror="this.src='assets/default-banner.jpg'">
+                        </a>
+                    </div>
+                `;
+            }
+        }
+    } catch (error) {
+        console.error('Error loading banners:', error);
     }
 }
 
-async function loadLoginLogs() {
-    const res = await window.ironPlus.getLoginLogs();
-    const tbody = document.getElementById('loginLogsBody');
-    if (res.success && tbody) {
-        tbody.innerHTML = res.logs.map(log => `
-            <tr>
-                <td>${new Date(log.created_at).toLocaleDateString('ar-SA')}</td>
-                <td>${new Date(log.created_at).toLocaleTimeString('ar-SA')}</td>
-                <td><small>${log.ip_address}</small></td>
-                <td><span class="status-badge ${log.status === 'success' ? 'status-completed' : 'status-failed'}">${log.status === 'success' ? 'ناجح' : 'فاشل'}</span></td>
-            </tr>
-        `).join('');
+// --- [5] الإحصائيات ---
+async function loadStatistics() {
+    try {
+        let stats;
+        
+        if (window.ironPlus && window.ironPlus.getSiteStats) {
+            const result = await window.ironPlus.getSiteStats();
+            if (result.success) {
+                stats = result.stats;
+            }
+        }
+        
+        if (!stats) {
+            stats = {
+                uniqueCustomers: 13655,
+                totalOrders: 3101,
+                averageRating: 5.0,
+                supportResponseTime: '24/7'
+            };
+        }
+        
+        updateCounters(stats);
+    } catch (error) {
+        console.error('Error loading statistics:', error);
+        updateCounters({
+            uniqueCustomers: 13655,
+            totalOrders: 3101,
+            averageRating: 5.0,
+            supportResponseTime: '24/7'
+        });
     }
 }
 
-// --- خامساً: إعداد مستمعي الأحداث (Event Listeners) ---
+function updateCounters(stats) {
+    const visitorCount = document.getElementById('visitorCount');
+    if (visitorCount) {
+        animateCounter(visitorCount, stats.uniqueCustomers || 13655);
+    }
+    
+    const orderCount = document.getElementById('orderCount');
+    if (orderCount) {
+        animateCounter(orderCount, stats.totalOrders || 3101);
+    }
+}
 
+function animateCounter(element, target) {
+    const current = parseInt(element.textContent.replace(/,/g, '') || 0);
+    const increment = target > current ? 1 : -1;
+    const step = Math.ceil(Math.abs(target - current) / 100);
+    
+    let currentValue = current;
+    
+    const timer = setInterval(() => {
+        currentValue += increment * step;
+        
+        if ((increment > 0 && currentValue >= target) || 
+            (increment < 0 && currentValue <= target)) {
+            currentValue = target;
+            clearInterval(timer);
+        }
+        
+        element.textContent = currentValue.toLocaleString();
+    }, 20);
+}
+
+// --- [6] إعداد مستمعي الأحداث ---
 function setupEventListeners() {
-    // نموذج المنتج
-    const productForm = document.getElementById('productForm');
-    if (productForm) {
-        productForm.onsubmit = handleProductSubmit;
+    // Mobile Menu
+    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    const closeMenuBtn = document.getElementById('closeMenuBtn');
+    const mobileMenu = document.getElementById('mobileMenu');
+    
+    if (mobileMenuBtn && mobileMenu) {
+        mobileMenuBtn.addEventListener('click', () => {
+            mobileMenu.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
     }
     
-    // إعدادات الموقع
-    const siteSettingsForm = document.getElementById('siteSettingsForm');
-    if (siteSettingsForm) {
-        siteSettingsForm.onsubmit = handleSiteSettingsSubmit;
+    if (closeMenuBtn && mobileMenu) {
+        closeMenuBtn.addEventListener('click', () => {
+            mobileMenu.classList.remove('active');
+            document.body.style.overflow = '';
+        });
     }
     
-    const socialSettingsForm = document.getElementById('socialSettingsForm');
-    if (socialSettingsForm) {
-        socialSettingsForm.onsubmit = handleSocialSettingsSubmit;
-    }
-    
-    const paymentSettingsForm = document.getElementById('paymentSettingsForm');
-    if (paymentSettingsForm) {
-        paymentSettingsForm.onsubmit = handlePaymentSettingsSubmit;
-    }
-    
-    // التسويق والـ SEO
-    const seoSettingsForm = document.getElementById('seoSettingsForm');
-    if (seoSettingsForm) {
-        seoSettingsForm.onsubmit = handleSeoSettingsSubmit;
-    }
-    
-    const trackingSettingsForm = document.getElementById('trackingSettingsForm');
-    if (trackingSettingsForm) {
-        trackingSettingsForm.onsubmit = handleTrackingSettingsSubmit;
-    }
-    
-    const notificationsSettingsForm = document.getElementById('notificationsSettingsForm');
-    if (notificationsSettingsForm) {
-        notificationsSettingsForm.onsubmit = handleNotificationsSettingsSubmit;
-    }
-    
-    // المحتوى القانوني
-    const refundPolicyForm = document.getElementById('refundPolicyForm');
-    if (refundPolicyForm) {
-        refundPolicyForm.onsubmit = handleRefundPolicySubmit;
-    }
-    
-    const termsForm = document.getElementById('termsForm');
-    if (termsForm) {
-        termsForm.onsubmit = handleTermsSubmit;
-    }
-    
-    const aboutForm = document.getElementById('aboutForm');
-    if (aboutForm) {
-        aboutForm.onsubmit = handleAboutSubmit;
-    }
-    
-    // الكوبونات
-    const couponForm = document.getElementById('couponForm');
-    if (couponForm) {
-        couponForm.onsubmit = handleCouponSubmit;
-    }
-    
-    const couponEditForm = document.getElementById('couponEditForm');
-    if (couponEditForm) {
-        couponEditForm.onsubmit = handleCouponEditSubmit;
-    }
-    
-    // البانرات
-    const bannerUploadForm = document.getElementById('bannerUploadForm');
-    if (bannerUploadForm) {
-        bannerUploadForm.onsubmit = handleBannerSubmit;
-    }
-    
-    const bannerEditForm = document.getElementById('bannerEditForm');
-    if (bannerEditForm) {
-        bannerEditForm.onsubmit = handleBannerEditSubmit;
-    }
-    
-    // الأمان
-    const adminCredentialsForm = document.getElementById('adminCredentialsForm');
-    if (adminCredentialsForm) {
-        adminCredentialsForm.onsubmit = handleAdminCredentialsSubmit;
-    }
-    
-    const securitySettingsForm = document.getElementById('securitySettingsForm');
-    if (securitySettingsForm) {
-        securitySettingsForm.onsubmit = handleSecuritySettingsSubmit;
+    // Accordion
+    document.querySelectorAll('.accordion-header').forEach(header => {
+        header.addEventListener('click', () => {
+            const content = header.nextElementSibling;
+            const icon = header.querySelector('i');
+            
+            document.querySelectorAll('.accordion-content').forEach(item => {
+                if (item !== content) {
+                    item.classList.remove('active');
+                    item.previousElementSibling.querySelector('i').classList.remove('fa-chevron-up');
+                    item.previousElementSibling.querySelector('i').classList.add('fa-chevron-down');
+                }
+            });
+            
+            content.classList.toggle('active');
+            
+            if (content.classList.contains('active')) {
+                icon.classList.remove('fa-chevron-down');
+                icon.classList.add('fa-chevron-up');
+            } else {
+                icon.classList.remove('fa-chevron-up');
+                icon.classList.add('fa-chevron-down');
+            }
+        });
+    });
+}
+
+function updateCartCount() {
+    try {
+        const cartCount = document.getElementById('cartCount');
+        if (!cartCount) return;
+        
+        const cart = JSON.parse(localStorage.getItem('iron_cart')) || [];
+        const totalItems = cart.reduce((total, item) => total + (item.quantity || 1), 0);
+        
+        cartCount.textContent = totalItems;
+        
+        if (totalItems > 0) {
+            cartCount.style.display = 'flex';
+            
+            // تأثير عند تحديث العداد
+            cartCount.style.animation = 'none';
+            setTimeout(() => {
+                cartCount.style.animation = 'bounce 0.5s ease';
+            }, 10);
+        } else {
+            cartCount.style.display = 'none';
+        }
+    } catch (error) {
+        console.error('Update cart count error:', error);
     }
 }
 
-// معالجة النماذج
-async function handleProductSubmit(e) {
-    e.preventDefault();
-    const form = e.target;
-    const productId = form.productId.value;
-    const data = {
-        name: form.productName.value,
-        price: parseFloat(form.productPrice.value),
-        duration: form.productDuration.value,
-        image_url: form.productImage.value,
-        description: form.productDescription.value,
-        features: form.productFeatures.value.split('\n').filter(f => f.trim()),
-        stock: form.productStock.value ? parseInt(form.productStock.value) : null,
-        is_active: true
-    };
-
-    const res = productId ? 
-        await window.ironPlus.updateProduct(productId, data) : 
-        await window.ironPlus.addProduct(data);
-
-    if (res.success) {
-        showNotification('تم الحفظ بنجاح ✅', 'success');
-        adminPanel.closeModal();
-        loadProducts();
-    } else {
-        showNotification(res.message || 'حدث خطأ أثناء الحفظ', 'error');
-    }
-}
-
-async function handleSiteSettingsSubmit(e) {
-    e.preventDefault();
-    const form = e.target;
-    const data = {
-        site_name: form.siteName.value,
-        site_logo: form.siteLogo.value,
-        site_favicon: form.siteFavicon.value,
-        announcement_bar: form.announcementBar.value,
-        maintenance_mode: form.maintenanceMode.checked
-    };
-
-    const res = await window.ironPlus.updateSiteSettings(data);
-    if (res.success) {
-        showNotification('تم حفظ الإعدادات العامة بنجاح ✅', 'success');
-    } else {
-        showNotification(res.message || 'حدث خطأ أثناء الحفظ', 'error');
-    }
-}
-
-async function handleSocialSettingsSubmit(e) {
-    e.preventDefault();
-    const form = e.target;
-    const data = {
-        whatsapp_number: form.whatsappNumber.value,
-        snapchat_username: form.snapchatUsername.value,
-        tiktok_username: form.tiktokUsername.value,
-        twitter_username: form.twitterUsername.value,
-        contact_email: form.contactEmail.value
-    };
-
-    const res = await window.ironPlus.updateSiteSettings(data);
-    if (res.success) {
-        showNotification('تم حفظ وسائل التواصل بنجاح ✅', 'success');
-    } else {
-        showNotification(res.message || 'حدث خطأ أثناء الحفظ', 'error');
-    }
-}
-
-async function handlePaymentSettingsSubmit(e) {
-    e.preventDefault();
-    const form = e.target;
-    const data = {
-        tax_rate: parseFloat(form.taxRate.value),
-        min_order_amount: parseFloat(form.minOrderAmount.value),
-        delivery_fee: parseFloat(form.deliveryFee.value),
-        currency: form.currency.value
-    };
-
-    const res = await window.ironPlus.updateSiteSettings(data);
-    if (res.success) {
-        showNotification('تم حفظ إعدادات الدفع بنجاح ✅', 'success');
-    } else {
-        showNotification(res.message || 'حدث خطأ أثناء الحفظ', 'error');
-    }
-}
-
-async function handleSeoSettingsSubmit(e) {
-    e.preventDefault();
-    const form = e.target;
-    const data = {
-        meta_title: form.metaTitle.value,
-        meta_description: form.metaDescription.value,
-        meta_keywords: form.metaKeywords.value,
-        canonical_url: form.canonicalUrl.value
-    };
-
-    const res = await window.ironPlus.updateSiteSettings(data);
-    if (res.success) {
-        showNotification('تم حفظ إعدادات SEO بنجاح ✅', 'success');
-    } else {
-        showNotification(res.message || 'حدث خطأ أثناء الحفظ', 'error');
-    }
-}
-
-async function handleTrackingSettingsSubmit(e) {
-    e.preventDefault();
-    const form = e.target;
-    const data = {
-        google_analytics_id: form.googleAnalyticsId.value,
-        snapchat_pixel_id: form.snapchatPixelId.value,
-        facebook_pixel_id: form.facebookPixelId.value,
-        twitter_pixel_id: form.twitterPixelId.value,
-        conversion_tracking: form.conversionTracking.checked
-    };
-
-    const res = await window.ironPlus.updateSiteSettings(data);
-    if (res.success) {
-        showNotification('تم حفظ إعدادات التتبع بنجاح ✅', 'success');
-    } else {
-        showNotification(res.message || 'حدث خطأ أثناء الحفظ', 'error');
-    }
-}
-
-async function handleNotificationsSettingsSubmit(e) {
-    e.preventDefault();
-    const form = e.target;
-    const data = {
-        live_notifications: form.liveNotifications.checked,
-        notification_duration: parseInt(form.notificationDuration.value),
-        notification_texts: form.notificationTexts.value,
-        real_order_notifications: form.realOrderNotifications.checked
-    };
-
-    const res = await window.ironPlus.updateSiteSettings(data);
-    if (res.success) {
-        showNotification('تم حفظ إعدادات الإشعارات بنجاح ✅', 'success');
-    } else {
-        showNotification(res.message || 'حدث خطأ أثناء الحفظ', 'error');
-    }
-}
-
-async function handleRefundPolicySubmit(e) {
-    e.preventDefault();
-    const form = e.target;
-    const data = {
-        refund_policy_title: form.refundPolicyTitle.value,
-        refund_policy_content: form.refundPolicyContent.value,
-        refund_policy_active: form.refundPolicyActive.checked
-    };
-
-    const res = await window.ironPlus.updateSiteSettings(data);
-    if (res.success) {
-        showNotification('تم حفظ سياسة الاسترجاع بنجاح ✅', 'success');
-    } else {
-        showNotification(res.message || 'حدث خطأ أثناء الحفظ', 'error');
-    }
-}
-
-async function handleTermsSubmit(e) {
-    e.preventDefault();
-    const form = e.target;
-    const data = {
-        terms_title: form.termsTitle.value,
-        terms_content: form.termsContent.value,
-        terms_active: form.termsActive.checked
-    };
-
-    const res = await window.ironPlus.updateSiteSettings(data);
-    if (res.success) {
-        showNotification('تم حفظ الشروط والأحكام بنجاح ✅', 'success');
-    } else {
-        showNotification(res.message || 'حدث خطأ أثناء الحفظ', 'error');
-    }
-}
-
-async function handleAboutSubmit(e) {
-    e.preventDefault();
-    const form = e.target;
-    const data = {
-        about_title: form.aboutTitle.value,
-        about_content: form.aboutContent.value,
-        about_active: form.aboutActive.checked
-    };
-
-    const res = await window.ironPlus.updateSiteSettings(data);
-    if (res.success) {
-        showNotification('تم حفظ صفحة من نحن بنجاح ✅', 'success');
-    } else {
-        showNotification(res.message || 'حدث خطأ أثناء الحفظ', 'error');
-    }
-}
-
-async function handleCouponSubmit(e) {
-    e.preventDefault();
-    const form = e.target;
-    const data = {
-        code: form.couponCode.value,
-        discount_type: form.discountType.value,
-        discount_value: parseFloat(form.discountValue.value),
-        min_order: form.minOrder.value ? parseFloat(form.minOrder.value) : null,
-        max_uses: form.maxUses.value ? parseInt(form.maxUses.value) : null,
-        expiry_date: form.expiryDate.value || null,
-        is_active: form.couponActive.checked
-    };
-
-    const res = await window.ironPlus.createCoupon(data);
-    if (res.success) {
-        showNotification('تم إنشاء الكوبون بنجاح ✅', 'success');
-        form.reset();
-        loadCoupons();
-    } else {
-        showNotification(res.message || 'حدث خطأ أثناء الإنشاء', 'error');
-    }
-}
-
-async function handleCouponEditSubmit(e) {
-    e.preventDefault();
-    const form = e.target;
-    const couponId = form.editCouponId.value;
-    const data = {
-        code: form.editCouponCode.value,
-        discount_type: form.editDiscountType.value,
-        discount_value: parseFloat(form.editDiscountValue.value),
-        min_order: form.editMinOrder.value ? parseFloat(form.editMinOrder.value) : null,
-        max_uses: form.editMaxUses.value ? parseInt(form.editMaxUses.value) : null,
-        expiry_date: form.editExpiryDate.value || null,
-        is_active: form.editCouponActive.checked
-    };
-
-    const res = await window.ironPlus.updateCoupon(couponId, data);
-    if (res.success) {
-        showNotification('تم تحديث الكوبون بنجاح ✅', 'success');
-        adminPanel.closeCouponModal();
-        loadCoupons();
-    } else {
-        showNotification(res.message || 'حدث خطأ أثناء التحديث', 'error');
-    }
-}
-
-async function handleBannerSubmit(e) {
-    e.preventDefault();
-    const form = e.target;
-    const data = {
-        title: form.bannerTitle.value,
-        image_url: form.bannerImage.value,
-        link: form.bannerLink.value,
-        position: form.bannerPosition.value,
-        order: parseInt(form.bannerOrder.value),
-        alt_text: form.bannerAlt.value,
-        is_active: form.bannerActive.checked
-    };
-
-    const res = await window.ironPlus.createBanner(data);
-    if (res.success) {
-        showNotification('تم رفع البانر بنجاح ✅', 'success');
-        form.reset();
-        loadBanners();
-    } else {
-        showNotification(res.message || 'حدث خطأ أثناء الرفع', 'error');
-    }
-}
-
-async function handleBannerEditSubmit(e) {
-    e.preventDefault();
-    const form = e.target;
-    const bannerId = form.editBannerId.value;
-    const data = {
-        title: form.editBannerTitle.value,
-        image_url: form.editBannerImage.value,
-        link: form.editBannerLink.value,
-        position: form.editBannerPosition.value,
-        order: parseInt(form.editBannerOrder.value),
-        alt_text: form.editBannerAlt.value,
-        is_active: form.editBannerActive.checked
-    };
-
-    const res = await window.ironPlus.updateBanner(bannerId, data);
-    if (res.success) {
-        showNotification('تم تحديث البانر بنجاح ✅', 'success');
-        adminPanel.closeBannerModal();
-        loadBanners();
-    } else {
-        showNotification(res.message || 'حدث خطأ أثناء التحديث', 'error');
-    }
-}
-
-async function handleAdminCredentialsSubmit(e) {
-    e.preventDefault();
-    const form = e.target;
-    const messageDiv = document.getElementById('credentialsMessage');
+// --- [7] تأثيرات التمرير ---
+function setupScrollEffects() {
+    const nav = document.querySelector('.nav-container');
+    let lastScroll = 0;
     
-    const currentPassword = form.currentPassword.value;
-    const newUsername = form.newUsername.value;
-    const newPassword = form.newPassword.value;
-    const confirmPassword = form.confirmPassword.value;
+    if (nav) {
+        window.addEventListener('scroll', () => {
+            const currentScroll = window.pageYOffset;
+            
+            if (currentScroll > 100) {
+                nav.classList.add('scrolled');
+                
+                if (currentScroll > lastScroll) {
+                    nav.style.transform = 'translateY(-100%)';
+                } else {
+                    nav.style.transform = 'translateY(0)';
+                }
+            } else {
+                nav.classList.remove('scrolled');
+                nav.style.transform = 'translateY(0)';
+            }
+            
+            lastScroll = currentScroll;
+        });
+    }
     
-    if (!currentPassword) {
-        showMessage(messageDiv, 'يرجى إدخال كلمة المرور الحالية', 'error');
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            const targetId = this.getAttribute('href');
+            if (targetId === '#') return;
+            
+            const targetElement = document.querySelector(targetId);
+            if (targetElement) {
+                window.scrollTo({
+                    top: targetElement.offsetTop - 80,
+                    behavior: 'smooth'
+                });
+            }
+        });
+    });
+}
+
+// --- [8] تسجيل الزيارة ---
+async function recordVisit() {
+    try {
+        if (window.ironPlus && window.ironPlus.recordVisit) {
+            await window.ironPlus.recordVisit('index.html');
+        }
+    } catch (error) {
+        console.error('Error recording visit:', error);
+    }
+}
+
+// --- [9] نظام الإشعارات الحية ---
+function setupLiveNotifications() {
+    if (!siteSettings || !siteSettings.live_notifications) {
         return;
     }
     
-    if (newPassword && newPassword !== confirmPassword) {
-        showMessage(messageDiv, 'كلمات المرور الجديدة غير متطابقة', 'error');
-        return;
+    clearInterval(liveNotificationsInterval);
+    
+    // عرض إشعار أولي بعد 3 ثواني
+    setTimeout(() => {
+        if (siteSettings.real_order_notifications && window.ironPlus) {
+            showRealOrderNotification();
+        } else {
+            showRandomNotification();
+        }
+    }, 3000);
+    
+    // عرض إشعارات عشوائية كل 15-30 ثانية
+    liveNotificationsInterval = setInterval(() => {
+        if (Math.random() > 0.3) {
+            if (siteSettings.real_order_notifications && window.ironPlus) {
+                showRealOrderNotification();
+            } else {
+                showRandomNotification();
+            }
+        }
+    }, 15000 + Math.random() * 15000);
+}
+
+async function showRealOrderNotification() {
+    try {
+        const res = await window.ironPlus.getRecentActivity(5);
+        if (res.success && res.activities.length > 0) {
+            const orderActivities = res.activities.filter(a => a.title.includes('طلب'));
+            if (orderActivities.length > 0) {
+                const randomActivity = orderActivities[Math.floor(Math.random() * orderActivities.length)];
+                
+                const notification = document.getElementById('liveNotification');
+                const notifTitle = document.getElementById('notifTitle');
+                const notifText = document.getElementById('notifText');
+                
+                if (notification && notifTitle && notifText) {
+                    notifTitle.textContent = randomActivity.title;
+                    notifText.textContent = randomActivity.description;
+                    notification.classList.remove('hidden');
+                    
+                    setTimeout(() => {
+                        notification.classList.add('hidden');
+                    }, (siteSettings.notification_duration || 10) * 1000);
+                }
+                return;
+            }
+        }
+        
+        // إذا لم تكن هناك طلبات حقيقية، نعرض إشعار عشوائي
+        showRandomNotification();
+    } catch (error) {
+        console.error('Error showing real order notification:', error);
+        showRandomNotification();
+    }
+}
+
+function showRandomNotification() {
+    const notification = document.getElementById('liveNotification');
+    const notifTitle = document.getElementById('notifTitle');
+    const notifText = document.getElementById('notifText');
+    
+    if (!notification || !notifTitle || !notifText) return;
+    
+    let messages = [];
+    
+    if (siteSettings && siteSettings.notification_texts) {
+        messages = siteSettings.notification_texts.split('\n').filter(m => m.trim());
     }
     
-    const data = {
-        current_password: currentPassword,
-        new_username: newUsername || null,
-        new_password: newPassword || null
-    };
+    if (messages.length === 0) {
+        messages = [
+            "مستخدم جديد اشترى الآن!",
+            "تم تحديث المخزون",
+            "عرض خاص محدود",
+            "خصم 20% على الباقات المميزة",
+            "جديد! باقات تيك توك بلس"
+        ];
+    }
     
-    const res = await window.ironPlus.updateAdminCredentials(data);
-    if (res.success) {
-        showNotification('تم تحديث بيانات المسؤول بنجاح ✅', 'success');
-        form.reset();
-        messageDiv.style.display = 'none';
-    } else {
-        showMessage(messageDiv, res.message || 'حدث خطأ أثناء التحديث', 'error');
+    const randomMsg = messages[Math.floor(Math.random() * messages.length)];
+    
+    // تقسيم الرسالة إلى عنوان ونص
+    const parts = randomMsg.split('|');
+    notifTitle.textContent = parts[0] || randomMsg;
+    notifText.textContent = parts[1] || "IRON+ متجر التطبيقات المميزة";
+    
+    notification.classList.remove('hidden');
+    
+    setTimeout(() => {
+        notification.classList.add('hidden');
+    }, (siteSettings?.notification_duration || 10) * 1000);
+}
+
+window.closeNotification = function() {
+    const notification = document.getElementById('liveNotification');
+    if (notification) {
+        notification.classList.add('hidden');
     }
-}
+};
 
-async function handleSecuritySettingsSubmit(e) {
-    e.preventDefault();
-    const form = e.target;
-    const data = {
-        two_factor_auth: form.twoFactorAuth.checked,
-        max_login_attempts: parseInt(form.maxLoginAttempts.value),
-        block_duration: parseInt(form.blockDuration.value),
-        user_activity_logging: form.userActivityLogging.checked,
-        force_https: form.forceHTTPS.checked
-    };
-
-    const res = await window.ironPlus.updateSiteSettings(data);
-    if (res.success) {
-        showNotification('تم حفظ إعدادات الأمان بنجاح ✅', 'success');
-    } else {
-        showNotification(res.message || 'حدث خطأ أثناء الحفظ', 'error');
-    }
-}
-
-// --- سادساً: الدوال المساعدة والخدمات (UI Helpers) ---
-
-function clearMessage(el) { if (el) { el.innerHTML = ''; el.style.display = 'none'; } }
-
-function showMessage(el, text, type) {
-    if (!el) return;
-    const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
-    el.innerHTML = `<i class="fas ${icon}"></i> ${text}`;
-    el.className = `message ${type}`;
-    el.style.display = 'block';
-}
-
-function updateElement(id, val) {
-    const el = document.getElementById(id);
-    if (el) el.textContent = val;
-}
-
-function getStatusText(s) {
-    const map = { completed: 'مكتمل', pending: 'معلق', failed: 'فاشل' };
-    return map[s] || s;
-}
-
-function getBannerPositionText(p) {
-    const map = { 
-        hero: 'الهيرو', 
-        middle: 'منتصف الصفحة', 
-        bottom: 'أسفل الصفحة',
-        sidebar: 'الشريط الجانبي'
-    };
-    return map[p] || p;
-}
-
-function showNotification(msg, type = 'info') {
+// --- [10] دوال مساعدة ---
+function showNotification(message, type = 'info', duration = 4000) {
     const notification = document.createElement('div');
     notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg max-w-sm ${
         type === 'success' ? 'bg-green-900/90 border-green-700' :
@@ -842,7 +982,7 @@ function showNotification(msg, type = 'info') {
     notification.innerHTML = `
         <div class="flex items-center">
             <i class="fas ${icon} mr-3 text-xl"></i>
-            <span class="flex-1">${msg}</span>
+            <span class="flex-1">${message}</span>
             <button class="ml-4 text-gray-300 hover:text-white" onclick="this.parentElement.parentElement.remove()">
                 <i class="fas fa-times"></i>
             </button>
@@ -851,230 +991,34 @@ function showNotification(msg, type = 'info') {
     
     document.body.appendChild(notification);
     
-    setTimeout(() => {
-        if (notification.parentNode) {
-            notification.remove();
-        }
-    }, 5000);
-}
-
-// --- سابعاً: تصدير الدوال للـ HTML (The Bridge) ---
-
-window.adminPanel = {
-    showProductModal: async (id) => {
-        const modal = document.getElementById('productModal');
-        const form = document.getElementById('productForm');
-        const title = document.getElementById('modalTitle');
-        if (id) {
-            title.textContent = "تعديل الباقة";
-            const res = await window.ironPlus.getProduct(id);
-            if (res.success) {
-                form.productId.value = res.product.id;
-                form.productName.value = res.product.name;
-                form.productPrice.value = res.product.price;
-                form.productDuration.value = res.product.duration || '';
-                form.productImage.value = res.product.image_url || '';
-                form.productDescription.value = res.product.description || '';
-                form.productFeatures.value = res.product.features ? res.product.features.join('\n') : '';
-                form.productStock.value = res.product.stock || '';
+    if (duration > 0) {
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
             }
-        } else {
-            title.textContent = "إضافة باقة جديدة";
-            form.reset();
-            form.productId.value = '';
-        }
-        modal.style.display = 'flex';
-    },
-
-    closeModal: () => {
-        document.getElementById('productModal').style.display = 'none';
-    },
-
-    deleteProduct: async (id, name) => {
-        if (confirm(`هل تريد حذف ${name} نهائياً؟`)) {
-            const res = await window.ironPlus.deleteProduct(id);
-            if (res.success) {
-                showNotification('تم حذف المنتج بنجاح ✅', 'success');
-                loadProducts();
-            }
-        }
-    },
-
-    uploadCodes: async () => {
-        const pId = document.getElementById('productForCodes').value;
-        const text = document.getElementById('bulkCodesText').value.trim();
-        if (!pId || !text) {
-            showNotification('يرجى اختيار منتج وإدخال الأكواد', 'warning');
-            return;
-        }
-        const res = await window.ironPlus.uploadBulkCodes(pId, text);
-        if (res.success) {
-            showNotification(`تم شحن ${res.count} كود بنجاح! 🚀`, 'success');
-            document.getElementById('bulkCodesText').value = '';
-        }
-    },
-
-    deliverOrder: async (orderId, productId) => {
-        const res = await window.ironPlus.assignActivationCode(orderId, productId);
-        if (res.success) {
-            showNotification(`تم تسليم الكود بنجاح: ${res.code}`, 'success');
-            loadOrders();
-        } else {
-            showNotification(res.message, 'error');
-        }
-    },
-
-    contactCustomer: (phone) => {
-        const cleanPhone = phone.startsWith('0') ? '966' + phone.substring(1) : phone;
-        window.open(`https://wa.me/${cleanPhone}`, '_blank');
-    },
-
-    viewOrder: async (orderId) => {
-        const res = await window.ironPlus.getOrder(orderId);
-        if (res.success) {
-            const order = res.order;
-            alert(`
-                تفاصيل الطلب:
-                رقم الطلب: ${order.id.substring(0, 8)}
-                العميل: ${order.customer_phone}
-                المنتج: ${order.products?.name || 'N/A'}
-                المبلغ: ${window.ironPlus.formatPrice(order.amount)} ر.س
-                الخصم: ${order.discount ? window.ironPlus.formatPrice(order.discount) + ' ر.س' : 'لا يوجد'}
-                الإجمالي: ${window.ironPlus.formatPrice(order.total || order.amount)} ر.س
-                الحالة: ${getStatusText(order.status)}
-                التاريخ: ${window.ironPlus.formatDate(order.created_at)}
-                ${order.activation_code ? `كود التفعيل: ${order.activation_code}` : ''}
-            `);
-        }
-    },
-
-    // إدارة الكوبونات
-    showCouponModal: () => {
-        document.getElementById('couponModal').style.display = 'flex';
-    },
-
-    closeCouponModal: () => {
-        document.getElementById('couponModal').style.display = 'none';
-    },
-
-    editCoupon: async (id) => {
-        const modal = document.getElementById('couponModal');
-        const form = document.getElementById('couponEditForm');
-        const title = document.getElementById('couponModalTitle');
-        
-        const res = await window.ironPlus.getCoupon(id);
-        if (res.success) {
-            const coupon = res.coupon;
-            title.textContent = "تعديل الكوبون";
-            form.editCouponId.value = coupon.id;
-            form.editCouponCode.value = coupon.code;
-            form.editDiscountType.value = coupon.discount_type;
-            form.editDiscountValue.value = coupon.discount_value;
-            form.editMinOrder.value = coupon.min_order || '';
-            form.editMaxUses.value = coupon.max_uses || '';
-            form.editExpiryDate.value = coupon.expiry_date ? coupon.expiry_date.substring(0, 10) : '';
-            form.editCouponActive.checked = coupon.is_active;
-            modal.style.display = 'flex';
-        }
-    },
-
-    deleteCoupon: async (id, code) => {
-        if (confirm(`هل تريد حذف الكوبون ${code} نهائياً؟`)) {
-            const res = await window.ironPlus.deleteCoupon(id);
-            if (res.success) {
-                showNotification('تم حذف الكوبون بنجاح ✅', 'success');
-                loadCoupons();
-            }
-        }
-    },
-
-    // إدارة البانرات
-    showBannerModal: () => {
-        document.getElementById('bannerModal').style.display = 'flex';
-    },
-
-    closeBannerModal: () => {
-        document.getElementById('bannerModal').style.display = 'none';
-    },
-
-    editBanner: async (id) => {
-        const modal = document.getElementById('bannerModal');
-        const form = document.getElementById('bannerEditForm');
-        const title = document.getElementById('bannerModalTitle');
-        
-        const res = await window.ironPlus.getBanner(id);
-        if (res.success) {
-            const banner = res.banner;
-            title.textContent = "تعديل البانر";
-            form.editBannerId.value = banner.id;
-            form.editBannerTitle.value = banner.title;
-            form.editBannerImage.value = banner.image_url;
-            form.editBannerLink.value = banner.link || '';
-            form.editBannerPosition.value = banner.position;
-            form.editBannerOrder.value = banner.order || 1;
-            form.editBannerAlt.value = banner.alt_text || '';
-            form.editBannerActive.checked = banner.is_active;
-            modal.style.display = 'flex';
-        }
-    },
-
-    deleteBanner: async (id, title) => {
-        if (confirm(`هل تريد حذف البانر "${title}" نهائياً؟`)) {
-            const res = await window.ironPlus.deleteBanner(id);
-            if (res.success) {
-                showNotification('تم حذف البانر بنجاح ✅', 'success');
-                loadBanners();
-            }
-        }
-    },
-
-    createCoupon: async (e) => {
-        e.preventDefault();
-        const form = document.getElementById('couponForm');
-        const data = {
-            code: form.couponCode.value,
-            discount_type: form.discountType.value,
-            discount_value: parseFloat(form.discountValue.value),
-            min_order: form.minOrder.value ? parseFloat(form.minOrder.value) : null,
-            max_uses: form.maxUses.value ? parseInt(form.maxUses.value) : null,
-            expiry_date: form.expiryDate.value || null,
-            is_active: form.couponActive.checked
-        };
-
-        const res = await window.ironPlus.createCoupon(data);
-        if (res.success) {
-            showNotification('تم إنشاء الكوبون بنجاح ✅', 'success');
-            form.reset();
-            loadCoupons();
-        } else {
-            showNotification(res.message || 'حدث خطأ أثناء الإنشاء', 'error');
-        }
-    }
-};
-
-async function loadProductsForCodes() {
-    const res = await window.ironPlus.getProducts();
-    const select = document.getElementById('productForCodes');
-    if (res.success && select) {
-        select.innerHTML = '<option value="">اختر باقة...</option>' + 
-            res.products.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+        }, duration);
     }
 }
 
-window.logoutAdmin = () => {
-    if(confirm('هل تريد تسجيل الخروج؟')) window.ironPlus.logout();
+// --- [11] تهيئة النظام الكاملة ---
+document.addEventListener('DOMContentLoaded', function() {
+    setupEventListeners();
+    
+    setTimeout(async () => {
+        await checkUserStatus();
+        await loadProducts();
+        await loadStatistics();
+        await recordVisit();
+        updateCartCount();
+    }, 100);
+});
+
+// تصدير الوظائف للاستخدام العام
+window.ironHomepage = {
+    addToCart,
+    showNotification,
+    updateCartCount,
+    closeNotification
 };
 
-window.switchTab = switchTab;
-window.loadOrders = loadOrders;
-window.loadSettings = loadSettings;
-window.loadCoupons = loadCoupons;
-window.loadBanners = loadBanners;
-window.loadLoginLogs = loadLoginLogs;
-
-// جسر لربط أزرار الـ HTML القديمة بالدوال الجديدة
-window.closeModal = window.adminPanel.closeModal;
-window.uploadCodes = window.adminPanel.uploadCodes;
-window.showAddProductModal = function() {
-    window.adminPanel.showProductModal();
-};
+console.log('📦 IRON+ Homepage v5.5 loaded successfully!');
