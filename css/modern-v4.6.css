@@ -1,0 +1,297 @@
+/* ========================================
+   أنماط IRON+ الإصدار 4.6
+   تصميم متكامل مع هوية آيرون مان المميزة
+   ======================================== */
+
+/* المتغيرات الخاصة بالتصميم الجديد */
+:root {
+    --iron-primary: #0A0A0A;
+    --iron-secondary: #9B111E;
+    --iron-accent: #FFD700;
+    --iron-card: #111111;
+    --iron-surface: #1A1A1A;
+    --iron-border: #333333;
+    --iron-text: #FFFFFF;
+    --iron-text-secondary: #A0A0A0;
+}
+
+/* إعادة الضبط */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', 'Cairo', sans-serif;
+    background-color: var(--iron-primary);
+    color: var(--iron-text);
+    line-height: 1.6;
+}
+
+.tech-font {
+    font-family: 'Orbitron', sans-serif;
+}
+
+/* Layout Spacing System */
+.section-spacing {
+    padding-top: 6rem;
+    padding-bottom: 6rem;
+}
+
+@media (max-width: 768px) {
+    .section-spacing {
+        padding-top: 4rem;
+        padding-bottom: 4rem;
+    }
+}
+
+.container-spacing {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+}
+
+/* Card Design System */
+.product-card {
+    background: var(--iron-card);
+    border: 1px solid var(--iron-border);
+    border-radius: 16px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+    height: 420px;
+    display: flex;
+    flex-direction: column;
+}
+
+.product-card:hover {
+    transform: translateY(-8px);
+    border-color: var(--iron-secondary);
+    box-shadow: 0 20px 40px rgba(155, 17, 30, 0.15);
+}
+
+/* Navigation */
+.nav-container {
+    backdrop-filter: blur(20px);
+    background: rgba(10, 10, 10, 0.95);
+    border-bottom: 1px solid rgba(51, 51, 51, 0.3);
+}
+
+/* Hero Section */
+.hero-gradient {
+    background: radial-gradient(ellipse at top, rgba(155, 17, 30, 0.15) 0%, transparent 60%);
+}
+
+/* Button Styles */
+.btn-primary {
+    background: linear-gradient(135deg, var(--iron-secondary) 0%, #C21807 100%);
+    color: white;
+    border: none;
+    padding: 12px 32px;
+    border-radius: 12px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(155, 17, 30, 0.3);
+}
+
+.btn-secondary {
+    background: transparent;
+    color: var(--iron-text);
+    border: 1px solid var(--iron-border);
+    padding: 12px 32px;
+    border-radius: 12px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
+}
+
+.btn-secondary:hover {
+    border-color: var(--iron-accent);
+    color: var(--iron-accent);
+}
+
+/* Accordion */
+.accordion-item {
+    border-bottom: 1px solid var(--iron-border);
+}
+
+.accordion-header {
+    padding: 24px 0;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s ease;
+}
+
+.accordion-header:hover {
+    color: var(--iron-accent);
+}
+
+.accordion-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+    color: var(--iron-text-secondary);
+}
+
+.accordion-content.active {
+    max-height: 300px;
+    padding-bottom: 24px;
+}
+
+/* Live Notification */
+.live-notification {
+    position: fixed;
+    bottom: 24px;
+    left: 24px;
+    background: var(--iron-surface);
+    border: 1px solid var(--iron-secondary);
+    border-radius: 12px;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    max-width: 320px;
+    z-index: 1000;
+    animation: slideInLeft 0.3s ease;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+@keyframes slideInLeft {
+    from {
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Stats */
+.stat-card {
+    background: var(--iron-surface);
+    border-radius: 16px;
+    padding: 32px;
+    border: 1px solid var(--iron-border);
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    border-color: var(--iron-accent);
+}
+
+/* Footer */
+.footer-column {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* Rating Stars */
+.rating-stars {
+    color: var(--iron-accent);
+}
+
+/* Mobile Navigation */
+.mobile-menu {
+    position: fixed;
+    top: 0;
+    right: -100%;
+    width: 100%;
+    height: 100%;
+    background: var(--iron-primary);
+    z-index: 1000;
+    transition: right 0.3s ease;
+    padding: 24px;
+}
+
+.mobile-menu.active {
+    right: 0;
+}
+
+/* Loading Spinner */
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(255, 215, 0, 0.1);
+    border-top-color: var(--iron-accent);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* User Info */
+.user-avatar {
+    width: 36px;
+    height: 36px;
+    background: rgba(255, 215, 0, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--iron-accent);
+}
+
+.user-details {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+    .product-card {
+        height: 380px;
+    }
+    
+    .btn-primary, .btn-secondary {
+        padding: 10px 24px;
+        font-size: 0.9rem;
+    }
+    
+    .stat-card {
+        padding: 24px;
+    }
+}
+
+/* Smooth scrolling */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--iron-primary);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--iron-secondary);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #c21807;
+}
