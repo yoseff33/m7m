@@ -89,6 +89,7 @@ async function initializeAdminPanel() {
         await loadCoupons();
         await loadBanners();
         await loadPages();
+        await loadRecentActivity(); // ✅ إضافة جديدة
         setupEventListeners();
         
         console.log('Systems Online: Admin panel fully operational.');
@@ -112,7 +113,7 @@ function setupNavigation() {
 
 function showAdminSection(sectionId) {
     // إخفاء جميع الأقسام
-    document.querySelectorAll('.admin-section').forEach(section => {
+    document.querySelectorAll('.admin-tab').forEach(section => {
         section.classList.remove('active');
     });
     
@@ -122,7 +123,7 @@ function showAdminSection(sectionId) {
     });
     
     // عرض القسم المطلوب
-    const targetSection = document.getElementById(`${sectionId}Section`);
+    const targetSection = document.getElementById(`${sectionId}Tab`);
     if (targetSection) {
         targetSection.classList.add('active');
     }
@@ -154,6 +155,31 @@ async function loadDashboardData() {
         }
     } catch (error) {
         console.error('Load dashboard error:', error);
+    }
+}
+
+async function loadRecentActivity() {
+    try {
+        const res = await window.ironPlus.getRecentActivity();
+        const container = document.getElementById('recentActivity');
+        if (res.success && container) {
+            container.innerHTML = res.activities.map(activity => `
+                <div class="activity-item">
+                    <div class="activity-icon">
+                        <i class="fas fa-${activity.icon || 'bell'}"></i>
+                    </div>
+                    <div class="activity-details">
+                        <p>${activity.description}</p>
+                        <small>${window.ironPlus.formatDate(activity.created_at)}</small>
+                    </div>
+                </div>
+            `).join('');
+        } else {
+            container.innerHTML = '<p class="text-gray-400">لا يوجد نشاط حديث</p>';
+        }
+    } catch (error) {
+        console.error('Load recent activity error:', error);
+        document.getElementById('recentActivity').innerHTML = '<p class="text-red-400">فشل تحميل النشاط</p>';
     }
 }
 
@@ -214,7 +240,7 @@ async function filterOrders() {
         if (status) filters.status = status;
         
         const res = await window.ironPlus.getAllOrders(filters);
-        const tbody = document.getElementById('allOrdersTableBody');
+        const tbody = document.getElementById('ordersTableBody'); // ✅ تم التصحيح من allOrdersTableBody
         if (res.success && tbody) {
             tbody.innerHTML = res.orders.map(o => `
                 <tr>
@@ -267,7 +293,6 @@ async function loadSiteSettings() {
             settingsForm.onsubmit = async function(e) {
                 e.preventDefault();
                 
-                const formData = new FormData(this);
                 const settings = {};
                 
                 // جمع البيانات من النموذج
@@ -602,8 +627,12 @@ async function handleSecuritySubmit(e) {
         return;
     }
     
-    // هنا يجب إضافة منطق تغيير بيانات المسؤول
-    showNotification('هذه الميزة قيد التطوير', 'info');
+    const res = await window.ironPlus.updateAdminCredentials(newUsername, newPassword);
+    if (res.success) {
+        showNotification('تم تحديث بيانات الدخول بنجاح', 'success');
+    } else {
+        showNotification('حدث خطأ أثناء التحديث', 'error');
+    }
 }
 
 // --- عاشراً: تصدير الدوال للـ HTML (The Bridge) ---
