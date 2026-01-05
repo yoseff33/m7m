@@ -551,81 +551,88 @@ IRON-ZZZZ-AAAA"></textarea>
             </div>
         </div>
 
-        <!-- Coupons Tab -->
-        <div id="couponsTab" class="tab-content">
-            <div class="grid-layout" style="margin-top: 30px;">
-                <div class="hud-card">
-                    <div class="flex justify-between items-center" style="margin-bottom: 20px;">
-                        <h3 class="text-gold"><i class="fas fa-tag"></i> إدارة الكوبونات</h3>
-                        <button onclick="adminPanel.showCouponModal()" class="btn-iron btn-small">+ كوبون جديد</button>
-                    </div>
-                    <div style="overflow-x:auto">
-                        <table class="admin-table">
-                            <thead>
-                                <tr>
-                                    <th>كود الكوبون</th>
-                                    <th>نوع الخصم</th>
-                                    <th>القيمة</th>
-                                    <th>الحد الأدنى</th>
-                                    <th>الحد الأقصى</th>
-                                    <th>المستخدم</th>
-                                    <th>تاريخ الانتهاء</th>
-                                    <th>الحالة</th>
-                                    <th>العمليات</th>
-                                </tr>
-                            </thead>
-                            <tbody id="couponsTableBody">
-                                <!-- سيتم ملؤها عبر JavaScript -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div class="hud-card">
-                    <h3 class="text-gold"><i class="fas fa-plus-circle"></i> إنشاء كوبون جديد</h3>
-                    <form id="couponForm" onsubmit="adminPanel.createCoupon(event)">
-                        <div class="form-group">
-                            <label>كود الكوبون</label>
-                            <input type="text" id="couponCode" class="input-iron" placeholder="IRON50" required>
-                        </div>
-                        <div class="form-group">
-                            <label>نوع الخصم</label>
-                            <select id="discountType" class="input-iron" required>
-                                <option value="percentage">نسبة مئوية %</option>
-                                <option value="fixed">مبلغ ثابت</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>قيمة الخصم</label>
-                            <input type="number" id="discountValue" class="input-iron" placeholder="50" step="0.01" required>
-                        </div>
-                        <div class="form-group">
-                            <label>الحد الأدنى للطلب (ر.س)</label>
-                            <input type="number" id="minOrder" class="input-iron" placeholder="0" step="0.01">
-                        </div>
-                        <div class="form-group">
-                            <label>الحد الأقصى للاستخدام</label>
-                            <input type="number" id="maxUses" class="input-iron" placeholder="غير محدود">
-                        </div>
-                        <div class="form-group">
-                            <label>تاريخ الانتهاء</label>
-                            <input type="date" id="expiryDate" class="input-iron">
-                        </div>
-                        <div class="form-group">
-                            <label style="display: flex; justify-content: space-between; align-items: center;">
-                                <span>تفعيل الكوبون</span>
-                                <label class="switch">
-                                    <input type="checkbox" id="couponActive" checked>
-                                    <span class="slider"></span>
-                                </label>
-                            </label>
-                        </div>
-                        <button type="submit" class="btn-iron w-full">إنشاء الكوبون</button>
-                    </form>
-                </div>
+    <div id="couponsTab" class="tab-content">
+    <div class="grid-layout" style="margin-top: 30px;">
+        <div class="hud-card">
+            <div class="flex justify-between items-center" style="margin-bottom: 20px;">
+                <h3 class="text-gold"><i class="fas fa-tag"></i> إدارة الكوبونات</h3>
+                <button onclick="adminPanel.showCouponModal()" class="btn-iron btn-small">+ كوبون جديد</button>
+            </div>
+            <div style="overflow-x:auto">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>كود الكوبون</th>
+                            <th>النوع</th>
+                            <th>القيمة</th>
+                            <th>المنتج</th>
+                            <th>تاريخ البدء</th>
+                            <th>تاريخ الانتهاء</th>
+                            <th>الحالة</th>
+                            <th>العمليات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="couponsTableBody">
+                        </tbody>
+                </table>
             </div>
         </div>
 
+        <div class="hud-card">
+            <h3 class="text-gold"><i class="fas fa-plus-circle"></i> التحكم بالكوبونات</h3>
+            <form id="couponForm">
+                <input type="hidden" id="couponId" name="couponId">
+
+                <div class="form-group">
+                    <label>كود الكوبون</label>
+                    <input type="text" id="couponCode" name="couponCode" class="input-iron" placeholder="مثال: RAMADAN20" required>
+                </div>
+
+                <div class="form-group">
+                    <label>نوع الخصم</label>
+                    <select id="couponType" name="couponType" class="input-iron" required>
+                        <option value="percentage">نسبة مئوية (%)</option>
+                        <option value="fixed">مبلغ ثابت (ر.س)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>قيمة الخصم</label>
+                    <input type="number" id="couponValue" name="couponValue" class="input-iron" placeholder="مثال: 15" step="0.01" required>
+                </div>
+
+                <div class="form-group">
+                    <label>تطبيق على منتج معين (اختياري)</label>
+                    <select id="couponProduct" name="couponProduct" class="input-iron">
+                        <option value="">جميع المنتجات (عام)</option>
+                        </select>
+                </div>
+
+                <div class="form-group">
+                    <label>تاريخ وقت البدء</label>
+                    <input type="datetime-local" id="couponValidFrom" name="couponValidFrom" class="input-iron">
+                </div>
+
+                <div class="form-group">
+                    <label>تاريخ وقت الانتهاء</label>
+                    <input type="datetime-local" id="couponValidTo" name="couponValidTo" class="input-iron">
+                </div>
+
+                <div class="form-group">
+                    <label style="display: flex; justify-content: space-between; align-items: center;">
+                        <span>تفعيل الكوبون</span>
+                        <label class="switch">
+                            <input type="checkbox" id="couponIsActive" name="couponIsActive" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </label>
+                </div>
+
+                <button type="submit" class="btn-iron w-full">حفظ البيانات</button>
+            </form>
+        </div>
+    </div>
+</div>
         <!-- Banners Tab -->
         <div id="bannersTab" class="tab-content">
             <div class="grid-layout" style="margin-top: 30px;">
