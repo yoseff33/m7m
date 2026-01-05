@@ -814,7 +814,7 @@ window.ironPlus = {
         }
     },
 
-    async createCoupon(couponData) {
+    async addCoupon(couponData) {
         try {
             const { data, error } = await window.supabaseClient
                 .from('coupons')
