@@ -707,8 +707,7 @@ window.adminPanel = {
             const productId = document.getElementById('productId').value;
             const productData = {
                 name: document.getElementById('productName').value,
-                price: Math.round(parseFloat(document.getElementById('productPrice').value || 0) 
-                duration: document.getElementById('productDuration').value,
+                price: parseFloat(document.getElementById('productPrice').value || 0),  
                 image_url: document.getElementById('productImage').value,
                 description: document.getElementById('productDescription').value,
                 features: document.getElementById('productFeatures').value.split('\n').filter(f => f.trim()),
