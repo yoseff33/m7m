@@ -169,6 +169,7 @@ window.ironPlus = {
         });
     },
 
+// دالة الحذف اللي أرسلتها أنت
     async deleteMedia(path) {
         try {
             const { error } = await window.supabaseClient
@@ -180,6 +181,30 @@ window.ironPlus = {
             return { success: true };
         } catch (error) {
             return { success: false, message: error.message };
+        }
+    }, // <-- تأكد إن فيه فاصلة هنا ضروري
+
+    // أضف دالة جلب الصور هنا تحتها مباشرة
+    async getAllMedia() {
+        try {
+            // جلب قائمة الملفات من مجلد 'general' داخل Bucket 'media'
+            const { data, error } = await window.supabaseClient
+                .storage
+                .from('media')
+                .list('general', { limit: 100, offset: 0, sortBy: { column: 'name', order: 'desc' } });
+
+            if (error) throw error;
+
+            // تحويل البيانات لروابط مباشرة يقدر المتصفح يعرضها
+            return data.map(file => ({
+                id: file.id,
+                name: file.name,
+                url: `${window.SUPABASE_STORAGE_URL}/media/general/${file.name}`,
+                path: `general/${file.name}` 
+            }));
+        } catch (error) {
+            console.error('Error fetching media:', error);
+            return [];
         }
     },
 
