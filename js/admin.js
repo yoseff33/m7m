@@ -707,7 +707,7 @@ window.adminPanel = {
             const productId = document.getElementById('productId').value;
             const productData = {
                 name: document.getElementById('productName').value,
-                price: Math.round(parseFloat(document.getElementById('productPrice').value || 0) * 100),
+                price: Math.round(parseFloat(document.getElementById('productPrice').value || 0) 
                 duration: document.getElementById('productDuration').value,
                 image_url: document.getElementById('productImage').value,
                 description: document.getElementById('productDescription').value,
@@ -943,7 +943,7 @@ window.adminPanel = {
                 <td>
                     ${coupon.discount_type === 'percentage' ? 
                         `${coupon.discount_value}%` : 
-                        `${this.formatPrice(coupon.discount_value * 100)}`
+                        `${this.formatPrice(coupon.discount_value )}`
                     }
                 </td>
                 <td>${coupon.product_id ? 'منتج معين' : 'جميع المنتجات'}</td>
