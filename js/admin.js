@@ -15,44 +15,44 @@ window.adminPanel = {
     mediaLibrary: [],
 
     // --- [1] التهيئة ---
-    async init() {
-        console.log('🚀 Iron Plus CMS v5.5 Initializing...');
-        
-        try {
-            // التحقق من تسجيل الدخول أولاً
-            const isLoggedIn = await this.checkAdminAuth();
-            if (!isLoggedIn) {
-                return;
-            }
-            
-            // إعداد مستمعي الأحداث
-            this.setupEventListeners();
-            
-            // تحميل البيانات
-            await Promise.all([
-                this.loadDashboard(),
-                this.loadProducts(),
-                this.loadCoupons(),
-                this.loadBanners(),
-                this.loadPages(),
-                this.loadReviews(),
-                this.loadLoginLogs(),
-                this.loadOrders(),
-                this.loadMediaLibrary()
-            ]);
-            
-            // تطبيق الإعدادات الديناميكية
-            await this.applyDynamicSettings();
-            
-            // إخفاء شاشة التحميل
-            this.hideLoading();
-            
-            console.log('✅ Iron Plus CMS v5.5 Initialized Successfully!');
-        } catch (error) {
-            console.error('❌ Initialization Error:', error);
-            this.showNotification('حدث خطأ في تهيئة النظام', 'error');
+async init() {
+    console.log('🚀 Iron Plus CMS v5.5 Initializing...');
+    
+    try {
+        // [التعديل الجوهري] شغلنا مستمعي الأحداث (الأزرار) أول شيء 
+        // عشان نضمن إن زر "دخول" يتفعل ويسمع لضغطة المستخدم
+        this.setupEventListeners(); 
+
+        // الحين نشيك على حالة تسجيل الدخول
+        const isLoggedIn = await this.checkAdminAuth(); 
+        if (!isLoggedIn) {
+            // لو مو مسجل دخول، الكود بيوقف هنا بس الأزرار قدها اشتغلت فوق
+            return; 
         }
-    },
+        
+        // تحميل البيانات واللوحة (ما يوصل هنا إلا لو كنت مسجل دخول)
+        await Promise.all([
+            this.loadDashboard(),
+            this.loadProducts(),
+            this.loadCoupons(),
+            this.loadBanners(),
+            this.loadPages(),
+            this.loadReviews(),
+            this.loadLoginLogs(),
+            this.loadOrders(),
+            this.loadMediaLibrary()
+        ]);
+        
+        // تطبيق الإعدادات وإخفاء شاشة التحميل
+        await this.applyDynamicSettings();
+        this.hideLoading();
+        
+        console.log('✅ Iron Plus CMS v5.5 Initialized Successfully!');
+    } catch (error) {
+        console.error('❌ Initialization Error:', error);
+        this.showNotification('حدث خطأ في تهيئة النظام', 'error');
+    }
+},
 
     // --- [2] التحقق من المصادقة ---
     async checkAdminAuth() {
