@@ -1815,32 +1815,33 @@ async init() {
     },
 
     // --- [13] إدارة الوسائط ---
-    async loadMediaLibrary() {
-        const container = document.getElementById('mediaLibrary');
-        if (!container) return;
+   async loadMediaLibrary() {
+    const container = document.getElementById('mediaLibrary');
+    if (!container) return;
+    
+    try {
+        // رسالة جارِ التحميل المبدئية
+        container.innerHTML = `
+            <div class="col-span-3 text-center py-8">
+                <i class="fas fa-spinner fa-spin text-xl text-gray-400"></i>
+                <p class="mt-2 text-gray-400">جاري تحميل الوسائط...</p>
+            </div>
+        `;
         
-        try {
-            container.innerHTML = `
-                <div class="col-span-3 text-center py-8">
-                    <i class="fas fa-spinner fa-spin text-xl text-gray-400"></i>
-                    <p class="mt-2 text-gray-400">جاري تحميل الوسائط...</p>
-                </div>
-            `;
-            
-            // في هذه النسخة، نعرض صور افتراضية
-            const defaultMedia = [
-                { id: '1', url: 'https://via.placeholder.com/300x200/1a1a1a/ffffff?text=صورة+1', name: 'صورة 1' },
-                { id: '2', url: 'https://via.placeholder.com/300x200/2a2a2a/ffffff?text=صورة+2', name: 'صورة 2' },
-                { id: '3', url: 'https://via.placeholder.com/300x200/3a3a3a/ffffff?text=صورة+3', name: 'صورة 3' },
-            ];
-            
-            this.renderMediaLibrary(defaultMedia);
-            
-        } catch (error) {
-            console.error('Load media library error:', error);
-        }
-    },
-
+        // تم حذف الصور الافتراضية هنا
+        // بدلاً من عرض الصور، نعرض رسالة بأن المكتبة فارغة
+        container.innerHTML = `
+            <div class="col-span-3 text-center py-8">
+                <i class="fas fa-folder-open text-3xl text-gray-500 mb-2"></i>
+                <p class="text-gray-400">لا توجد وسائط مرفوعة حالياً</p>
+            </div>
+        `;
+        
+    } catch (error) {
+        console.error('Load media library error:', error);
+        container.innerHTML = `<p class="text-center text-red-500">حدث خطأ أثناء تحميل المكتبة</p>`;
+    }
+},
     renderMediaLibrary(media) {
         const container = document.getElementById('mediaLibrary');
         if (!container) return;
