@@ -1890,66 +1890,126 @@ async init() {
         });
     },
 
-    async handleMediaUpload(event) {
-        const files = event.target.files;
-        if (!files || files.length === 0) return;
+ // --- [13] إدارة الوسائط (النسخة الحقيقية) ---
+
+async handleMediaUpload(event) {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    const progressBar = document.getElementById('progressBar');
+    const uploadProgress = document.getElementById('uploadProgress');
+    
+    // إظهار شريط التقدم
+    if (uploadProgress) uploadProgress.style.display = 'block';
+    
+    let successCount = 0;
+    
+    // معالجة كل ملف على حدة
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
         
-        // في هذه النسخة، نعرض محاكاة للرفع
-        const progressBar = document.getElementById('progressBar');
-        const uploadProgress = document.getElementById('uploadProgress');
-        
-        if (uploadProgress) uploadProgress.style.display = 'block';
-        
-        let progress = 0;
-        const interval = setInterval(() => {
-            progress += 10;
-            if (progressBar) progressBar.style.width = `${progress}%`;
-            
-            if (progress >= 100) {
-                clearInterval(interval);
-                
-                setTimeout(() => {
-                    if (uploadProgress) uploadProgress.style.display = 'none';
-                    if (progressBar) progressBar.style.width = '0%';
-                    
-                    this.showNotification(`تم رفع ${files.length} ملف بنجاح`, 'success');
-                    
-                    // إضافة الملفات الجديدة للمكتبة
-                    this.loadMediaLibrary();
-                }, 500);
-            }
-        }, 100);
-    },
-
-    async uploadFromCamera() {
-        this.showNotification('ميزة الرفع من الكاميرا قيد التطوير', 'info');
-    },
-
-    async uploadFromGallery() {
-        this.showNotification('ميزة الرفع من المعرض قيد التطوير', 'info');
-    },
-
-    async deleteSelectedMedia() {
-        if (!confirm('هل أنت متأكد من حذف الوسائط المحددة؟')) return;
-        
-        // محاكاة الحذف
-        setTimeout(() => {
-            this.showNotification('تم حذف الوسائط المحددة بنجاح', 'success');
-            this.loadMediaLibrary();
-        }, 1000);
-    },
-
-    refreshMediaLibrary() {
-        this.loadMediaLibrary();
-        this.showNotification('تم تحديث مكتبة الوسائط', 'info');
-    },
-
-    searchMedia(query) {
-        // محاكاة البحث
-        if (query.trim()) {
-            this.showNotification(`جاري البحث عن: ${query}`, 'info');
+        // تحديث نسبة الإنجاز في شريط التقدم
+        if (progressBar) {
+            const percent = ((i + 1) / files.length) * 100;
+            progressBar.style.width = `${percent}%`;
         }
-    },
+
+        // الرفع الفعلي لـ Supabase عبر مكتبة ironPlus
+        const result = await window.ironPlus.uploadMedia(file, 'general');
+        
+        if (result.success) {
+            successCount++;
+        }
+    }
+
+    // إخفاء شريط التقدم بعد ثانية
+    setTimeout(() => {
+        if (uploadProgress) uploadProgress.style.display = 'none';
+        if (progressBar) progressBar.style.width = '0%';
+    }, 1000);
+
+    if (successCount > 0) {
+        this.showNotification(`تم رفع ${successCount} ملف بنجاح`, 'success');
+        this.loadMediaLibrary(); // تحديث المكتبة لعرض الصور الجديدة
+    } else {
+        this.showNotification('فشل في رفع الملفات، يرجى التحقق من الاتصال', 'error');
+    }
+},
+
+async uploadFromCamera() {
+    try {
+        this.showNotification('جاري فتح الكاميرا...', 'info');
+        // استخدام دالة الكاميرا الحقيقية من ironPlus
+        const result = await window.ironPlus.uploadFromCamera();
+        
+        if (result.success) {
+            this.showNotification('تم التقاط ورفع الصورة بنجاح', 'success');
+            this.loadMediaLibrary();
+        } else {
+            this.showNotification('تم إلغاء التصوير أو حدث خطأ', 'warning');
+        }
+    } catch (error) {
+        this.showNotification('حدث خطأ أثناء فتح الكاميرا', 'error');
+    }
+},
+
+async uploadFromGallery() {
+    // محاكاة النقر على عنصر الإدخال المخفي لفتح معرض الصور
+    const fileInput = document.getElementById('mediaUpload');
+    if (fileInput) fileInput.click();
+},
+
+async deleteSelectedMedia() {
+    // جلب كافة العناصر المختارة (التي تحتوي على كلاس selected)
+    const selectedItems = document.querySelectorAll('.media-checkbox.selected');
+    
+    if (selectedItems.length === 0) {
+        this.showNotification('يرجى اختيار ملفات لحذفها أولاً', 'warning');
+        return;
+    }
+
+    if (!confirm(`هل أنت متأكد من حذف ${selectedItems.length} من الوسائط؟`)) return;
+
+    let deletedCount = 0;
+    
+    for (let checkbox of selectedItems) {
+        // البحث عن رابط الصورة أو مسارها المخزن في العنصر الأب
+        const mediaItem = checkbox.closest('.media-item');
+        const path = mediaItem.getAttribute('data-path'); // تأكد من تخزين المسار هنا عند الرندر
+
+        if (path) {
+            // الحذف الفعلي من Supabase Storage
+            const result = await window.ironPlus.deleteMedia(path);
+            if (result.success) deletedCount++;
+        }
+    }
+
+    if (deletedCount > 0) {
+        this.showNotification(`تم حذف ${deletedCount} ملف بنجاح`, 'success');
+        this.loadMediaLibrary();
+    } else {
+        this.showNotification('تعذر حذف بعض الملفات', 'error');
+    }
+},
+
+refreshMediaLibrary() {
+    this.loadMediaLibrary();
+    this.showNotification('تم تحديث مكتبة الوسائط من السيرفر', 'success');
+},
+
+searchMedia(query) {
+    const mediaItems = document.querySelectorAll('.media-item');
+    const searchTerm = query.toLowerCase().trim();
+
+    mediaItems.forEach(item => {
+        const name = item.querySelector('.media-item-name').textContent.toLowerCase();
+        if (name.includes(searchTerm)) {
+            item.style.display = 'block';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+},
 
     // --- [14] إعدادات التصميم ---
     setupColorPickers() {
