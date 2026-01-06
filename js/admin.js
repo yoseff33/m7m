@@ -2153,7 +2153,7 @@ searchMedia(query) {
         }
     },
 
-    async saveSEOSettings() {
+ async saveSEOSettings() {
         try {
             const seoSettings = {
                 meta_title: document.getElementById('metaTitle').value,
@@ -2180,6 +2180,29 @@ searchMedia(query) {
         }
     },
 
+    async uploadLogo() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        
+        input.onchange = async (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                this.showNotification('جاري رفع الشعار...', 'info');
+                // استدعاء دالة الرفع من نظام Supabase
+                const result = await window.ironPlus.uploadMedia(file, 'general');
+                if (result.success) {
+                    // تحديث رابط الشعار في خانة الإدخال تلقائياً
+                    document.getElementById('siteLogo').value = result.url;
+                    this.showNotification('تم رفع الشعار بنجاح', 'success');
+                } else {
+                    this.showNotification('فشل رفع الشعار: ' + (result.message || 'خطأ غير معروف'), 'error');
+                }
+            }
+        };
+        input.click();
+    },
+    
     // --- [16] تطبيق الإعدادات الديناميكية ---
     async applyDynamicSettings() {
         try {
