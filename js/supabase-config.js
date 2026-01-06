@@ -1275,77 +1275,80 @@ window.ironPlus = {
     },
 
     // --- [15] نظام الدفع مع Paylink ---
-    async createPayment(productId, phone, amount) {
-        try {
-            console.log('🔄 جاري الاتصال بـ Paylink...', { productId, phone, amount });
-            
-            // أولاً: إنشاء سجل الطلب في قاعدة البيانات
-            const orderNumber = `IRON-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-            
-            const { data: order, error: orderError } = await window.supabaseClient
-                .from('orders')
-                .insert([{
-                    product_id: productId,
-                    customer_phone: phone,
-                    amount: amount,
-                    status: 'pending',
-                    transaction_no: orderNumber,
-                    created_at: new Date().toISOString()
-                }])
-                .select()
-                .single();
-            
-            if (orderError) throw orderError;
-            
-            // ثانياً: الاتصال بـ Edge Function لإنشاء رابط Paylink
-            const response = await fetch(`${window.SUPABASE_URL}/functions/v1/create_paylink`, {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'apikey': window.SUPABASE_ANON_KEY,
-                    'Authorization': `Bearer ${window.SUPABASE_ANON_KEY}`
-                },
-                body: JSON.stringify({ 
-                    order_id: order.id,
-                    order_number: orderNumber,
-                    product_id: productId, 
-                    customer_phone: phone, 
-                    amount: amount,
-                    timestamp: Date.now()
-                })
-            });
-            
-            const data = await response.json();
-            
-            if (!response.ok || !data.url) {
-                console.error('Paylink API error:', data);
-                throw new Error(data.error || data.message || 'فشل إنشاء رابط الدفع');
-            }
-            
-            // ثالثاً: تحديث الطلب برابط الدفع
-            await window.supabaseClient
-                .from('orders')
-                .update({ payment_url: data.url, updated_at: new Date().toISOString() })
-                .eq('id', order.id);
-            
-            return { 
-                success: true, 
-                data: { 
-                    url: data.url,
-                    order_id: order.id,
-                    transaction_no: orderNumber
-                } 
-            };
-        } catch (error) {
-            console.error('❌ خطأ الدفع:', error);
-            await this.logError(error, 'createPayment');
-            return { 
-                success: false, 
-                message: "حدث خطأ في إنشاء رابط الدفع", 
-                error: error.message 
-            };
+async createPayment(productId, phone, amount) {
+    try {
+        console.log('🔄 جاري الاتصال بـ Paylink...', { productId, phone, amount });
+        
+        // تعديل ضروري: تقريب المبلغ لأقرب هللة صحيحة لتجنب أخطاء قاعدة البيانات
+        const cleanAmount = Math.round(amount); 
+        
+        // أولاً: إنشاء سجل الطلب في قاعدة البيانات
+        const orderNumber = `IRON-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        
+        const { data: order, error: orderError } = await window.supabaseClient
+            .from('orders')
+            .insert([{
+                product_id: productId,
+                customer_phone: phone,
+                amount: cleanAmount, // تم استخدام الرقم المقرب
+                status: 'pending',
+                transaction_no: orderNumber,
+                created_at: new Date().toISOString()
+            }])
+            .select()
+            .single();
+        
+        if (orderError) throw orderError;
+        
+        // ثانياً: الاتصال بـ Edge Function لإنشاء رابط Paylink
+        const response = await fetch(`${window.SUPABASE_URL}/functions/v1/create_paylink`, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'apikey': window.SUPABASE_ANON_KEY,
+                'Authorization': `Bearer ${window.SUPABASE_ANON_KEY}`
+            },
+            body: JSON.stringify({ 
+                order_id: order.id,
+                order_number: orderNumber,
+                product_id: productId, 
+                customer_phone: phone, 
+                amount: cleanAmount, // إرسال المبلغ كـ Integer
+                timestamp: Date.now()
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok || !data.url) {
+            console.error('Paylink API error:', data);
+            throw new Error(data.error || data.message || 'فشل إنشاء رابط الدفع');
         }
-    },
+        
+        // ثالثاً: تحديث الطلب برابط الدفع
+        await window.supabaseClient
+            .from('orders')
+            .update({ payment_url: data.url, updated_at: new Date().toISOString() })
+            .eq('id', order.id);
+        
+        return { 
+            success: true, 
+            data: { 
+                url: data.url,
+                order_id: order.id,
+                transaction_no: orderNumber
+            } 
+        };
+    } catch (error) {
+        console.error('❌ خطأ الدفع:', error);
+        if (this.logError) await this.logError(error, 'createPayment');
+        return { 
+            success: false, 
+            message: "حدث خطأ في إنشاء رابط الدفع", 
+            error: error.message 
+        };
+    }
+}
 
     async createOrderFromCart(phone, couponCode = null) {
         try {
