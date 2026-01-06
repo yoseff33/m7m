@@ -1299,6 +1299,7 @@ async createPayment(productId, phone, amount) {
             .insert([{
                 product_id: productId,
                 customer_phone: phone,
+                customer_name: name, // أرسلنا الاسم هنا
                 amount: cleanAmount, // تم استخدام الرقم المقرب
                 status: 'pending',
                 transaction_no: orderNumber,
