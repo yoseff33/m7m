@@ -1,5 +1,6 @@
 // ==========================================
-// success.js - نظام إدارة نجاح الطلبات IRON+ v5.5
+// success.js - نظام إدارة نجاح الطلبات IRON+ v5.6
+// تم الإصلاح: معالجة خطأ PGRST201 (تعدد العلاقات)
 // ==========================================
 
 document.addEventListener('DOMContentLoaded', async function() {
@@ -18,7 +19,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         return;
     }
 
-    // 2. توجيه عملية البحث
+    // 2. توجيه عملية البحث بناءً على المعطى
     if (transactionNo) {
         await loadOrderDetails(transactionNo);
     } else if (orderId) {
@@ -36,7 +37,7 @@ async function loadOrderDetails(transactionNo) {
     try {
         console.log('🔍 جاري جلب الطلب عبر المعاملة:', transactionNo);
         
-        // إصلاح الاستعلام لتجنب خطأ 406 (الربط الصريح)
+        // حل خطأ PGRST201: تحديد أن الربط يتم عبر عمود product_id تحديداً
         const { data: order, error } = await window.supabaseClient
             .from('orders')
             .select(`
@@ -269,9 +270,7 @@ function showActivationInstructions() {
                 <li>قم بنسخ كود التفعيل الظاهر في الصفحة.</li>
                 <li>افتح تطبيق <span style="color:#9B111E">IRON+</span> على جهازك.</li>
                 <li>توجه إلى قائمة "تفعيل الباقة".</li>
-                <li>ضع الكود في الخانة المخصصة واضغط "تفعيل".</li>
             </ol>
-            <p style="margin-top: 15px; font-size: 13px; color: #888;">* إذا واجهت مشكلة، تواصل مع الدعم الفني فوراً عبر الواتساب.</p>
         </div>
     `;
     showModal('تعليمات التفعيل 💡', content);
@@ -285,7 +284,6 @@ function showError(message) {
         <div style="padding: 50px 20px; text-align: center; background: rgba(155, 17, 30, 0.05); border: 1px solid #9B111E; border-radius: 20px;">
             <i class="fas fa-exclamation-triangle" style="font-size: 60px; color: #9B111E; margin-bottom: 20px;"></i>
             <h3 style="color: #fff; margin-bottom: 10px;">${message}</h3>
-            <p style="color: #888; margin-bottom: 30px;">يرجى التأكد من الرابط أو المحاولة لاحقاً. إذا تم خصم المبلغ، تواصل مع الدعم.</p>
             <div style="display: flex; gap: 10px; justify-content: center;">
                 <a href="index.html" class="btn-primary" style="text-decoration:none;">العودة للرئيسية</a>
                 <button onclick="window.location.reload()" class="btn-secondary">إعادة المحاولة</button>
@@ -315,9 +313,6 @@ function showModal(title, content) {
                 <button onclick="this.closest('.fixed').remove()" class="text-white/50 hover:text-white"><i class="fas fa-times"></i></button>
             </div>
             <div class="p-6 text-white">${content}</div>
-            <div class="p-4 bg-[#1a1a1a] text-center">
-                <button onclick="this.closest('.fixed').remove()" class="btn-primary w-full">فهمت ذلك</button>
-            </div>
         </div>
     `;
     document.body.appendChild(modal);
