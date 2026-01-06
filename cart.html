@@ -6,14 +6,10 @@
     <title>IRON+ | سلة المشتريات 🛒</title>
     <meta name="description" content="سلة مشترياتك في IRON+ - تفعيل فوري تطبيقات بلس، فك حظر سناب، واشتراكات رقمية">
     
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- أنماط الصفحة -->
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/cart.css">
     <style>
@@ -146,11 +142,9 @@
     </style>
 </head>
 <body class="antialiased bg-[#0A0A0A] text-white">
-    <!-- Navigation -->
     <nav class="nav-container sticky top-0 z-50">
         <div class="container mx-auto px-4">
             <div class="flex items-center justify-between h-20">
-                <!-- Logo -->
                 <div class="flex items-center gap-3">
                     <a href="index.html" class="tech-font text-2xl">
                         <span class="text-[#9B111E]">IRON</span>
@@ -161,14 +155,12 @@
                     </span>
                 </div>
                 
-                <!-- Navigation Links -->
                 <div class="hidden md:flex items-center gap-8">
                     <a href="index.html" class="text-sm font-medium hover:text-[#FFD700] transition-colors">الرئيسية</a>
                     <a href="index.html#products" class="text-sm font-medium hover:text-[#FFD700] transition-colors">الباقات</a>
                     <a href="index.html#features" class="text-sm font-medium hover:text-[#FFD700] transition-colors">المميزات</a>
                 </div>
                 
-                <!-- User Actions -->
                 <div class="flex items-center gap-4">
                     <a href="cart.html" class="relative p-2">
                         <i class="fas fa-shopping-bag text-lg"></i>
@@ -187,7 +179,6 @@
         </div>
     </nav>
 
-    <!-- Cart Section -->
     <section class="py-12">
         <div class="container mx-auto px-4 max-w-6xl">
             <h1 class="tech-font text-3xl md:text-4xl font-bold mb-8 text-center">
@@ -196,7 +187,6 @@
             </h1>
             
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <!-- تفاصيل السلة -->
                 <div class="lg:col-span-2">
                     <div class="cart-container">
                         <h2 class="text-xl font-bold mb-6 text-[#FFD700] border-b border-gray-800 pb-3">
@@ -205,8 +195,7 @@
                         </h2>
                         
                         <div id="cartItems">
-                            <!-- المنتجات ستظهر هنا عبر JavaScript -->
-                        </div>
+                            </div>
                         
                         <div id="emptyCartMessage" class="empty-cart hidden">
                             <div class="empty-cart-icon">
@@ -222,7 +211,6 @@
                     </div>
                 </div>
                 
-                <!-- ملخص الطلب -->
                 <div class="lg:col-span-1">
                     <div class="summary-card">
                         <h2 class="text-xl font-bold mb-6 text-[#FFD700] border-b border-gray-800 pb-3">
@@ -230,7 +218,6 @@
                             ملخص الطلب
                         </h2>
                         
-                        <!-- تفاصيل الأسعار -->
                         <div class="space-y-4 mb-6">
                             <div class="flex justify-between items-center">
                                 <span class="text-gray-400">المجموع الفرعي</span>
@@ -242,7 +229,6 @@
                                 <span id="tax" class="font-bold">0.00 ر.س</span>
                             </div>
                             
-                            <!-- قسم الخصم -->
                             <div id="discountSection" class="hidden">
                                 <div class="flex justify-between items-center text-green-500">
                                     <span>الخصم</span>
@@ -258,7 +244,6 @@
                             </div>
                         </div>
                         
-                        <!-- كود الخصم -->
                         <div class="mb-6">
                             <label class="block text-sm mb-2 text-gray-400">كود الخصم (إن وجد)</label>
                             <div class="flex gap-2 mb-2">
@@ -273,7 +258,6 @@
                             </div>
                             <div id="couponMessage" class="text-sm mt-2 hidden"></div>
                             
-                            <!-- تفاصيل الكوبون -->
                             <div id="couponDetails" class="hidden mt-4 p-3 bg-gradient-to-r from-green-900/20 to-green-800/10 border border-green-800/30 rounded-lg">
                                 <div class="flex justify-between items-center mb-2">
                                     <span class="text-sm text-gray-300">الكوبون المطبق:</span>
@@ -289,8 +273,19 @@
                                 </button>
                             </div>
                         </div>
+
+                        <div class="mb-6">
+                            <label class="block text-sm mb-2 text-gray-400">الاسم الكامل</label>
+                            <div class="flex gap-2">
+                                <input type="text" 
+                                       id="customerName" 
+                                       class="coupon-input flex-1" 
+                                       placeholder="اكتب اسمك الثلاثي"
+                                       required>
+                            </div>
+                            <p class="text-[10px] text-gray-500 mt-1">يُرجى كتابة الاسم لضمان سرعة تفعيل الطلب</p>
+                        </div>
                         
-                        <!-- زر إتمام الطلب -->
                         <button id="checkoutButton" 
                                 onclick="checkout()" 
                                 class="btn-primary w-full py-4 text-lg font-bold flex items-center justify-center gap-2"
@@ -299,7 +294,6 @@
                             إتمام الطلب
                         </button>
                         
-                        <!-- ملاحظات -->
                         <div class="mt-6 text-sm text-gray-400 space-y-2">
                             <p class="flex items-center gap-2">
                                 <i class="fas fa-info-circle text-[#FFD700]"></i>
@@ -320,7 +314,6 @@
         </div>
     </section>
 
-    <!-- Footer -->
     <footer class="bg-[#0A0A0A] border-t border-[#333333] mt-12">
         <div class="container mx-auto px-4 py-12">
             <div class="text-center">
@@ -335,7 +328,6 @@
         </div>
     </footer>
 
-    <!-- مكتبات JavaScript -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase-config.js"></script>
     <script>
@@ -460,7 +452,6 @@
                 container.innerHTML = currentCart.map((item, index) => `
                     <div class="cart-item">
                         <div class="flex flex-col md:flex-row gap-6">
-                            <!-- صورة المنتج -->
                             <div class="md:w-32 h-32 bg-gradient-to-br from-[#1A1A1A] to-[#2A2A2A] rounded-lg flex items-center justify-center">
                                 <div class="text-center">
                                     <i class="${getProductIcon(item.category)} text-4xl" style="color: ${getProductColor(item.category)}"></i>
@@ -468,7 +459,6 @@
                                 </div>
                             </div>
                             
-                            <!-- تفاصيل المنتج -->
                             <div class="flex-1">
                                 <div class="flex justify-between items-start mb-3">
                                     <div>
@@ -485,7 +475,6 @@
                                 </div>
                                 
                                 <div class="flex items-center justify-between">
-                                    <!-- الكمية -->
                                     <div class="flex items-center">
                                         <button onclick="updateQuantity(${index}, -1)" class="quantity-btn">
                                             <i class="fas fa-minus"></i>
@@ -496,7 +485,6 @@
                                         </button>
                                     </div>
                                     
-                                    <!-- السعر -->
                                     <div class="text-right">
                                         <div class="text-2xl font-bold text-[#FFD700]">
                                             ${formatPrice(item.price * (item.quantity || 1))} ر.س
@@ -756,6 +744,16 @@
         
         // إتمام الطلب
         async function checkout() {
+            const nameInput = document.getElementById('customerName');
+            const name = nameInput ? nameInput.value.trim() : '';
+
+            // التأكد من كتابة الاسم
+            if (!name) {
+                showNotification('يرجى كتابة الاسم الكامل أولاً', 'warning');
+                nameInput.focus();
+                return;
+            }
+
             if (currentCart.length === 0) {
                 showNotification('سلة المشتريات فارغة', 'warning');
                 return;
@@ -797,8 +795,8 @@
                 return;
             }
             
-            // إذا كان هناك مبلغ مدفوع، نوجه إلى بوابة الدفع
-            await redirectToPayment(total);
+            // إذا كان هناك مبلغ مدفوع، نوجه إلى بوابة الدفع ونرسل الاسم
+            await redirectToPayment(total, name);
         }
         
         async function createFreeOrder() {
@@ -846,7 +844,7 @@
             }
         }
         
-        async function redirectToPayment(total) {
+        async function redirectToPayment(total, name) {
             try {
                 showNotification('جاري توجيهك إلى بوابة الدفع...', 'info');
                 
@@ -855,7 +853,8 @@
                     const firstItem = currentCart[0];
                     const phone = window.ironPlus.getUserPhone();
                     
-                    const res = await window.ironPlus.createPayment(firstItem.id, phone, total);
+                    // نرسل الاسم كبارامتر رابع لدالة createPayment
+                    const res = await window.ironPlus.createPayment(firstItem.id, phone, total, name);
                     
                     if (res.success && res.data.url) {
                         // مسح السلة والكوبون
