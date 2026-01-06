@@ -1348,7 +1348,7 @@ async createPayment(productId, phone, amount) {
             error: error.message 
         };
     }
-}
+},
 
     async createOrderFromCart(phone, couponCode = null) {
         try {
