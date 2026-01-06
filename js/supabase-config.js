@@ -73,8 +73,18 @@ window.ironPlus = {
         }
     },
 
-    async adminLogin(username, password) {
+   async adminLogin(username, password) {
         try {
+            // [1] التحقق المباشر المخصص لك (يدخلك فوراً بـ 12345678)
+            if (username === 'admin' && password === '12345678') {
+                localStorage.setItem('iron_admin', 'true');
+                localStorage.setItem('admin_username', username);
+                localStorage.setItem('admin_login_time', new Date().toISOString());
+                console.log('✅ تم الدخول المباشر للمسؤول');
+                return { success: true };
+            }
+
+            // [2] التحقق عبر قاعدة البيانات (RPC) في حال استخدمت بيانات أخرى
             const { data, error } = await window.supabaseClient.rpc('verify_password', {
                 p_username: username,
                 p_password: password
@@ -82,7 +92,7 @@ window.ironPlus = {
             
             if (error) {
                 console.error('RPC Error:', error);
-                // تحقق مباشر للاختبار
+                // تحقق احتياطي للباسورد القديم في حال وجود مشكلة بالسيرفر
                 if (username === 'admin' && password === 'admin123') {
                     localStorage.setItem('iron_admin', 'true');
                     localStorage.setItem('admin_username', username);
@@ -108,7 +118,6 @@ window.ironPlus = {
             return { success: false, message: 'حدث خطأ في الاتصال بقاعدة البيانات' };
         }
     },
-
     // --- [2] فحص الحالة (Status) ---
     isLoggedIn: () => localStorage.getItem('iron_user_phone') !== null,
     isAdminLoggedIn: () => localStorage.getItem('iron_admin') === 'true',
