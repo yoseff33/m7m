@@ -32,8 +32,8 @@ async function loadOrderDetails(transactionNo) {
             .from('orders')
             .select(`
                 *,
-                products:products_id (*),
-                activation_codes:activation_code_id (code)
+                products (*),
+                activation_codes (code)
             `)
             .eq('transaction_no', transactionNo)
             .single();
@@ -64,8 +64,8 @@ async function loadOrderById(orderId) {
             .from('orders')
             .select(`
                 *,
-                products:products_id (*),
-                activation_codes:activation_code_id (code)
+                products (*),
+                activation_codes (code)
             `)
             .eq('id', orderId)
             .single();
@@ -87,8 +87,8 @@ async function findLatestOrder(phone) {
             .from('orders')
             .select(`
                 *,
-                products:products_id (*),
-                activation_codes:activation_code_id (code)
+                products (*),
+                activation_codes (code)
             `)
             .eq('customer_phone', phone)
             .order('created_at', { ascending: false })
