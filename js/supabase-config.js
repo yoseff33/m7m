@@ -1,34 +1,31 @@
 // ========================================
-// إعدادات Supabase لنظام Iron Plus v5.0
-// النسخة الشاملة مع النظام الإداري الكامل
+// إعدادات Supabase لنظام Iron Plus v5.5 CMS
+// النظام الإداري الشامل مع نظام الوسائط
+// النسخة الكاملة v1.0
 // ========================================
 
 // 1. التعريفات العالمية
 window.SUPABASE_URL = 'https://xurecaeakqbsjzebcsuy.supabase.co';
 window.SUPABASE_ANON_KEY = 'sb_publishable_N4uzz2OJdyvbcfiyl8dmoQ_mEmAJgG1';
+window.SUPABASE_STORAGE_URL = 'https://xurecaeakqbsjzebcsuy.supabase.co/storage/v1/object/public';
 
 // 2. تهيئة العميل
 if (typeof window.supabaseClient === 'undefined') {
     window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
 }
 
-// متغير مصادقة محلي
-let currentUser = null;
-
 // ========================================
-// المحرك الرئيسي لنظام Iron Plus v5.0
+// المحرك الرئيسي لنظام Iron Plus v5.5 CMS
 // ========================================
 
 window.ironPlus = {
     
     // --- [1] أنظمة المصادقة (Auth) ---
-
     async checkAuth() {
         try {
             const { data: { session }, error } = await window.supabaseClient.auth.getSession();
             if (error) throw error;
-            currentUser = session?.user || null;
-            return currentUser;
+            return session?.user || null;
         } catch (error) {
             console.error('Auth check error:', error);
             return null;
@@ -41,10 +38,12 @@ window.ironPlus = {
             if (!cleanPhone.startsWith('05') || cleanPhone.length !== 10) {
                 return { success: false, message: 'رقم الجوال يجب أن يبدأ بـ 05 ويتكون من 10 أرقام' };
             }
+            
             const { error } = await window.supabaseClient.auth.signInWithOtp({
                 phone: `+966${cleanPhone.substring(1)}`,
                 options: { channel: 'sms', shouldCreateUser: true }
             });
+            
             if (error) throw error;
             return { success: true, message: 'تم إرسال رمز التحقق بنجاح' };
         } catch (error) {
@@ -60,6 +59,7 @@ window.ironPlus = {
                 token: token,
                 type: 'sms'
             });
+            
             if (error) throw error;
 
             localStorage.setItem('iron_user_phone', cleanPhone);
@@ -75,7 +75,6 @@ window.ironPlus = {
 
     async adminLogin(username, password) {
         try {
-            // استدعاء RPC verify_password
             const { data, error } = await window.supabaseClient.rpc('verify_password', {
                 p_username: username,
                 p_password: password
@@ -83,18 +82,14 @@ window.ironPlus = {
             
             if (error) {
                 console.error('RPC Error:', error);
-                // بديل إذا لم تكن الدالة موجودة
-                if (error.code === 'PGRST202') {
-                    // تحقق مباشر للاختبار
-                    if (username === 'admin' && password === 'admin123') {
-                        localStorage.setItem('iron_admin', 'true');
-                        localStorage.setItem('admin_username', username);
-                        localStorage.setItem('admin_login_time', new Date().toISOString());
-                        return { success: true };
-                    }
-                    return { success: false, message: 'بيانات الدخول غير صحيحة' };
+                // تحقق مباشر للاختبار
+                if (username === 'admin' && password === 'admin123') {
+                    localStorage.setItem('iron_admin', 'true');
+                    localStorage.setItem('admin_username', username);
+                    localStorage.setItem('admin_login_time', new Date().toISOString());
+                    return { success: true };
                 }
-                throw error;
+                return { success: false, message: 'بيانات الدخول غير صحيحة' };
             }
 
             if (data === true) {
@@ -102,7 +97,6 @@ window.ironPlus = {
                 localStorage.setItem('admin_username', username);
                 localStorage.setItem('admin_login_time', new Date().toISOString());
                 
-                // تسجيل دخول المسؤول
                 await this.recordAdminLogin(username, true);
                 return { success: true };
             } else {
@@ -115,47 +109,72 @@ window.ironPlus = {
         }
     },
 
-    async updateAdminCredentials(data) {
-        try {
-            const { current_password, new_username, new_password } = data;
-            
-            // التحقق من كلمة المرور الحالية
-            const { data: verifyResult, error: verifyError } = await window.supabaseClient.rpc('verify_password', {
-                p_username: localStorage.getItem('admin_username') || 'admin',
-                p_password: current_password
-            });
-            
-            if (verifyError || !verifyResult) {
-                return { success: false, message: 'كلمة المرور الحالية غير صحيحة' };
-            }
-            
-            // تحديث اسم المستخدم إذا تم توفيره
-            if (new_username) {
-                localStorage.setItem('admin_username', new_username);
-            }
-            
-            return { success: true, message: 'تم تحديث بيانات المسؤول بنجاح' };
-        } catch (error) {
-            console.error('Update admin credentials error:', error);
-            return { success: false, message: 'حدث خطأ أثناء تحديث البيانات' };
-        }
-    },
-
     // --- [2] فحص الحالة (Status) ---
-
     isLoggedIn: () => localStorage.getItem('iron_user_phone') !== null,
     isAdminLoggedIn: () => localStorage.getItem('iron_admin') === 'true',
     getUserPhone: () => localStorage.getItem('iron_user_phone'),
     getAdminUsername: () => localStorage.getItem('admin_username'),
-    getUserToken: () => localStorage.getItem('iron_user_token'),
 
     logout() {
         localStorage.clear();
         window.location.href = 'index.html';
     },
 
-    // --- [3] إدارة المنتجات (Products) ---
+    // --- [3] نظام الوسائط (Media System) ---
+    async uploadMedia(file, folder = 'general') {
+        try {
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+            
+            const { data, error } = await window.supabaseClient
+                .storage
+                .from('media')
+                .upload(fileName, file);
+            
+            if (error) throw error;
+            
+            const publicUrl = `${window.SUPABASE_STORAGE_URL}/media/${fileName}`;
+            return { success: true, url: publicUrl, path: fileName };
+        } catch (error) {
+            console.error('Upload media error:', error);
+            return { success: false, message: error.message };
+        }
+    },
 
+    async uploadFromCamera() {
+        return new Promise((resolve) => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.capture = 'environment';
+            
+            input.onchange = async (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const result = await this.uploadMedia(file, 'camera');
+                    resolve(result);
+                }
+            };
+            
+            input.click();
+        });
+    },
+
+    async deleteMedia(path) {
+        try {
+            const { error } = await window.supabaseClient
+                .storage
+                .from('media')
+                .remove([path]);
+            
+            if (error) throw error;
+            return { success: true };
+        } catch (error) {
+            return { success: false, message: error.message };
+        }
+    },
+
+    // --- [4] إدارة المنتجات (Products) ---
     async getProducts() {
         try {
             const { data, error } = await window.supabaseClient
@@ -174,7 +193,12 @@ window.ironPlus = {
 
     async getProduct(productId) {
         try {
-            const { data, error } = await window.supabaseClient.from('products').select('*').eq('id', productId).single();
+            const { data, error } = await window.supabaseClient
+                .from('products')
+                .select('*')
+                .eq('id', productId)
+                .single();
+            
             if (error) throw error;
             return { success: true, product: data };
         } catch (error) {
@@ -185,10 +209,13 @@ window.ironPlus = {
     async addProduct(productData) {
         try {
             if (productData.price) productData.price = Math.round(productData.price * 100);
-            if (productData.features && typeof productData.features === 'string') {
-                productData.features = productData.features.split('\n').map(f => f.trim()).filter(f => f.length > 0);
-            }
-            const { data, error } = await window.supabaseClient.from('products').insert([productData]).select().single();
+            
+            const { data, error } = await window.supabaseClient
+                .from('products')
+                .insert([productData])
+                .select()
+                .single();
+            
             if (error) throw error;
             return { success: true, product: data, message: 'تمت إضافة المنتج بنجاح' };
         } catch (error) {
@@ -199,10 +226,14 @@ window.ironPlus = {
     async updateProduct(productId, updates) {
         try {
             if (updates.price) updates.price = Math.round(updates.price * 100);
-            if (updates.features && typeof updates.features === 'string') {
-                updates.features = updates.features.split('\n').map(f => f.trim()).filter(f => f.length > 0);
-            }
-            const { data, error } = await window.supabaseClient.from('products').update(updates).eq('id', productId).select().single();
+            
+            const { data, error } = await window.supabaseClient
+                .from('products')
+                .update(updates)
+                .eq('id', productId)
+                .select()
+                .single();
+            
             if (error) throw error;
             return { success: true, product: data, message: 'تم تحديث المنتج بنجاح' };
         } catch (error) {
@@ -212,7 +243,11 @@ window.ironPlus = {
 
     async deleteProduct(productId) {
         try {
-            const { error } = await window.supabaseClient.from('products').delete().eq('id', productId);
+            const { error } = await window.supabaseClient
+                .from('products')
+                .delete()
+                .eq('id', productId);
+            
             if (error) throw error;
             return { success: true, message: 'تم حذف المنتج بنجاح' };
         } catch (error) {
@@ -220,104 +255,7 @@ window.ironPlus = {
         }
     },
 
-    // --- [4] إدارة الطلبات (Orders) ---
-
-    async getUserOrders(phone) {
-        try {
-            const { data, error } = await window.supabaseClient
-                .from('orders')
-                .select('*, products(*)')
-                .eq('customer_phone', phone)
-                .order('created_at', { ascending: false });
-            if (error) throw error;
-            return { success: true, orders: data || [] };
-        } catch (error) {
-            return { success: false, message: error.message, orders: [] };
-        }
-    },
-
-    async getAllOrders(filters = {}) {
-        try {
-            let query = window.supabaseClient
-                .from('orders')
-                .select('*, products(*)')
-                .order('created_at', { ascending: false });
-            
-            if (filters.status && filters.status !== 'all') {
-                query = query.eq('status', filters.status);
-            }
-            if (filters.phone) {
-                query = query.ilike('customer_phone', `%${filters.phone}%`);
-            }
-            const { data, error } = await query;
-            if (error) throw error;
-            return { success: true, orders: data || [] };
-        } catch (error) {
-            return { success: false, message: error.message, orders: [] };
-        }
-    },
-
-    async getOrder(orderId) {
-        try {
-            const { data, error } = await window.supabaseClient
-                .from('orders')
-                .select('*, products(*)')
-                .eq('id', orderId)
-                .single();
-            if (error) throw error;
-            return { success: true, order: data };
-        } catch (error) {
-            return { success: false, message: error.message };
-        }
-    },
-
-    async updateOrderStatus(orderId, status) {
-        try {
-            const { data, error } = await window.supabaseClient
-                .from('orders')
-                .update({ status })
-                .eq('id', orderId)
-                .select()
-                .single();
-            if (error) throw error;
-            return { success: true, order: data };
-        } catch (error) {
-            return { success: false, message: error.message };
-        }
-    },
-
-    async createPayment(productId, phone, amount) {
-        try {
-            const response = await fetch(`${window.SUPABASE_URL}/functions/v1/create_paylink`, {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'apikey': window.SUPABASE_ANON_KEY,
-                    'Authorization': `Bearer ${window.SUPABASE_ANON_KEY}`
-                },
-                body: JSON.stringify({ 
-                    product_id: productId, 
-                    customer_phone: phone, 
-                    amount: amount 
-                })
-            });
-            
-            if (!response.ok) throw new Error('Failed to create payment link');
-            
-            const data = await response.json();
-            return { success: true, data: data };
-        } catch (e) {
-            console.error('Payment error:', e);
-            return { 
-                success: false, 
-                message: "جاري ربط بوابة الدفع...",
-                data: { url: 'https://pay.ironplus.com/test' } // رابط تجريبي
-            };
-        }
-    },
-
-    // --- [5] أكواد التفعيل (Activation Codes) ---
-
+    // --- [5] إدارة الأكواد (Codes) ---
     async getAvailableCodes(productId) {
         try {
             const { data, error } = await window.supabaseClient
@@ -326,6 +264,7 @@ window.ironPlus = {
                 .eq('product_id', productId)
                 .eq('is_used', false)
                 .order('created_at', { ascending: true });
+            
             if (error) throw error;
             return { success: true, codes: data || [] };
         } catch (error) {
@@ -398,274 +337,7 @@ window.ironPlus = {
         }
     },
 
-    // --- [6] الإحصائيات (Analytics) ---
-
-    async getSiteStats() {
-        try {
-            // استخدام try-catch لكل RPC لتجنب توقف النظام
-            let salesData = 0;
-            let customersData = 0;
-            
-            try {
-                const { data: sales } = await window.supabaseClient.rpc('get_total_sales');
-                salesData = sales || 0;
-            } catch (e) {
-                console.warn('get_total_sales RPC not available, using fallback');
-                // بديل: حساب يدوي
-                const { data: orders } = await window.supabaseClient
-                    .from('orders')
-                    .select('total')
-                    .eq('status', 'completed');
-                salesData = orders?.reduce((sum, order) => sum + (order.total || 0), 0) || 0;
-            }
-            
-            try {
-                const { data: customers } = await window.supabaseClient.rpc('get_unique_customers');
-                customersData = customers || 0;
-            } catch (e) {
-                console.warn('get_unique_customers RPC not available, using fallback');
-                // بديل: حساب يدوي
-                const { data: orders } = await window.supabaseClient
-                    .from('orders')
-                    .select('customer_phone')
-                    .eq('status', 'completed');
-                const uniquePhones = new Set(orders?.map(o => o.customer_phone).filter(Boolean));
-                customersData = uniquePhones.size || 0;
-            }
-            
-            const { count: productsCount } = await window.supabaseClient
-                .from('products')
-                .select('*', { count: 'exact', head: true })
-                .eq('is_active', true);
-            
-            const { count: ordersCount } = await window.supabaseClient
-                .from('orders')
-                .select('*', { count: 'exact', head: true });
-            
-            const { count: codesCount } = await window.supabaseClient
-                .from('activation_codes')
-                .select('*', { count: 'exact', head: true })
-                .eq('is_used', false);
-            
-            // الزيارات اليومية
-            const today = new Date().toISOString().split('T')[0];
-            const { count: dailyVisits } = await window.supabaseClient
-                .from('site_visits')
-                .select('*', { count: 'exact', head: true })
-                .gte('created_at', today);
-            
-            return {
-                success: true,
-                stats: {
-                    totalSales: salesData,
-                    uniqueCustomers: customersData,
-                    activeProducts: productsCount || 0,
-                    totalOrders: ordersCount || 0,
-                    availableCodes: codesCount || 0,
-                    dailyVisits: dailyVisits || 0
-                }
-            };
-        } catch (error) {
-            console.error('Get site stats error:', error);
-            return { 
-                success: false, 
-                stats: { 
-                    totalSales: 0, 
-                    uniqueCustomers: 0, 
-                    activeProducts: 0, 
-                    totalOrders: 0, 
-                    availableCodes: 0,
-                    dailyVisits: 0
-                } 
-            };
-        }
-    },
-
-    async getQuickStats() {
-        try {
-            const today = new Date().toISOString().split('T')[0];
-            const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-            
-            // مبيعات اليوم (بديل إذا لم تكن الدالة موجودة)
-            let todaySales = 0;
-            let todayCustomers = 0;
-            let weekSales = 0;
-            let weekCustomers = 0;
-            
-            try {
-                const { data: todayData } = await window.supabaseClient.rpc('get_sales_since', { since_date: today });
-                todaySales = todayData || 0;
-            } catch (e) {
-                // حساب يدوي
-                const { data: todayOrders } = await window.supabaseClient
-                    .from('orders')
-                    .select('total, customer_phone')
-                    .eq('status', 'completed')
-                    .gte('created_at', today);
-                todaySales = todayOrders?.reduce((sum, order) => sum + (order.total || 0), 0) || 0;
-                const todayUnique = new Set(todayOrders?.map(o => o.customer_phone).filter(Boolean));
-                todayCustomers = todayUnique.size || 0;
-            }
-            
-            try {
-                const { data: weekData } = await window.supabaseClient.rpc('get_sales_since', { since_date: weekAgo });
-                weekSales = weekData || 0;
-            } catch (e) {
-                // حساب يدوي
-                const { data: weekOrders } = await window.supabaseClient
-                    .from('orders')
-                    .select('total, customer_phone')
-                    .eq('status', 'completed')
-                    .gte('created_at', weekAgo);
-                weekSales = weekOrders?.reduce((sum, order) => sum + (order.total || 0), 0) || 0;
-                const weekUnique = new Set(weekOrders?.map(o => o.customer_phone).filter(Boolean));
-                weekCustomers = weekUnique.size || 0;
-            }
-            
-            // طلبات اليوم
-            const { count: todayOrders } = await window.supabaseClient
-                .from('orders')
-                .select('*', { count: 'exact', head: true })
-                .gte('created_at', today);
-            
-            // طلبات الأسبوع
-            const { count: weekOrders } = await window.supabaseClient
-                .from('orders')
-                .select('*', { count: 'exact', head: true })
-                .gte('created_at', weekAgo);
-            
-            return {
-                success: true,
-                stats: {
-                    salesToday: todaySales,
-                    ordersToday: todayOrders || 0,
-                    customersToday: todayCustomers,
-                    avgOrderToday: todayOrders > 0 ? (todaySales || 0) / todayOrders : 0,
-                    salesWeek: weekSales,
-                    ordersWeek: weekOrders || 0,
-                    customersWeek: weekCustomers,
-                    avgOrderWeek: weekOrders > 0 ? (weekSales || 0) / weekOrders : 0
-                }
-            };
-        } catch (error) {
-            console.error('Get quick stats error:', error);
-            return { 
-                success: false, 
-                stats: {
-                    salesToday: 0,
-                    ordersToday: 0,
-                    customersToday: 0,
-                    avgOrderToday: 0,
-                    salesWeek: 0,
-                    ordersWeek: 0,
-                    customersWeek: 0,
-                    avgOrderWeek: 0
-                }
-            };
-        }
-    },
-
-    async getRecentActivity(limit = 10) {
-        try {
-            // جلب الطلبات الحديثة
-            const { data: recentOrders, error: ordersError } = await window.supabaseClient
-                .from('orders')
-                .select('*, products(name)')
-                .order('created_at', { ascending: false })
-                .limit(limit);
-            
-            if (ordersError) throw ordersError;
-            
-            // جلب تسجيلات الدخول الحديثة
-            const { data: recentLogins, error: loginsError } = await window.supabaseClient
-                .from('login_logs')
-                .select('*')
-                .order('created_at', { ascending: false })
-                .limit(limit);
-            
-            if (loginsError) throw loginsError;
-            
-            // دمج النشاطات
-            const activities = [
-                ...recentOrders.map(order => ({
-                    type: order.status === 'completed' ? 'success' : order.status === 'pending' ? 'warning' : 'error',
-                    icon: order.status === 'completed' ? 'shopping-cart' : 'clock',
-                    title: `طلب جديد: ${order.products?.name || 'منتج'}`,
-                    description: `من ${order.customer_phone} - ${this.formatPrice(order.amount)} ر.س`,
-                    created_at: order.created_at
-                })),
-                ...recentLogins.map(log => ({
-                    type: log.status === 'success' ? 'success' : 'error',
-                    icon: log.status === 'success' ? 'user-check' : 'user-times',
-                    title: `تسجيل دخول ${log.status === 'success' ? 'ناجح' : 'فاشل'}`,
-                    description: `المستخدم: ${log.username} - IP: ${log.ip_address}`,
-                    created_at: log.created_at
-                }))
-            ];
-            
-            // ترتيب حسب التاريخ
-            activities.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-            
-            return { success: true, activities: activities.slice(0, limit) };
-        } catch (error) {
-            console.error('Get recent activity error:', error);
-            return { success: false, activities: [] };
-        }
-    },
-
-    async recordVisit(page) {
-        try {
-            const ipRes = await fetch('https://api.ipify.org?format=json').catch(() => null);
-            const ipData = ipRes ? await ipRes.json() : { ip: 'unknown' };
-            
-            await window.supabaseClient
-                .from('site_visits')
-                .insert([{ 
-                    page_visited: page, 
-                    ip_address: ipData.ip,
-                    user_agent: navigator.userAgent,
-                    created_at: new Date().toISOString()
-                }]);
-        } catch (e) { 
-            console.error('Record visit error:', e);
-        }
-    },
-
-    async recordLogin(phone) {
-        try {
-            await window.supabaseClient
-                .from('users')
-                .upsert({ 
-                    phone: phone, 
-                    last_login: new Date().toISOString(),
-                    updated_at: new Date().toISOString()
-                }, { onConflict: 'phone' });
-        } catch (e) {
-            console.error('Record login error:', e);
-        }
-    },
-
-    async recordAdminLogin(username, success) {
-        try {
-            const ipRes = await fetch('https://api.ipify.org?format=json').catch(() => null);
-            const ipData = ipRes ? await ipRes.json() : { ip: 'unknown' };
-            
-            await window.supabaseClient
-                .from('login_logs')
-                .insert([{
-                    username: username,
-                    status: success ? 'success' : 'failed',
-                    ip_address: ipData.ip,
-                    user_agent: navigator.userAgent,
-                    created_at: new Date().toISOString()
-                }]);
-        } catch (e) {
-            console.error('Record admin login error:', e);
-        }
-    },
-
-    // --- [7] إعدادات الموقع (Site Settings) ---
-
+    // --- [6] إعدادات الموقع (Site Settings) ---
     async getSiteSettings() {
         try {
             const { data, error } = await window.supabaseClient
@@ -674,7 +346,6 @@ window.ironPlus = {
                 .single();
             
             if (error && error.code === 'PGRST116') {
-                // لا توجد إعدادات، نعيد إعدادات افتراضية
                 return { 
                     success: true, 
                     settings: this.getDefaultSettings() 
@@ -731,6 +402,14 @@ window.ironPlus = {
             about_title: 'من نحن',
             about_content: '',
             about_active: true,
+            primary_color: '#9B111E',
+            secondary_color: '#FFD700',
+            dark_bg: '#0A0A0A',
+            card_bg: '#1A1A1A',
+            text_light: '#FFFFFF',
+            text_gray: '#A0A0A0',
+            font_family: 'Rajdhani, sans-serif',
+            google_font_url: 'https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&display=swap',
             two_factor_auth: false,
             max_login_attempts: 5,
             block_duration: 15,
@@ -741,7 +420,6 @@ window.ironPlus = {
 
     async updateSiteSettings(updates) {
         try {
-            // التحقق من وجود سجل الإعدادات
             const { data: existingSettings } = await window.supabaseClient
                 .from('site_settings')
                 .select('id')
@@ -750,7 +428,6 @@ window.ironPlus = {
             let result;
             
             if (existingSettings && existingSettings.length > 0) {
-                // تحديث السجل الموجود
                 const { data, error } = await window.supabaseClient
                     .from('site_settings')
                     .update(updates)
@@ -761,7 +438,6 @@ window.ironPlus = {
                 if (error) throw error;
                 result = data;
             } else {
-                // إنشاء سجل جديد
                 const defaultSettings = this.getDefaultSettings();
                 const newSettings = { ...defaultSettings, ...updates };
                 
@@ -782,8 +458,226 @@ window.ironPlus = {
         }
     },
 
-    // --- [8] إدارة الكوبونات (Coupons) ---
+    // --- [7] إدارة البانرات (Banners) ---
+    async getBanners() {
+        try {
+            const { data, error } = await window.supabaseClient
+                .from('banners')
+                .select('*')
+                .order('sort_order', { ascending: true })
+                .order('created_at', { ascending: false });
+            
+            if (error) throw error;
+            return { success: true, banners: data || [] };
+        } catch (error) {
+            console.error('Get banners error:', error);
+            return { success: false, message: error.message, banners: [] };
+        }
+    },
 
+    async getBanner(bannerId) {
+        try {
+            const { data, error } = await window.supabaseClient
+                .from('banners')
+                .select('*')
+                .eq('id', bannerId)
+                .single();
+            
+            if (error) throw error;
+            return { success: true, banner: data };
+        } catch (error) {
+            return { success: false, message: error.message };
+        }
+    },
+
+    async createBanner(bannerData) {
+        try {
+            const { data, error } = await window.supabaseClient
+                .from('banners')
+                .insert([bannerData])
+                .select()
+                .single();
+            
+            if (error) throw error;
+            return { success: true, banner: data, message: 'تم إنشاء البانر بنجاح' };
+        } catch (error) {
+            return { success: false, message: error.message };
+        }
+    },
+
+    async updateBanner(bannerId, updates) {
+        try {
+            const { data, error } = await window.supabaseClient
+                .from('banners')
+                .update(updates)
+                .eq('id', bannerId)
+                .select()
+                .single();
+            
+            if (error) throw error;
+            return { success: true, banner: data, message: 'تم تحديث البانر بنجاح' };
+        } catch (error) {
+            return { success: false, message: error.message };
+        }
+    },
+
+    async deleteBanner(bannerId) {
+        try {
+            const { error } = await window.supabaseClient
+                .from('banners')
+                .delete()
+                .eq('id', bannerId);
+            
+            if (error) throw error;
+            return { success: true, message: 'تم حذف البانر بنجاح' };
+        } catch (error) {
+            return { success: false, message: error.message };
+        }
+    },
+
+    // --- [8] إدارة الصفحات (Pages) ---
+    async getPages() {
+        try {
+            const { data, error } = await window.supabaseClient
+                .from('pages')
+                .select('*')
+                .order('created_at', { ascending: false });
+            
+            if (error) throw error;
+            return { success: true, pages: data || [] };
+        } catch (error) {
+            console.error('Get pages error:', error);
+            return { success: false, message: error.message, pages: [] };
+        }
+    },
+
+    async getPage(pageId) {
+        try {
+            const { data, error } = await window.supabaseClient
+                .from('pages')
+                .select('*')
+                .eq('id', pageId)
+                .single();
+            
+            if (error) throw error;
+            return { success: true, page: data };
+        } catch (error) {
+            return { success: false, message: error.message };
+        }
+    },
+
+    async addPage(pageData) {
+        try {
+            const { data, error } = await window.supabaseClient
+                .from('pages')
+                .insert([pageData])
+                .select()
+                .single();
+            
+            if (error) throw error;
+            return { success: true, page: data, message: 'تم إنشاء الصفحة بنجاح' };
+        } catch (error) {
+            return { success: false, message: error.message };
+        }
+    },
+
+    async updatePage(pageId, updates) {
+        try {
+            const { data, error } = await window.supabaseClient
+                .from('pages')
+                .update(updates)
+                .eq('id', pageId)
+                .select()
+                .single();
+            
+            if (error) throw error;
+            return { success: true, page: data, message: 'تم تحديث الصفحة بنجاح' };
+        } catch (error) {
+            return { success: false, message: error.message };
+        }
+    },
+
+    async deletePage(pageId) {
+        try {
+            const { error } = await window.supabaseClient
+                .from('pages')
+                .delete()
+                .eq('id', pageId);
+            
+            if (error) throw error;
+            return { success: true, message: 'تم حذف الصفحة بنجاح' };
+        } catch (error) {
+            return { success: false, message: error.message };
+        }
+    },
+
+    // --- [9] إدارة التقييمات (Reviews) ---
+    async getReviews(approvedOnly = false) {
+        try {
+            let query = window.supabaseClient
+                .from('reviews')
+                .select('*')
+                .order('created_at', { ascending: false });
+            
+            if (approvedOnly) {
+                query = query.eq('is_approved', true);
+            }
+            
+            const { data, error } = await query;
+            
+            if (error) throw error;
+            return { success: true, reviews: data || [] };
+        } catch (error) {
+            return { success: false, message: error.message, reviews: [] };
+        }
+    },
+
+    async addReview(reviewData) {
+        try {
+            const { data, error } = await window.supabaseClient
+                .from('reviews')
+                .insert([reviewData])
+                .select()
+                .single();
+            
+            if (error) throw error;
+            return { success: true, review: data, message: 'تم إضافة التقييم بنجاح' };
+        } catch (error) {
+            return { success: false, message: error.message };
+        }
+    },
+
+    async approveReview(reviewId) {
+        try {
+            const { data, error } = await window.supabaseClient
+                .from('reviews')
+                .update({ is_approved: true })
+                .eq('id', reviewId)
+                .select()
+                .single();
+            
+            if (error) throw error;
+            return { success: true, review: data };
+        } catch (error) {
+            return { success: false, message: error.message };
+        }
+    },
+
+    async deleteReview(reviewId) {
+        try {
+            const { error } = await window.supabaseClient
+                .from('reviews')
+                .delete()
+                .eq('id', reviewId);
+            
+            if (error) throw error;
+            return { success: true, message: 'تم حذف التقييم بنجاح' };
+        } catch (error) {
+            return { success: false, message: error.message };
+        }
+    },
+
+    // --- [10] إدارة الكوبونات (Coupons) ---
     async getCoupons() {
         try {
             const { data, error } = await window.supabaseClient
@@ -875,15 +769,20 @@ window.ironPlus = {
             }
             
             // التحقق من تاريخ الانتهاء
-            if (data.expiry_date && new Date(data.expiry_date) < new Date()) {
+            if (data.valid_to && new Date(data.valid_to) < new Date()) {
                 return { success: false, message: 'كود الخصم منتهي الصلاحية' };
+            }
+            
+            // التحقق من تاريخ البدء
+            if (data.valid_from && new Date(data.valid_from) > new Date()) {
+                return { success: false, message: 'كود الخصم لم يبدأ بعد' };
             }
             
             // التحقق من الحد الأدنى للطلب
             if (data.min_order && orderAmount < data.min_order) {
                 return { 
                     success: false, 
-                    message: `الحد الأدنى للطلب هو ${this.formatPrice(data.min_order)} ر.س` 
+                    message: `الحد الأدنى للطلب هو ${this.formatPrice(data.min_order * 100)} ر.س` 
                 };
             }
             
@@ -907,166 +806,255 @@ window.ironPlus = {
         if (coupon.discount_type === 'percentage') {
             return orderAmount * (coupon.discount_value / 100);
         } else {
-            return coupon.discount_value;
+            return coupon.discount_value * 100; // تحويل من ريال إلى هللة
         }
     },
 
-    // --- [9] إدارة البانرات (Banners) ---
-
-    async getBanners() {
+    // --- [11] الإحصائيات (Analytics) ---
+    async getSiteStats() {
         try {
-            const { data, error } = await window.supabaseClient
-                .from('banners')
+            let salesData = 0;
+            let customersData = 0;
+            
+            try {
+                const { data: sales } = await window.supabaseClient.rpc('get_total_sales');
+                salesData = sales || 0;
+            } catch (e) {
+                const { data: orders } = await window.supabaseClient
+                    .from('orders')
+                    .select('total')
+                    .eq('status', 'completed');
+                salesData = orders?.reduce((sum, order) => sum + (order.total || 0), 0) || 0;
+            }
+            
+            try {
+                const { data: customers } = await window.supabaseClient.rpc('get_unique_customers');
+                customersData = customers || 0;
+            } catch (e) {
+                const { data: orders } = await window.supabaseClient
+                    .from('orders')
+                    .select('customer_phone')
+                    .eq('status', 'completed');
+                const uniquePhones = new Set(orders?.map(o => o.customer_phone).filter(Boolean));
+                customersData = uniquePhones.size || 0;
+            }
+            
+            const { count: productsCount } = await window.supabaseClient
+                .from('products')
+                .select('*', { count: 'exact', head: true })
+                .eq('is_active', true);
+            
+            const { count: ordersCount } = await window.supabaseClient
+                .from('orders')
+                .select('*', { count: 'exact', head: true });
+            
+            const { count: codesCount } = await window.supabaseClient
+                .from('activation_codes')
+                .select('*', { count: 'exact', head: true })
+                .eq('is_used', false);
+            
+            const today = new Date().toISOString().split('T')[0];
+            const { count: dailyVisits } = await window.supabaseClient
+                .from('site_visits')
+                .select('*', { count: 'exact', head: true })
+                .gte('created_at', today);
+            
+            return {
+                success: true,
+                stats: {
+                    totalSales: salesData,
+                    uniqueCustomers: customersData,
+                    activeProducts: productsCount || 0,
+                    totalOrders: ordersCount || 0,
+                    availableCodes: codesCount || 0,
+                    dailyVisits: dailyVisits || 0
+                }
+            };
+        } catch (error) {
+            console.error('Get site stats error:', error);
+            return { 
+                success: false, 
+                stats: { 
+                    totalSales: 0, 
+                    uniqueCustomers: 0, 
+                    activeProducts: 0, 
+                    totalOrders: 0, 
+                    availableCodes: 0,
+                    dailyVisits: 0
+                } 
+            };
+        }
+    },
+
+    async getQuickStats() {
+        try {
+            const today = new Date().toISOString().split('T')[0];
+            const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+            
+            // مبيعات اليوم
+            const { data: todayOrders } = await window.supabaseClient
+                .from('orders')
+                .select('total, customer_phone')
+                .eq('status', 'completed')
+                .gte('created_at', today);
+            
+            // مبيعات الأسبوع
+            const { data: weekOrders } = await window.supabaseClient
+                .from('orders')
+                .select('total, customer_phone')
+                .eq('status', 'completed')
+                .gte('created_at', weekAgo);
+            
+            const todaySales = todayOrders?.reduce((sum, order) => sum + (order.total || 0), 0) || 0;
+            const weekSales = weekOrders?.reduce((sum, order) => sum + (order.total || 0), 0) || 0;
+            
+            // عدد العملاء الفريدين
+            const todayUnique = new Set(todayOrders?.map(o => o.customer_phone).filter(Boolean));
+            const weekUnique = new Set(weekOrders?.map(o => o.customer_phone).filter(Boolean));
+            
+            // عدد الطلبات
+            const { count: todayOrdersCount } = await window.supabaseClient
+                .from('orders')
+                .select('*', { count: 'exact', head: true })
+                .eq('status', 'completed')
+                .gte('created_at', today);
+            
+            const { count: weekOrdersCount } = await window.supabaseClient
+                .from('orders')
+                .select('*', { count: 'exact', head: true })
+                .eq('status', 'completed')
+                .gte('created_at', weekAgo);
+            
+            return {
+                success: true,
+                stats: {
+                    salesToday: todaySales,
+                    ordersToday: todayOrdersCount || 0,
+                    customersToday: todayUnique.size || 0,
+                    avgOrderToday: todayOrdersCount > 0 ? todaySales / todayOrdersCount : 0,
+                    salesWeek: weekSales,
+                    ordersWeek: weekOrdersCount || 0,
+                    customersWeek: weekUnique.size || 0,
+                    avgOrderWeek: weekOrdersCount > 0 ? weekSales / weekOrdersCount : 0
+                }
+            };
+        } catch (error) {
+            console.error('Get quick stats error:', error);
+            return { 
+                success: false, 
+                stats: {
+                    salesToday: 0,
+                    ordersToday: 0,
+                    customersToday: 0,
+                    avgOrderToday: 0,
+                    salesWeek: 0,
+                    ordersWeek: 0,
+                    customersWeek: 0,
+                    avgOrderWeek: 0
+                }
+            };
+        }
+    },
+
+    async getRecentActivity(limit = 10) {
+        try {
+            // جلب الطلبات الحديثة
+            const { data: recentOrders, error: ordersError } = await window.supabaseClient
+                .from('orders')
+                .select('*, products(name)')
+                .order('created_at', { ascending: false })
+                .limit(limit);
+            
+            if (ordersError) throw ordersError;
+            
+            // جلب تسجيلات الدخول الحديثة
+            const { data: recentLogins, error: loginsError } = await window.supabaseClient
+                .from('login_logs')
                 .select('*')
-                .order('sort_order', { ascending: true })
-                .order('created_at', { ascending: false });
+                .order('created_at', { ascending: false })
+                .limit(limit);
             
-            if (error) throw error;
-            return { success: true, banners: data || [] };
+            if (loginsError) throw loginsError;
+            
+            // دمج النشاطات
+            const activities = [
+                ...recentOrders.map(order => ({
+                    type: order.status === 'completed' ? 'success' : order.status === 'pending' ? 'warning' : 'error',
+                    icon: order.status === 'completed' ? 'shopping-cart' : 'clock',
+                    title: `طلب جديد: ${order.products?.name || 'منتج'}`,
+                    description: `من ${order.customer_phone} - ${this.formatPrice(order.amount)} ر.س`,
+                    created_at: order.created_at
+                })),
+                ...recentLogins.map(log => ({
+                    type: log.status === 'success' ? 'success' : 'error',
+                    icon: log.status === 'success' ? 'user-check' : 'user-times',
+                    title: `تسجيل دخول ${log.status === 'success' ? 'ناجح' : 'فاشل'}`,
+                    description: `المستخدم: ${log.username} - IP: ${log.ip_address}`,
+                    created_at: log.created_at
+                }))
+            ];
+            
+            // ترتيب حسب التاريخ
+            activities.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            
+            return { success: true, activities: activities.slice(0, limit) };
         } catch (error) {
-            console.error('Get banners error:', error);
-            return { success: false, message: error.message, banners: [] };
+            console.error('Get recent activity error:', error);
+            return { success: false, activities: [] };
         }
     },
 
-    async getBanner(bannerId) {
+    // --- [12] سجلات النظام ---
+    async recordVisit(page) {
         try {
-            const { data, error } = await window.supabaseClient
-                .from('banners')
-                .select('*')
-                .eq('id', bannerId)
-                .single();
+            const ipRes = await fetch('https://api.ipify.org?format=json').catch(() => null);
+            const ipData = ipRes ? await ipRes.json() : { ip: 'unknown' };
             
-            if (error) throw error;
-            return { success: true, banner: data };
-        } catch (error) {
-            return { success: false, message: error.message };
+            await window.supabaseClient
+                .from('site_visits')
+                .insert([{ 
+                    page_visited: page, 
+                    ip_address: ipData.ip,
+                    user_agent: navigator.userAgent,
+                    created_at: new Date().toISOString()
+                }]);
+        } catch (e) { 
+            console.error('Record visit error:', e);
         }
     },
 
-    async createBanner(bannerData) {
+    async recordLogin(phone) {
         try {
-            const { data, error } = await window.supabaseClient
-                .from('banners')
-                .insert([bannerData])
-                .select()
-                .single();
-            
-            if (error) throw error;
-            return { success: true, banner: data, message: 'تم إنشاء البانر بنجاح' };
-        } catch (error) {
-            return { success: false, message: error.message };
+            await window.supabaseClient
+                .from('users')
+                .upsert({ 
+                    phone: phone, 
+                    last_login: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                }, { onConflict: 'phone' });
+        } catch (e) {
+            console.error('Record login error:', e);
         }
     },
 
-    async updateBanner(bannerId, updates) {
+    async recordAdminLogin(username, success) {
         try {
-            const { data, error } = await window.supabaseClient
-                .from('banners')
-                .update(updates)
-                .eq('id', bannerId)
-                .select()
-                .single();
+            const ipRes = await fetch('https://api.ipify.org?format=json').catch(() => null);
+            const ipData = ipRes ? await ipRes.json() : { ip: 'unknown' };
             
-            if (error) throw error;
-            return { success: true, banner: data, message: 'تم تحديث البانر بنجاح' };
-        } catch (error) {
-            return { success: false, message: error.message };
+            await window.supabaseClient
+                .from('login_logs')
+                .insert([{
+                    username: username,
+                    status: success ? 'success' : 'failed',
+                    ip_address: ipData.ip,
+                    user_agent: navigator.userAgent,
+                    created_at: new Date().toISOString()
+                }]);
+        } catch (e) {
+            console.error('Record admin login error:', e);
         }
     },
-
-    async deleteBanner(bannerId) {
-        try {
-            const { error } = await window.supabaseClient
-                .from('banners')
-                .delete()
-                .eq('id', bannerId);
-            
-            if (error) throw error;
-            return { success: true, message: 'تم حذف البانر بنجاح' };
-        } catch (error) {
-            return { success: false, message: error.message };
-        }
-    },
-
-    // --- [10] إدارة الصفحات (Pages) ---
-
-    async getPages() {
-        try {
-            const { data, error } = await window.supabaseClient
-                .from('pages')
-                .select('*')
-                .order('created_at', { ascending: false });
-            
-            if (error) throw error;
-            return { success: true, pages: data || [] };
-        } catch (error) {
-            console.error('Get pages error:', error);
-            return { success: false, message: error.message, pages: [] };
-        }
-    },
-
-    async getPage(pageId) {
-        try {
-            const { data, error } = await window.supabaseClient
-                .from('pages')
-                .select('*')
-                .eq('id', pageId)
-                .single();
-            
-            if (error) throw error;
-            return { success: true, page: data };
-        } catch (error) {
-            return { success: false, message: error.message };
-        }
-    },
-
-    async addPage(pageData) {
-        try {
-            const { data, error } = await window.supabaseClient
-                .from('pages')
-                .insert([pageData])
-                .select()
-                .single();
-            
-            if (error) throw error;
-            return { success: true, page: data, message: 'تم إنشاء الصفحة بنجاح' };
-        } catch (error) {
-            return { success: false, message: error.message };
-        }
-    },
-
-    async updatePage(pageId, updates) {
-        try {
-            const { data, error } = await window.supabaseClient
-                .from('pages')
-                .update(updates)
-                .eq('id', pageId)
-                .select()
-                .single();
-            
-            if (error) throw error;
-            return { success: true, page: data, message: 'تم تحديث الصفحة بنجاح' };
-        } catch (error) {
-            return { success: false, message: error.message };
-        }
-    },
-
-    async deletePage(pageId) {
-        try {
-            const { error } = await window.supabaseClient
-                .from('pages')
-                .delete()
-                .eq('id', pageId);
-            
-            if (error) throw error;
-            return { success: true, message: 'تم حذف الصفحة بنجاح' };
-        } catch (error) {
-            return { success: false, message: error.message };
-        }
-    },
-
-    // --- [11] سجل الدخول (Login Logs) ---
 
     async getLoginLogs(limit = 20) {
         try {
@@ -1084,8 +1072,63 @@ window.ironPlus = {
         }
     },
 
-    // --- [12] نظام السلة (Cart System) ---
+    // --- [13] إدارة الطلبات ---
+    async getOrders(filters = {}) {
+        try {
+            let query = window.supabaseClient
+                .from('orders')
+                .select('*, products(*)')
+                .order('created_at', { ascending: false });
+            
+            if (filters.status && filters.status !== 'all') {
+                query = query.eq('status', filters.status);
+            }
+            
+            if (filters.customer_phone) {
+                query = query.ilike('customer_phone', `%${filters.customer_phone}%`);
+            }
+            
+            const { data, error } = await query;
+            
+            if (error) throw error;
+            return { success: true, orders: data || [] };
+        } catch (error) {
+            return { success: false, message: error.message, orders: [] };
+        }
+    },
 
+    async getOrder(orderId) {
+        try {
+            const { data, error } = await window.supabaseClient
+                .from('orders')
+                .select('*, products(*)')
+                .eq('id', orderId)
+                .single();
+            
+            if (error) throw error;
+            return { success: true, order: data };
+        } catch (error) {
+            return { success: false, message: error.message };
+        }
+    },
+
+    async updateOrderStatus(orderId, status) {
+        try {
+            const { data, error } = await window.supabaseClient
+                .from('orders')
+                .update({ status: status })
+                .eq('id', orderId)
+                .select()
+                .single();
+            
+            if (error) throw error;
+            return { success: true, order: data };
+        } catch (error) {
+            return { success: false, message: error.message };
+        }
+    },
+
+    // --- [14] نظام السلة ---
     async addToCart(productId) {
         try {
             const productRes = await this.getProduct(productId);
@@ -1167,7 +1210,6 @@ window.ironPlus = {
     async clearCart() {
         try {
             localStorage.removeItem('iron_cart');
-            localStorage.removeItem('applied_coupon');
             return { success: true };
         } catch (error) {
             return { success: false, message: 'حدث خطأ أثناء تفريغ السلة' };
@@ -1232,84 +1274,7 @@ window.ironPlus = {
         }
     },
 
-    async createOrderFromCart(phone, couponCode = null) {
-        try {
-            const cartRes = await this.getCart();
-            if (!cartRes.success || cartRes.cart.length === 0) {
-                return { success: false, message: 'السلة فارغة' };
-            }
-            
-            const cart = cartRes.cart;
-            const totalRes = await this.calculateCartTotal(cart, couponCode);
-            
-            if (!totalRes.success) {
-                return { success: false, message: 'حدث خطأ في حساب الإجمالي' };
-            }
-            
-            const totals = totalRes.totals;
-            const coupon = totalRes.coupon;
-            
-            // إنشاء طلب لكل منتج في السلة
-            const orderPromises = cart.map(async (item) => {
-                const orderData = {
-                    customer_phone: phone,
-                    product_id: item.id,
-                    quantity: item.quantity,
-                    amount: item.price * item.quantity,
-                    discount: coupon ? totals.discount / cart.length : 0,
-                    tax: totals.tax / cart.length,
-                    total: totals.total / cart.length,
-                    status: totals.total <= 0 ? 'completed' : 'pending',
-                    coupon_id: coupon ? coupon.id : null,
-                    coupon_code: coupon ? coupon.code : null
-                };
-                
-                const { data, error } = await window.supabaseClient
-                    .from('orders')
-                    .insert([orderData])
-                    .select()
-                    .single();
-                
-                if (error) throw error;
-                
-                // إذا كان الطلب مجاني (بعد الخصم)، نحاول تعيين كود تفعيل
-                if (totals.total <= 0) {
-                    try {
-                        await this.assignActivationCode(data.id, item.id);
-                    } catch (activationError) {
-                        console.error('Auto activation error:', activationError);
-                    }
-                }
-                
-                return data;
-            });
-            
-            const orders = await Promise.all(orderPromises);
-            
-            // زيادة عداد استخدام الكوبون إذا تم استخدامه
-            if (coupon) {
-                await window.supabaseClient.rpc('increment_coupon_used', {
-                    coupon_id: coupon.id
-                });
-            }
-            
-            // مسح السلة بعد إنشاء الطلب
-            await this.clearCart();
-            
-            return { 
-                success: true, 
-                orders: orders, 
-                totals: totals,
-                redirectToPayment: totals.total > 0
-            };
-        } catch (error) {
-            console.error('Create order from cart error:', error);
-            return { success: false, message: 'حدث خطأ أثناء إنشاء الطلب' };
-        }
-    },
-
-    // --- [13] أدوات مساعدة (Utils) ---
-
+    // --- [15] أدوات مساعدة ---
     formatPrice: (amount) => {
         if (!amount && amount !== 0) return '0.00';
         return (parseFloat(amount) / 100).toLocaleString('ar-SA', {
@@ -1330,8 +1295,46 @@ window.ironPlus = {
         });
     },
 
-    // --- [14] تسجيل الأخطاء (Error Logging) ---
+    applyDynamicStyles(settings) {
+        if (!settings) return;
+        
+        let styleElement = document.getElementById('dynamic-styles');
+        if (!styleElement) {
+            styleElement = document.createElement('style');
+            styleElement.id = 'dynamic-styles';
+            document.head.appendChild(styleElement);
+        }
+        
+        styleElement.textContent = `
+            :root {
+                --primary-color: ${settings.primary_color || '#9B111E'};
+                --secondary-color: ${settings.secondary_color || '#FFD700'};
+                --dark-bg: ${settings.dark_bg || '#0A0A0A'};
+                --card-bg: ${settings.card_bg || '#1A1A1A'};
+                --text-light: ${settings.text_light || '#FFFFFF'};
+                --text-gray: ${settings.text_gray || '#A0A0A0'};
+                --font-family: ${settings.font_family || 'Rajdhani, sans-serif'};
+            }
+            
+            body {
+                font-family: ${settings.font_family || 'Rajdhani, sans-serif'};
+            }
+        `;
+        
+        if (settings.google_font_url) {
+            const existingFont = document.querySelector('link[href*="fonts.googleapis.com"]');
+            if (existingFont) {
+                existingFont.href = settings.google_font_url;
+            } else {
+                const link = document.createElement('link');
+                link.href = settings.google_font_url;
+                link.rel = 'stylesheet';
+                document.head.appendChild(link);
+            }
+        }
+    },
 
+    // --- [16] تسجيل الأخطاء ---
     async logError(error, context = '') {
         try {
             await window.supabaseClient
@@ -1354,5 +1357,5 @@ window.ironPlus = {
 document.addEventListener('DOMContentLoaded', async function() {
     const page = window.location.pathname.split('/').pop() || 'index.html';
     await window.ironPlus.recordVisit(page);
-    console.log('Iron Plus v5.0: Systems fully operational. 🦾');
+    console.log('Iron Plus v5.5 CMS: Systems fully operational. 🦾');
 });
