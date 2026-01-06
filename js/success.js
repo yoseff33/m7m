@@ -1,319 +1,380 @@
-// ==========================================
-// success.js - نظام إدارة نجاح الطلبات IRON+ v5.6
-// تم الإصلاح: معالجة خطأ PGRST201 (تعدد العلاقات)
-// ==========================================
-
+// success.js - منطق صفحة النجاح مع دعم Paylink
 document.addEventListener('DOMContentLoaded', async function() {
-    // 1. استخراج المعلمات من الرابط (URL Parameters)
     const urlParams = new URLSearchParams(window.location.search);
     const transactionNo = urlParams.get('transactionNo');
     const phone = urlParams.get('phone');
     const orderId = urlParams.get('orderId');
-    
-    console.log('🔍 نظام النجاح - المعلمات المستلمة:', { transactionNo, phone, orderId });
-    
-    // التأكد من تهيئة سوبابيس
-    if (typeof window.supabaseClient === 'undefined') {
-        console.error('❌ Supabase Client is not initialized!');
-        showError('فشل الاتصال بنظام السيرفر');
-        return;
-    }
 
-    // 2. توجيه عملية البحث بناءً على المعطى
-    if (transactionNo) {
-        await loadOrderDetails(transactionNo);
-    } else if (orderId) {
-        await loadOrderById(orderId);
-    } else if (phone) {
-        await findLatestOrder(phone);
-    } else {
-        showError('لم يتم العثور على أي تفاصيل للطلب في الرابط');
+    console.log('🔍 معلمات النجاح:', { transactionNo, phone, orderId });
+
+    try {
+        if (transactionNo) {
+            await loadOrderDetails(transactionNo);
+        } else if (orderId) {
+            await loadOrderById(orderId);
+        } else if (phone) {
+            await findLatestOrder(phone);
+        } else {
+            showError('لم يتم العثور على تفاصيل الطلب');
+        }
+    } catch (err) {
+        console.error('Error in DOMContentLoaded:', err);
+        showError('حدث خطأ غير متوقع أثناء تحميل الصفحة');
     }
 });
 
-// --- [دوال جلب البيانات] ---
-
+// تحميل الطلب بواسطة رقم المعاملة
 async function loadOrderDetails(transactionNo) {
     try {
-        console.log('🔍 جاري جلب الطلب عبر المعاملة:', transactionNo);
-        
-        // حل خطأ PGRST201: تحديد أن الربط يتم عبر عمود product_id تحديداً
-        const { data: order, error } = await window.supabaseClient
+        console.log('🔍 جاري تحميل تفاصيل الطلب:', transactionNo);
+
+        const { data: order, error } = await supabaseClient
             .from('orders')
             .select(`
                 *,
-                products:product_id (*),
-                activation_codes:order_id (code)
+                products:products_id (*),
+                activation_codes:activation_code_id (code)
             `)
             .eq('transaction_no', transactionNo)
-            .maybeSingle();
-        
+            .single();
+
         if (error) {
             console.error('Supabase error:', error);
             throw error;
         }
-        
-        if (!order) {
-            console.warn('⚠️ الطلب غير موجود في قاعدة البيانات');
-            showError('لم يتم العثور على تفاصيل الطلب.. تأكد من اكتمال الدفع');
-            return;
-        }
-        
-        console.log('✅ تم استرجاع الطلب:', order);
+
+        console.log('✅ الطلب المسترجع:', order);
+
         displayOrderDetails(order);
-        
-        // إذا كان الطلب مدفوعاً ولم يتم تعيين كود، نحاول تعيينه
-        if (order.status === 'paid' && !order.activation_code_id && order.product_id) {
+
+        if (order.status === 'paid' && (!order.activation_codes || order.activation_codes.length === 0) && order.product_id) {
             await tryAssignActivationCode(order);
         }
-        
+
     } catch (error) {
         console.error('Error loading order details:', error);
-        showError('حدث خطأ أثناء تحميل تفاصيل الطلب');
+        showError('حدث خطأ في تحميل تفاصيل الطلب');
     }
 }
 
+// تحميل الطلب بواسطة ID
 async function loadOrderById(orderId) {
     try {
-        const { data: order, error } = await window.supabaseClient
+        const { data: order, error } = await supabaseClient
             .from('orders')
             .select(`
                 *,
-                products:product_id (*),
-                activation_codes:order_id (code)
+                products:products_id (*),
+                activation_codes:activation_code_id (code)
             `)
             .eq('id', orderId)
-            .maybeSingle();
-        
+            .single();
+
         if (error) throw error;
-        if (order) displayOrderDetails(order);
-        else showError('رقم الطلب غير صحيح');
-        
+
+        displayOrderDetails(order);
+
     } catch (error) {
         console.error('Error loading order by ID:', error);
-        showError('حدث خطأ في تحميل الطلب عبر المعرف');
+        showError('حدث خطأ في تحميل تفاصيل الطلب');
     }
 }
 
+// العثور على آخر طلب بواسطة رقم الهاتف
 async function findLatestOrder(phone) {
     try {
-        const { data: orders, error } = await window.supabaseClient
+        const { data: orders, error } = await supabaseClient
             .from('orders')
             .select(`
                 *,
-                products:product_id (*),
-                activation_codes:order_id (code)
+                products:products_id (*),
+                activation_codes:activation_code_id (code)
             `)
             .eq('customer_phone', phone)
             .order('created_at', { ascending: false })
             .limit(1);
-        
+
         if (error || !orders || orders.length === 0) {
-            throw new Error('لم يتم العثور على طلبات سابقة');
+            throw new Error('لم يتم العثور على طلبات');
         }
-        
+
         displayOrderDetails(orders[0]);
-        
+
     } catch (error) {
         console.error('Error finding latest order:', error);
-        showError('حدث خطأ في العثور على طلبك الأخير');
+        showError('حدث خطأ في العثور على طلبك');
     }
 }
 
+// تعيين كود التفعيل تلقائياً
 async function tryAssignActivationCode(order) {
     try {
-        console.log('🔄 محاولة تعيين كود تفعيل تلقائي...');
         if (!window.ironPlus || !window.ironPlus.assignActivationCode) {
-            console.log('دالة التعيين غير متوفرة في ironPlus');
+            console.log('ironPlus غير متاح');
             return;
         }
-        
+
         const codeRes = await window.ironPlus.assignActivationCode(order.id, order.product_id);
-        
+
         if (codeRes.success) {
-            console.log('✅ تم تعيين الكود:', codeRes.code);
-            showNotification('تم تفعيل الكود الخاص بك بنجاح!', 'success');
-            setTimeout(() => window.location.reload(), 1500);
+            console.log('✅ تم تعيين كود التفعيل:', codeRes.code);
+
+            setTimeout(async () => {
+                try {
+                    await loadOrderDetails(order.transaction_no);
+                    showNotification('تم تعيين كود التفعيل بنجاح!', 'success');
+                } catch (err) {
+                    console.error('Error reloading order after assigning code:', err);
+                }
+            }, 1000);
         }
     } catch (error) {
         console.error('Error assigning activation code:', error);
     }
 }
 
-// --- [دوال العرض والواجهة] ---
-
+// عرض تفاصيل الطلب
 function displayOrderDetails(order) {
     const orderDetails = document.getElementById('orderDetails');
-    if (!orderDetails) return;
 
     const orderDate = new Date(order.created_at).toLocaleDateString('ar-SA', {
-        year: 'numeric', month: 'long', day: 'numeric',
-        hour: '2-digit', minute: '2-digit'
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
     });
-    
+
     const statusBadge = getStatusBadge(order.status);
-    
-    // التحقق من وجود الكود
-    let activationCodeHtml = '';
-    const codes = order.activation_codes;
-    
-    if (codes && codes.length > 0) {
+
+    let activationCode = '';
+    const codes = Array.isArray(order.activation_codes) ? order.activation_codes : [];
+
+    if (codes.length > 0) {
         const code = codes[0].code;
-        activationCodeHtml = `
-            <div class="activation-code hud-effect" style="margin-top: 25px; padding: 25px; background: rgba(0, 255, 255, 0.05); border: 2px solid #00ffff; border-radius: 12px; box-shadow: 0 0 20px rgba(0, 255, 255, 0.1);">
+        activationCode = `
+            <div class="activation-code hud-effect" style="margin-top: 25px; padding: 20px; background: linear-gradient(135deg, rgba(0, 255, 255, 0.1), rgba(0, 150, 255, 0.1)); border-radius: 12px; border: 2px solid var(--tech-blue); box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);">
                 <div style="text-align: center;">
-                    <i class="fas fa-key" style="font-size: 40px; color: #00ffff; margin-bottom: 15px;"></i>
-                    <h3 style="color: #fff; margin-bottom: 15px; font-family: 'Orbitron', sans-serif;">كود التفعيل الخاص بك</h3>
-                    <div style="font-family: 'Courier New', monospace; font-size: 26px; font-weight: bold; color: #00ffff; padding: 18px; background: rgba(0, 0, 0, 0.4); border-radius: 8px; letter-spacing: 2px; margin: 15px 0; border: 1px dashed #00ffff;">
+                    <i class="fas fa-key" style="font-size: 40px; color: var(--tech-blue); margin-bottom: 15px;"></i>
+                    <h3 style="color: var(--text-light); margin-bottom: 15px; font-family: 'Orbitron', sans-serif;">
+                        كود التفعيل الخاص بك
+                    </h3>
+                    <div style="font-family: 'Courier New', monospace; font-size: 24px; font-weight: bold; color: var(--tech-blue); padding: 15px; background: rgba(0, 0, 0, 0.3); border-radius: 8px; letter-spacing: 2px; margin: 15px 0;">
                         ${code}
                     </div>
-                    <button onclick="copyToClipboard('${code}')" class="btn-primary" style="margin-top: 15px; padding: 12px 30px;">
-                        <i class="fas fa-copy ml-2"></i> نسخ كود التفعيل
+                    <button onclick="copyToClipboard('${code}')" class="btn-primary" style="margin-top: 15px;">
+                        <i class="fas fa-copy"></i> نسخ الكود
                     </button>
-                    <p style="color: #aaa; margin-top: 15px; font-size: 13px;">
-                        <i class="fas fa-info-circle ml-1"></i> استخدم هذا الكود داخل التطبيق لتفعيل اشتراكك
+                    <p style="color: #aaa; margin-top: 15px; font-size: 14px;">
+                        <i class="fas fa-info-circle"></i> احفظ هذا الكود واستخدمه في تطبيق IRON+
                     </p>
                 </div>
             </div>
         `;
-    } else if (order.status === 'paid' || order.status === 'completed') {
-        activationCodeHtml = `
-            <div class="activation-pending hud-effect" style="margin-top: 25px; padding: 25px; background: rgba(255, 215, 0, 0.05); border-radius: 12px; border: 2px solid #FFD700; text-align: center;">
-                <i class="fas fa-hourglass-half fa-spin" style="font-size: 40px; color: #FFD700; margin-bottom: 15px;"></i>
-                <h3 style="color: #fff; margin-bottom: 10px;">جاري تحضير الكود...</h3>
-                <p style="color: #aaa; font-size: 14px;">يتم الآن تخصيص كود لك من المخزن. إذا استغرق الأمر أكثر من دقيقة، يرجى تحديث الصفحة.</p>
-                <button onclick="window.location.reload()" class="btn-secondary" style="margin-top: 20px;">
-                    <i class="fas fa-sync-alt ml-2"></i> تحديث الحالة
-                </button>
+    } else if (order.status === 'paid') {
+        activationCode = `
+            <div class="activation-pending hud-effect" style="margin-top: 25px; padding: 20px; background: rgba(255, 215, 0, 0.1); border-radius: 12px; border: 2px solid var(--iron-gold);">
+                <div style="text-align: center;">
+                    <i class="fas fa-hourglass-half" style="font-size: 40px; color: var(--iron-gold); margin-bottom: 15px;"></i>
+                    <h3 style="color: var(--text-light); margin-bottom: 10px;">جاري تحضير كود التفعيل...</h3>
+                    <p style="color: #aaa;">
+                        سيتم تعيين كود التفعيل تلقائياً خلال دقائق. إذا لم يظهر، يرجى تحديث الصفحة.
+                    </p>
+                    <button onclick="window.location.reload()" class="btn-secondary" style="margin-top: 15px;">
+                        <i class="fas fa-sync-alt"></i> تحديث الصفحة
+                    </button>
+                </div>
             </div>
         `;
     }
 
+    const productName = order.products && order.products.name ? order.products.name : 'غير محدد';
+    const amountPaid = (order.amount / 100).toFixed(2);
+    const discount = order.discount > 0 ? (order.discount / 100).toFixed(2) : 0;
+
     orderDetails.innerHTML = `
-        <div class="details-card hud-effect" style="padding: 30px; background: rgba(15, 15, 15, 0.95); border-radius: 20px; border: 1px solid rgba(255, 215, 0, 0.15);">
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; text-align: right;">
+        <div class="details-card hud-effect" style="padding: 30px; background: rgba(26, 26, 26, 0.8); border-radius: 16px; border: 1px solid rgba(255, 215, 0, 0.1);">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 25px;">
                 <div class="detail-item">
-                    <strong class="text-gold"><i class="fas fa-hashtag ml-2"></i>رقم المعاملة:</strong><br>
-                    <span style="font-family: 'Courier New', monospace; color: #fff;">${order.transaction_no || order.id}</span>
+                    <strong class="text-gold"><i class="fas fa-receipt ml-2"></i>رقم الطلب:</strong><br>
+                    <span style="font-family: 'Courier New', monospace;">${order.transaction_no || order.id.substring(0, 12)}</span>
                 </div>
                 <div class="detail-item">
-                    <strong class="text-gold"><i class="fas fa-signal ml-2"></i>الحالة:</strong><br>
+                    <strong class="text-gold"><i class="fas fa-info-circle ml-2"></i>الحالة:</strong><br>
                     ${statusBadge}
                 </div>
                 <div class="detail-item">
-                    <strong class="text-gold"><i class="fas fa-user ml-2"></i>العميل:</strong><br>
-                    <span style="color: #fff;">${order.customer_name || 'عميل IRON+'}</span>
+                    <strong class="text-gold"><i class="fas fa-user ml-2"></i>رقم الجوال:</strong><br>
+                    ${order.customer_phone || 'غير محدد'}
                 </div>
                 <div class="detail-item">
-                    <strong class="text-gold"><i class="fas fa-calendar-alt ml-2"></i>التاريخ:</strong><br>
-                    <span style="color: #fff;">${orderDate}</span>
+                    <strong class="text-gold"><i class="fas fa-calendar ml-2"></i>تاريخ الطلب:</strong><br>
+                    ${orderDate}
                 </div>
             </div>
-            
-            <div style="padding: 20px; background: rgba(255, 255, 255, 0.03); border-radius: 12px; border-right: 4px solid #9B111E; margin-bottom: 25px;">
-                <strong class="text-gold"><i class="fas fa-shopping-cart ml-2"></i>المنتج المطلوب:</strong><br>
-                <div style="font-size: 18px; margin-top: 8px; color: #fff;">
-                    ${order.products ? order.products.name : 'باقة اشتراك IRON+'}
-                </div>
-                <div style="margin-top: 10px; font-size: 24px; font-weight: bold; color: #fff;">
-                    ${(order.amount / 100).toFixed(2)} ر.س
+
+            <div class="detail-item" style="margin-bottom: 25px;">
+                <strong class="text-gold"><i class="fas fa-box ml-2"></i>المنتج:</strong><br>
+                <div style="padding: 15px; background: rgba(255, 255, 255, 0.05); border-radius: 8px; margin-top: 10px;">
+                    ${productName}
                 </div>
             </div>
-            
-            ${activationCodeHtml}
-            
-            <div class="action-buttons" style="margin-top: 35px; display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;">
-                <a href="index.html" class="btn-secondary" style="min-width: 160px; text-align: center; text-decoration: none;">
-                    <i class="fas fa-home ml-2"></i> الرئيسية
+
+            <div class="detail-item" style="margin-bottom: 25px;">
+                <strong class="text-gold"><i class="fas fa-money-bill-wave ml-2"></i>المبلغ المدفوع:</strong><br>
+                <span class="text-glow-red" style="font-size: 28px; font-family: 'Orbitron', sans-serif;">
+                    ${amountPaid} ر.س
+                </span>
+                ${discount > 0 ? `<div style="color: #2ecc71; margin-top: 5px;"><i class="fas fa-tag"></i> شامل خصم ${discount} ر.س</div>` : ''}
+            </div>
+
+            ${activationCode}
+
+            <div class="action-buttons" style="margin-top: 30px; display: flex; gap: 15px; flex-wrap: wrap;">
+                <a href="index.html" class="btn-secondary">
+                    <i class="fas fa-home"></i> العودة للرئيسية
                 </a>
-                <button onclick="showActivationInstructions()" class="btn-primary" style="min-width: 160px;">
-                    <i class="fas fa-info-circle ml-2"></i> التعليمات
-                </button>
+                ${order.status === 'completed' && codes.length > 0 ? `
+                    <button onclick="showActivationInstructions()" class="btn-primary">
+                        <i class="fas fa-question-circle"></i> كيفية الاستخدام
+                    </button>
+                ` : ''}
                 <button onclick="window.print()" class="btn-secondary">
-                    <i class="fas fa-print"></i>
+                    <i class="fas fa-print"></i> طباعة الفاتورة
                 </button>
             </div>
         </div>
     `;
 }
 
-// --- [الأدوات المساعدة والمكونات] ---
-
+// ---------------------------------------
+// دوال مساعدة
+// ---------------------------------------
 function getStatusBadge(status) {
     const statusMap = {
-        'pending': { text: '⏳ معلق', color: '#FFD700', icon: 'fa-clock' },
-        'paid': { text: '✅ مدفوع', color: '#00d1ff', icon: 'fa-check-circle' },
-        'completed': { text: '🏁 مكتمل', color: '#2ecc71', icon: 'fa-flag-checkered' },
-        'failed': { text: '❌ فاشل', color: '#ff4444', icon: 'fa-times-circle' }
+        'pending': { text: '⏳ معلق', color: 'var(--iron-gold)', icon: 'fa-clock' },
+        'paid': { text: '✅ مدفوع', color: 'var(--tech-blue)', icon: 'fa-check-circle' },
+        'completed': { text: '🎉 مكتمل', color: '#2ecc71', icon: 'fa-award' },
+        'failed': { text: '❌ فاشل', color: 'var(--iron-red)', icon: 'fa-times-circle' },
+        'refunded': { text: '↩️ مسترد', color: '#f39c12', icon: 'fa-undo' }
     };
-    
-    const info = statusMap[status] || { text: status, color: '#888', icon: 'fa-question' };
-    
+
+    const statusInfo = statusMap[status] || { text: status, color: '#ccc', icon: 'fa-question-circle' };
+
     return `
-        <span style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; background: ${info.color}15; border: 1px solid ${info.color}; border-radius: 20px; color: ${info.color}; font-weight: bold; font-size: 14px;">
-            <i class="fas ${info.icon}"></i> ${info.text}
+        <span style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; background: ${statusInfo.color}20; border-radius: 20px; border: 1px solid ${statusInfo.color}; color: ${statusInfo.color}; font-weight: bold;">
+            <i class="fas ${statusInfo.icon}"></i>
+            ${statusInfo.text}
         </span>
     `;
 }
 
 function copyToClipboard(text) {
     navigator.clipboard.writeText(text).then(() => {
-        showNotification('تم نسخ الكود بنجاح! 📋', 'success');
-    }).catch(() => showNotification('فشل النسخ، يرجى النسخ يدوياً', 'error'));
+        showNotification('تم نسخ الكود بنجاح!', 'success');
+    }).catch(err => {
+        console.error('Failed to copy:', err);
+        showNotification('فشل نسخ الكود', 'error');
+    });
 }
 
 function showActivationInstructions() {
-    const content = `
-        <div style="text-align: right; line-height: 1.8;">
-            <p style="color: #FFD700; font-weight: bold; margin-bottom: 15px;">خطوات تفعيل الاشتراك:</p>
-            <ol style="padding-right: 20px; color: #ccc;">
-                <li>قم بنسخ كود التفعيل الظاهر في الصفحة.</li>
-                <li>افتح تطبيق <span style="color:#9B111E">IRON+</span> على جهازك.</li>
-                <li>توجه إلى قائمة "تفعيل الباقة".</li>
+    const instructions = `
+        <div style="padding: 20px; max-width: 500px;">
+            <h3 style="color: var(--text-light); margin-bottom: 15px;">
+                <i class="fas fa-graduation-cap ml-2"></i>
+                كيفية تفعيل تطبيق IRON+
+            </h3>
+            <ol style="color: var(--text-gray); line-height: 2; text-align: right; padding-right: 20px;">
+                <li>افتح تطبيق IRON+ على جهازك</li>
+                <li>اذهب إلى قسم "التفعيل"</li>
+                <li>أدخل كود التفعيل الظاهر أعلاه</li>
+                <li>اضغط على زر "تفعيل"</li>
+                <li>انتظر حتى تظهر رسالة "تم التفعيل بنجاح"</li>
+                <li>أعد تشغيل التطبيق للاستمتاع بالمزايا الكاملة</li>
             </ol>
+            <p style="color: #aaa; margin-top: 20px; font-size: 14px;">
+                <i class="fas fa-headset ml-2"></i>
+                للاستفسارات: تواصل مع الدعم الفني عبر الواتساب
+            </p>
         </div>
     `;
-    showModal('تعليمات التفعيل 💡', content);
+
+    showModal('تعليمات التفعيل', instructions);
 }
 
 function showError(message) {
     const orderDetails = document.getElementById('orderDetails');
-    if (!orderDetails) return;
-    
     orderDetails.innerHTML = `
-        <div style="padding: 50px 20px; text-align: center; background: rgba(155, 17, 30, 0.05); border: 1px solid #9B111E; border-radius: 20px;">
-            <i class="fas fa-exclamation-triangle" style="font-size: 60px; color: #9B111E; margin-bottom: 20px;"></i>
-            <h3 style="color: #fff; margin-bottom: 10px;">${message}</h3>
-            <div style="display: flex; gap: 10px; justify-content: center;">
-                <a href="index.html" class="btn-primary" style="text-decoration:none;">العودة للرئيسية</a>
-                <button onclick="window.location.reload()" class="btn-secondary">إعادة المحاولة</button>
+        <div class="error-message hud-effect" style="padding: 40px; text-align: center; background: rgba(155, 17, 30, 0.1); border-radius: 16px; border: 1px solid var(--iron-red);">
+            <div style="font-size: 80px; color: var(--iron-red); margin-bottom: 20px;">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h3 class="text-glow-red" style="margin-bottom: 15px;">${message}</h3>
+            <p style="color: #aaa; margin-bottom: 25px;">يرجى التأكد من رابط الطلب أو التواصل مع الدعم الفني</p>
+            <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                <a href="index.html" class="btn-primary">
+                    <i class="fas fa-home"></i> العودة للرئيسية
+                </a>
+                <button onclick="window.location.reload()" class="btn-secondary">
+                    <i class="fas fa-sync-alt"></i> إعادة المحاولة
+                </button>
             </div>
         </div>
     `;
 }
 
 function showNotification(message, type = 'info') {
-    const note = document.createElement('div');
-    note.className = 'fixed top-4 left-4 z-[9999] p-4 rounded-lg shadow-2xl border slide-in';
-    note.style.backgroundColor = type === 'success' ? '#064e3b' : '#7f1d1d';
-    note.style.borderColor = type === 'success' ? '#10b981' : '#ef4444';
-    note.style.color = '#fff';
-    note.innerHTML = `<div class="flex items-center gap-3"><i class="fas ${type === 'success' ? 'fa-check' : 'fa-info'}"></i><span>${message}</span></div>`;
-    document.body.appendChild(note);
-    setTimeout(() => note.remove(), 4000);
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg max-w-sm ${
+        type === 'success' ? 'bg-green-900/90 border-green-700' :
+        type === 'error' ? 'bg-red-900/90 border-red-700' :
+        type === 'warning' ? 'bg-yellow-900/90 border-yellow-700' :
+        'bg-blue-900/90 border-blue-700'
+    } border`;
+
+    notification.innerHTML = `
+        <div class="flex items-center">
+            <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-times-circle' : 'fa-info-circle'} mr-3 text-xl"></i>
+            <span class="flex-1">${message}</span>
+            <button class="ml-4 text-gray-300 hover:text-white" onclick="this.parentElement.parentElement.remove()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    `;
+
+    document.body.appendChild(notification);
+
+    setTimeout(() => {
+        if (notification.parentNode) notification.remove();
+    }, 5000);
 }
 
 function showModal(title, content) {
     const modal = document.createElement('div');
-    modal.className = 'fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm';
+    modal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black/70';
     modal.innerHTML = `
-        <div class="bg-[#111] border border-[#FFD700]/30 w-full max-w-md rounded-2xl overflow-hidden">
-            <div class="p-4 border-b border-white/10 flex justify-between items-center bg-[#1a1a1a]">
-                <h3 class="text-[#FFD700] font-bold">${title}</h3>
-                <button onclick="this.closest('.fixed').remove()" class="text-white/50 hover:text-white"><i class="fas fa-times"></i></button>
+        <div class="bg-[#1A1A1A] rounded-2xl p-6 max-w-md w-full mx-4 border border-[#FFD700]/20">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-[#FFD700]">${title}</h3>
+                <button onclick="this.parentElement.parentElement.parentElement.remove()" class="text-gray-400 hover:text-white">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
             </div>
-            <div class="p-6 text-white">${content}</div>
+            <div class="modal-content">
+                ${content}
+            </div>
         </div>
     `;
+
     document.body.appendChild(modal);
+
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.remove();
+    });
+}
+
+// تأكد من تعريف supabaseClient
+if (typeof supabaseClient === 'undefined' && typeof window.supabaseClient !== 'undefined') {
+    var supabaseClient = window.supabaseClient;
 }
