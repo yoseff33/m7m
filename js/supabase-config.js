@@ -1274,7 +1274,253 @@ window.ironPlus = {
         }
     },
 
-    // --- [15] أدوات مساعدة ---
+    // --- [15] نظام الدفع مع Paylink ---
+    async createPayment(productId, phone, amount) {
+        try {
+            console.log('🔄 جاري الاتصال بـ Paylink...', { productId, phone, amount });
+            
+            // أولاً: إنشاء سجل الطلب في قاعدة البيانات
+            const orderNumber = `IRON-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+            
+            const { data: order, error: orderError } = await window.supabaseClient
+                .from('orders')
+                .insert([{
+                    product_id: productId,
+                    customer_phone: phone,
+                    amount: amount,
+                    status: 'pending',
+                    transaction_no: orderNumber,
+                    created_at: new Date().toISOString()
+                }])
+                .select()
+                .single();
+            
+            if (orderError) throw orderError;
+            
+            // ثانياً: الاتصال بـ Edge Function لإنشاء رابط Paylink
+            const response = await fetch(`${window.SUPABASE_URL}/functions/v1/create_paylink`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'apikey': window.SUPABASE_ANON_KEY,
+                    'Authorization': `Bearer ${window.SUPABASE_ANON_KEY}`
+                },
+                body: JSON.stringify({ 
+                    order_id: order.id,
+                    order_number: orderNumber,
+                    product_id: productId, 
+                    customer_phone: phone, 
+                    amount: amount,
+                    timestamp: Date.now()
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (!response.ok || !data.url) {
+                console.error('Paylink API error:', data);
+                throw new Error(data.error || data.message || 'فشل إنشاء رابط الدفع');
+            }
+            
+            // ثالثاً: تحديث الطلب برابط الدفع
+            await window.supabaseClient
+                .from('orders')
+                .update({ payment_url: data.url, updated_at: new Date().toISOString() })
+                .eq('id', order.id);
+            
+            return { 
+                success: true, 
+                data: { 
+                    url: data.url,
+                    order_id: order.id,
+                    transaction_no: orderNumber
+                } 
+            };
+        } catch (error) {
+            console.error('❌ خطأ الدفع:', error);
+            await this.logError(error, 'createPayment');
+            return { 
+                success: false, 
+                message: "حدث خطأ في إنشاء رابط الدفع", 
+                error: error.message 
+            };
+        }
+    },
+
+    async createOrderFromCart(phone, couponCode = null) {
+        try {
+            const cartRes = await this.getCart();
+            if (!cartRes.success || cartRes.cart.length === 0) {
+                return { success: false, message: 'سلة المشتريات فارغة' };
+            }
+            
+            const cart = cartRes.cart;
+            const orderNumber = `IRON-${Date.now()}`;
+            
+            // حساب المبلغ الإجمالي
+            let subtotal = 0;
+            cart.forEach(item => {
+                subtotal += (item.price || 0) * (item.quantity || 1);
+            });
+            
+            const settingsRes = await this.getSiteSettings();
+            const taxRate = settingsRes.success ? (settingsRes.settings.tax_rate || 15) : 15;
+            const tax = subtotal * (taxRate / 100);
+            let total = subtotal + tax;
+            
+            // تطبيق الكوبون
+            let discount = 0;
+            if (couponCode) {
+                const couponRes = await this.validateCoupon(couponCode, total);
+                if (couponRes.success) {
+                    discount = couponRes.discount;
+                    total -= discount;
+                }
+            }
+            
+            // إنشاء الطلب في قاعدة البيانات
+            const { data: order, error: orderError } = await window.supabaseClient
+                .from('orders')
+                .insert([{
+                    customer_phone: phone,
+                    amount: total,
+                    subtotal: subtotal,
+                    tax: tax,
+                    discount: discount,
+                    status: 'pending',
+                    transaction_no: orderNumber,
+                    coupon_code: couponCode,
+                    created_at: new Date().toISOString()
+                }])
+                .select()
+                .single();
+            
+            if (orderError) throw orderError;
+            
+            // إضافة تفاصيل المنتجات
+            const orderItems = cart.map(item => ({
+                order_id: order.id,
+                product_id: item.id,
+                quantity: item.quantity || 1,
+                price: item.price,
+                created_at: new Date().toISOString()
+            }));
+            
+            const { error: itemsError } = await window.supabaseClient
+                .from('order_items')
+                .insert(orderItems);
+            
+            if (itemsError) throw itemsError;
+            
+            // إذا كان المبلغ صفر (بعد الخصم)
+            if (total <= 0) {
+                await this.updateOrderStatus(order.id, 'completed');
+                
+                // محاولة تعيين كود التفعيل
+                if (cart.length > 0) {
+                    const productId = cart[0].id;
+                    const codeRes = await this.assignActivationCode(order.id, productId);
+                    if (codeRes.success) {
+                        return { 
+                            success: true, 
+                            order: order,
+                            code: codeRes.code,
+                            message: 'تم إنشاء طلبك المجاني بنجاح'
+                        };
+                    }
+                }
+                
+                return { 
+                    success: true, 
+                    order: order,
+                    message: 'تم إنشاء طلبك بنجاح'
+                };
+            }
+            
+            // إذا كان هناك مبلغ مدفوع
+            return {
+                success: true,
+                order: order,
+                amount: total,
+                redirectToPayment: true
+            };
+            
+        } catch (error) {
+            console.error('Create order from cart error:', error);
+            await this.logError(error, 'createOrderFromCart');
+            return { success: false, message: error.message };
+        }
+    },
+
+    // --- [16] Webhook معالجة الدفع ---
+    async handlePaymentWebhook(payload) {
+        try {
+            const { orderNumber, status, transactionNo, amount } = payload;
+            
+            if (!orderNumber) {
+                return { success: false, message: 'رقم الطلب مطلوب' };
+            }
+            
+            // البحث عن الطلب
+            const { data: order, error: orderError } = await window.supabaseClient
+                .from('orders')
+                .select('*, products(*)')
+                .eq('transaction_no', orderNumber)
+                .single();
+            
+            if (orderError) throw orderError;
+            
+            if (status === 'Paid' || status === 'paid') {
+                // تحديث حالة الطلب
+                await this.updateOrderStatus(order.id, 'paid');
+                
+                // تعيين كود التفعيل تلقائياً
+                if (order.product_id) {
+                    const codeRes = await this.assignActivationCode(order.id, order.product_id);
+                    
+                    if (codeRes.success) {
+                        // إرسال إشعار للعميل (يمكن تنفيذه لاحقاً)
+                        console.log('✅ تم تعيين كود التفعيل:', codeRes.code);
+                        
+                        return {
+                            success: true,
+                            order: order,
+                            code: codeRes.code,
+                            message: 'تم الدفع وتعيين كود التفعيل بنجاح'
+                        };
+                    } else {
+                        return {
+                            success: true,
+                            order: order,
+                            message: 'تم الدفع بنجاح، لكن حدث خطأ في تعيين كود التفعيل'
+                        };
+                    }
+                }
+                
+                return {
+                    success: true,
+                    order: order,
+                    message: 'تم الدفع بنجاح'
+                };
+            } else if (status === 'Failed' || status === 'failed') {
+                await this.updateOrderStatus(order.id, 'failed');
+                return {
+                    success: true,
+                    order: order,
+                    message: 'فشلت عملية الدفع'
+                };
+            }
+            
+            return { success: false, message: 'حالة الدفع غير معروفة' };
+            
+        } catch (error) {
+            console.error('Webhook handling error:', error);
+            await this.logError(error, 'handlePaymentWebhook');
+            return { success: false, message: error.message };
+        }
+    },
+
+    // --- [17] أدوات مساعدة ---
     formatPrice: (amount) => {
         if (!amount && amount !== 0) return '0.00';
         return (parseFloat(amount) / 100).toLocaleString('ar-SA', {
@@ -1334,7 +1580,7 @@ window.ironPlus = {
         }
     },
 
-    // --- [16] تسجيل الأخطاء ---
+    // --- [18] تسجيل الأخطاء ---
     async logError(error, context = '') {
         try {
             await window.supabaseClient
