@@ -6,7 +6,8 @@
 
 // 1. التعريفات العالمية
 window.SUPABASE_URL = 'https://xurecaeakqbsjzebcsuy.supabase.co';
-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh1cmVjYWVha3Fic2p6ZWJjc3V5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjczNjcxMDIsImV4cCI6MjA4Mjk0MzEwMn0.F0ro8tPzGP9-pDxEQV3RtSpxiCbtPZE5dlpSJDiyAZcwindow.SUPABASE_STORAGE_URL = 'https://xurecaeakqbsjzebcsuy.supabase.co/storage/v1/object/public';
+window.SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh1cmVjYWVha3Fic2p6ZWJjc3V5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjczNjcxMDIsImV4cCI6MjA4Mjk0MzEwMn0.F0ro8tPzGP9-pDxEQV3RtSpxiCbtPZE5dlpSJDiyAZc';
+window.SUPABASE_STORAGE_URL = 'https://xurecaeakqbsjzebcsuy.supabase.co/storage/v1/object/public';
 
 // 2. تهيئة العميل
 if (typeof window.supabaseClient === 'undefined') {
