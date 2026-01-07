@@ -1894,35 +1894,77 @@ async init() {
 
 async handleMediaUpload(event) {
     const files = event.target.files;
-    if (!files || files.length === 0) return;
+    const externalUrlInput = document.getElementById('externalImageUrl');
+    const externalUrl = externalUrlInput ? externalUrlInput.value.trim() : '';
 
     const progressBar = document.getElementById('progressBar');
     const uploadProgress = document.getElementById('uploadProgress');
-    
-    // إظهار شريط التقدم
+
+    // لو لا يوجد ملفات ولا رابط
+    if ((!files || files.length === 0) && !externalUrl) {
+        this.showNotification('يرجى اختيار ملفات أو إدخال رابط صورة', 'warning');
+        return;
+    }
+
+    // ===== حالة إضافة رابط صورة خارجي =====
+    if (externalUrl) {
+
+        if (!externalUrl.startsWith('http')) {
+            this.showNotification('يرجى إدخال رابط صحيح يبدأ بـ http أو https', 'error');
+            return;
+        }
+
+        const isImage = /\.(png|jpg|jpeg|webp|gif|svg)$/i.test(externalUrl);
+        if (!isImage) {
+            this.showNotification('تنبيه: الرابط لا يبدو كرابط صورة مباشر', 'warning');
+        }
+
+        const mediaItem = {
+            name: externalUrl.split('/').pop(),
+            url: externalUrl,
+            type: 'external',
+            created_at: new Date().toISOString()
+        };
+
+        if (window.supabaseClient) {
+            const { error } = await window.supabaseClient
+                .from('media')
+                .insert([mediaItem]);
+
+            if (error) {
+                console.error(error);
+                this.showNotification('فشل حفظ رابط الصورة في قاعدة البيانات', 'error');
+                return;
+            }
+        }
+
+        if (externalUrlInput) externalUrlInput.value = '';
+
+        this.showNotification('تمت إضافة الصورة من الرابط بنجاح', 'success');
+        this.loadMediaLibrary();
+        return; // نوقف هنا ولا ندخل في الرفع
+    }
+
+    // ===== حالة رفع ملفات =====
     if (uploadProgress) uploadProgress.style.display = 'block';
-    
+
     let successCount = 0;
-    
-    // معالجة كل ملف على حدة
+
     for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        
-        // تحديث نسبة الإنجاز في شريط التقدم
+
         if (progressBar) {
             const percent = ((i + 1) / files.length) * 100;
             progressBar.style.width = `${percent}%`;
         }
 
-        // الرفع الفعلي لـ Supabase عبر مكتبة ironPlus
         const result = await window.ironPlus.uploadMedia(file, 'general');
-        
-        if (result.success) {
+
+        if (result && result.success) {
             successCount++;
         }
     }
 
-    // إخفاء شريط التقدم بعد ثانية
     setTimeout(() => {
         if (uploadProgress) uploadProgress.style.display = 'none';
         if (progressBar) progressBar.style.width = '0%';
@@ -1930,7 +1972,7 @@ async handleMediaUpload(event) {
 
     if (successCount > 0) {
         this.showNotification(`تم رفع ${successCount} ملف بنجاح`, 'success');
-        this.loadMediaLibrary(); // تحديث المكتبة لعرض الصور الجديدة
+        this.loadMediaLibrary();
     } else {
         this.showNotification('فشل في رفع الملفات، يرجى التحقق من الاتصال', 'error');
     }
