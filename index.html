@@ -304,90 +304,137 @@
     </section>
 
     <!-- Reviews Section -->
-    <section id="reviews" class="section-spacing">
-        <div class="container-spacing">
-            <div class="text-center mb-16">
-                <h2 class="tech-font text-3xl md:text-4xl font-bold mb-4">آراء عملائنا</h2>
-                <p class="text-[#A0A0A0] text-lg max-w-2xl mx-auto">
-                    شهادات حقيقية من عملائنا الكرام
+<section id="reviews" class="section-spacing overflow-hidden">
+    <div class="container-spacing">
+        <div class="text-center mb-12">
+            <h2 class="tech-font text-3xl md:text-4xl font-bold mb-4">آراء عملائنا</h2>
+            <p class="text-[#A0A0A0] text-lg max-w-2xl mx-auto">
+                شهادات حقيقية من عملائنا الكرام في IRON+
+            </p>
+        </div>
+        
+        <div class="flex overflow-x-auto gap-6 pb-8 snap-x scrollbar-hide" style="scroll-behavior: smooth; -webkit-overflow-scrolling: touch; scrollbar-width: none; -ms-overflow-style: none;">
+            
+            <div class="snap-center shrink-0 w-[300px] stat-card">
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="w-12 h-12 rounded-full bg-gradient-to-br from-[#9B111E] to-[#FF4757] flex items-center justify-center text-white">
+                        <span class="font-bold">س</span>
+                    </div>
+                    <div>
+                        <h4 class="font-bold">سعد العتيبي</h4>
+                        <div class="rating-stars text-sm text-[#FFD700]">
+                            <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                        </div>
+                    </div>
+                    <span class="text-xs text-[#A0A0A0] mr-auto">يومين</span>
+                </div>
+                <p class="text-[#A0A0A0] text-sm leading-relaxed">
+                    "أفضل متجر تعاملت معه، التفعيل فوري والسناب شغال معي زي الحلاوة. الدعم الفني سريع ومحترف."
                 </p>
             </div>
             
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <!-- Review 1 -->
-                <div class="stat-card">
-                    <div class="flex items-center gap-4 mb-4">
-                        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-[#9B111E] to-[#FF4757] flex items-center justify-center">
-                            <span class="font-bold">س</span>
-                        </div>
-                        <div>
-                            <h4 class="font-bold">سعد العتيبي</h4>
-                            <div class="rating-stars text-sm">
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                            </div>
-                        </div>
-                        <span class="text-xs text-[#A0A0A0] mr-auto">منذ يومين</span>
+            <div class="snap-center shrink-0 w-[300px] stat-card">
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="w-12 h-12 rounded-full bg-gradient-to-br from-[#FFD700] to-[#FF9F1A] flex items-center justify-center text-black">
+                        <span class="font-bold">ن</span>
                     </div>
-                    <p class="text-[#A0A0A0]">
-                        "أفضل متجر تعاملت معه، التفعيل فوري والسناب شغال معي زي الحلاوة. الدعم الفني سريع ومحترف."
-                    </p>
-                </div>
-                
-                <!-- Review 2 -->
-                <div class="stat-card">
-                    <div class="flex items-center gap-4 mb-4">
-                        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-[#FFD700] to-[#FF9F1A] flex items-center justify-center">
-                            <span class="font-bold">ن</span>
+                    <div>
+                        <h4 class="font-bold">نورة محمد</h4>
+                        <div class="rating-stars text-sm text-[#FFD700]">
+                            <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
                         </div>
-                        <div>
-                            <h4 class="font-bold">نورة محمد</h4>
-                            <div class="rating-stars text-sm">
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                            </div>
-                        </div>
-                        <span class="text-xs text-[#A0A0A0] mr-auto">منذ ٥ أيام</span>
                     </div>
-                    <p class="text-[#A0A0A0]">
-                        "اشتريت باقة تيك توك بلس وكل شيء سلس. الكود وصل خلال ثواني والدعم رد علي حتى وقت متأخر."
-                    </p>
+                    <span class="text-xs text-[#A0A0A0] mr-auto">٥ أيام</span>
                 </div>
-                
-                <!-- Review 3 -->
-                <div class="stat-card">
-                    <div class="flex items-center gap-4 mb-4">
-                        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-[#00A8FF] to-[#0097E6] flex items-center justify-center">
-                            <span class="font-bold">خ</span>
-                        </div>
-                        <div>
-                            <h4 class="font-bold">خالد السبيعي</h4>
-                            <div class="rating-stars text-sm">
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                            </div>
-                        </div>
-                        <span class="text-xs text-[#A0A0A0] mr-auto">منذ أسبوع</span>
-                    </div>
-                    <p class="text-[#A0A0A0]">
-                        "خدمة فك الحظر ساعدتني كثيراً. كنت محظور من سناب ومكثت ٣ شهور، والآن الحساب رجع خلال ١٠ دقائق!"
-                    </p>
-                </div>
+                <p class="text-[#A0A0A0] text-sm leading-relaxed">
+                    "اشتريت باقة تيك توك بلس وكل شيء سلس. الكود وصل خلال ثواني والدعم رد علي حتى وقت متأخر."
+                </p>
             </div>
-        </div>
-    </section>
+            
+            <div class="snap-center shrink-0 w-[300px] stat-card">
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="w-12 h-12 rounded-full bg-gradient-to-br from-[#00A8FF] to-[#0097E6] flex items-center justify-center text-white">
+                        <span class="font-bold">خ</span>
+                    </div>
+                    <div>
+                        <h4 class="font-bold">خالد السبيعي</h4>
+                        <div class="rating-stars text-sm text-[#FFD700]">
+                            <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                        </div>
+                    </div>
+                    <span class="text-xs text-[#A0A0A0] mr-auto">أسبوع</span>
+                </div>
+                <p class="text-[#A0A0A0] text-sm leading-relaxed">
+                    "خدمة فك الحظر ساعدتني كثيراً. كنت محظور من سناب ومكثت ٣ شهور، والآن الحساب رجع خلال ١٠ دقائق!"
+                </p>
+            </div>
 
-    <!-- Bottom Banner -->
-    <div id="bottomBanner" class="container-spacing my-12">
+            <div class="snap-center shrink-0 w-[300px] stat-card">
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="w-12 h-12 rounded-full bg-gradient-to-br from-[#4cd137] to-[#44bd32] flex items-center justify-center text-white">
+                        <span class="font-bold">م</span>
+                    </div>
+                    <div>
+                        <h4 class="font-bold">محمد الحربي</h4>
+                        <div class="rating-stars text-sm text-[#FFD700]">
+                            <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                        </div>
+                    </div>
+                    <span class="text-xs text-[#A0A0A0] mr-auto">١٠ أيام</span>
+                </div>
+                <p class="text-[#A0A0A0] text-sm leading-relaxed">
+                    "يوتيوب بريميوم شغال تمام وبدون إعلانات، وفرتوا علي مبالغ كبيرة. شكراً لكم على المصداقية."
+                </p>
+            </div>
+
+            <div class="snap-center shrink-0 w-[300px] stat-card">
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="w-12 h-12 rounded-full bg-gradient-to-br from-[#9c88ff] to-[#8c7ae6] flex items-center justify-center text-white">
+                        <span class="font-bold">ر</span>
+                    </div>
+                    <div>
+                        <h4 class="font-bold">ريما القحطاني</h4>
+                        <div class="rating-stars text-sm text-[#FFD700]">
+                            <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                        </div>
+                    </div>
+                    <span class="text-xs text-[#A0A0A0] mr-auto">أسبوعين</span>
+                </div>
+                <p class="text-[#A0A0A0] text-sm leading-relaxed">
+                    "أول مرة أجرب متجر بلس وما خاب ظني. المتجر واضح وسهل والتعامل جداً راقي."
+                </p>
+            </div>
+
+            <div class="snap-center shrink-0 w-[300px] stat-card">
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="w-12 h-12 rounded-full bg-gradient-to-br from-[#e1b12c] to-[#fbc531] flex items-center justify-center text-white">
+                        <span class="font-bold">ف</span>
+                    </div>
+                    <div>
+                        <h4 class="font-bold">فيصل الشمري</h4>
+                        <div class="rating-stars text-sm text-[#FFD700]">
+                            <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                        </div>
+                    </div>
+                    <span class="text-xs text-[#A0A0A0] mr-auto">شهر</span>
+                </div>
+                <p class="text-[#A0A0A0] text-sm leading-relaxed">
+                    "سرعة في الإنجاز، الكود وصلني واتساب وإيميل في نفس اللحظة. متجر يستحق الدعم."
+                </p>
+            </div>
+            
+        </div>
+        
+        <div class="flex justify-center gap-2 mt-4 md:hidden">
+            <div class="w-8 h-1 bg-[#9B111E] rounded-full"></div>
+            <div class="w-2 h-1 bg-gray-600 rounded-full"></div>
+            <div class="w-2 h-1 bg-gray-600 rounded-full"></div>
+        </div>
+    </div>
+</section>
+
+<div id="bottomBanner" class="container-spacing my-12">
+    </div>
         <!-- سيتم ملؤه عبر JavaScript -->
     </div>
 
