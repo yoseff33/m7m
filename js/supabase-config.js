@@ -990,53 +990,58 @@ window.ironPlus = {
         }
     },
 
-    async getRecentActivity(limit = 10) {
-        try {
-            // جلب الطلبات الحديثة
-            const { data: recentOrders, error: ordersError } = await window.supabaseClient
-                .from('orders')
-                .select('*, products(name)')
-                .order('created_at', { ascending: false })
-                .limit(limit);
-            
-            if (ordersError) throw ordersError;
-            
-            // جلب تسجيلات الدخول الحديثة
-            const { data: recentLogins, error: loginsError } = await window.supabaseClient
-                .from('login_logs')
-                .select('*')
-                .order('created_at', { ascending: false })
-                .limit(limit);
-            
-            if (loginsError) throw loginsError;
-            
-            // دمج النشاطات
-            const activities = [
-                ...recentOrders.map(order => ({
-                    type: order.status === 'completed' ? 'success' : order.status === 'pending' ? 'warning' : 'error',
-                    icon: order.status === 'completed' ? 'shopping-cart' : 'clock',
-                    title: `طلب جديد: ${order.products?.name || 'منتج'}`,
-                    description: `من ${order.customer_phone} - ${this.formatPrice(order.amount)} ر.س`,
-                    created_at: order.created_at
-                })),
-                ...recentLogins.map(log => ({
-                    type: log.status === 'success' ? 'success' : 'error',
-                    icon: log.status === 'success' ? 'user-check' : 'user-times',
-                    title: `تسجيل دخول ${log.status === 'success' ? 'ناجح' : 'فاشل'}`,
-                    description: `المستخدم: ${log.username} - IP: ${log.ip_address}`,
-                    created_at: log.created_at
-                }))
-            ];
-            
-            // ترتيب حسب التاريخ
-            activities.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-            
-            return { success: true, activities: activities.slice(0, limit) };
-        } catch (error) {
-            console.error('Get recent activity error:', error);
-            return { success: false, activities: [] };
-        }
-    },
+   async getRecentActivity(limit = 10) {
+    try {
+        // --- جلب الطلبات الحديثة ---
+        const { data: recentOrders, error: ordersError } = await window.supabaseClient
+            .from('orders')
+            .select('*') // إزالة الربط المكرر مع products لتجنب خطأ PGRST201
+            .order('created_at', { ascending: false })
+            .limit(limit);
+
+        if (ordersError) throw ordersError;
+
+        // --- جلب تسجيلات الدخول الحديثة ---
+        const { data: recentLogins, error: loginsError } = await window.supabaseClient
+            .from('login_logs')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(limit);
+
+        if (loginsError) throw loginsError;
+
+        // --- دمج النشاطات ---
+        const activities = [
+            ...recentOrders.map(order => ({
+                type: order.status === 'completed'
+                    ? 'success'
+                    : order.status === 'pending'
+                    ? 'warning'
+                    : 'error',
+                icon: order.status === 'completed' ? 'shopping-cart' : 'clock',
+                title: `طلب جديد: ${order.product_id || 'منتج'}`, // استخدم product_id مؤقتًا
+                description: `من ${order.customer_phone} - ${this.formatPrice(order.amount)} ر.س`,
+                created_at: order.created_at
+            })),
+            ...recentLogins.map(log => ({
+                type: log.status === 'success' ? 'success' : 'error',
+                icon: log.status === 'success' ? 'user-check' : 'user-times',
+                title: `تسجيل دخول ${log.status === 'success' ? 'ناجح' : 'فاشل'}`,
+                description: `المستخدم: ${log.username} - IP: ${log.ip_address}`,
+                created_at: log.created_at
+            }))
+        ];
+
+        // --- ترتيب حسب التاريخ ---
+        activities.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+        return { success: true, activities: activities.slice(0, limit) };
+
+    } catch (error) {
+        console.error('Get recent activity error:', error);
+        return { success: false, activities: [] };
+    }
+},
 
     // --- [12] سجلات النظام ---
     async recordVisit(page) {
