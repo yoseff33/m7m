@@ -51,7 +51,7 @@ async function loadUserOrders() {
     const phone = localStorage.getItem('iron_user_phone');
 
     try {
-        // قمنا بتعديل الاستعلام لتحديد أسماء العلاقات صراحة ( !اسم_العلاقة )
+        // قمنا بتحديد أسماء العلاقات ( ! ) لحل مشكلة PGRST201
         const { data: orders, error } = await supabaseClient
             .from('orders')
             .select(`
