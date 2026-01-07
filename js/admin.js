@@ -2271,6 +2271,7 @@ searchMedia(query) {
     },
     
     // --- [16] تطبيق الإعدادات     // --- [16] تطبيق الإعدادات الديناميكية ---
+ // --- [16] تطبيق الإعدادات الديناميكية ---
     async applyDynamicSettings() {
         try {
             let settings = {};
@@ -2297,36 +2298,11 @@ searchMedia(query) {
                 }
             }
 
-            // --- الكود الجديد لتحديث حالة زر وضع الصيانة في لوحة التحكم ---
+            // تحديث حالة زر وضع الصيانة في لوحة التحكم
             if (settings.maintenance_mode !== undefined) {
                 const maintenanceBtn = document.getElementById('maintenanceMode');
                 if (maintenanceBtn) {
                     maintenanceBtn.checked = settings.maintenance_mode;
-                }
-            }
-            
-            // تطبيق الألوان
-            this.applyDynamicColors(settings);
-            
-            // تطبيق الخطوط
-            this.applyDynamicFonts(settings);
-            
-        } catch (error) {
-            console.error('Apply dynamic settings error:', error);
-        }
-    },
- 
-            // إذا لم تكن هناك إعدادات، نستخدم المحلية
-            if (!settings || Object.keys(settings).length === 0) {
-                const localColors = localStorage.getItem('iron_colors');
-                const localFonts = localStorage.getItem('iron_fonts');
-                
-                if (localColors) {
-                    settings = { ...settings, ...JSON.parse(localColors) };
-                }
-                
-                if (localFonts) {
-                    settings = { ...settings, ...JSON.parse(localFonts) };
                 }
             }
             
