@@ -621,23 +621,24 @@ async function loadBanners() {
         
         const activeBanners = res.banners.filter(b => b.is_active);
         
-        // Hero Banner
+        // --- [1] البانر الرئيسي (Hero Banner) بمقاس 9:16 ---
         const heroBanner = activeBanners.find(b => b.position === 'hero');
         if (heroBanner) {
             const heroContainer = document.getElementById('heroBanner');
             if (heroContainer) {
                 heroContainer.innerHTML = `
-                    <a href="${heroBanner.link || '#'}" ${heroBanner.link ? 'target="_blank"' : ''}>
+                    <a href="${heroBanner.link || '#'}" ${heroBanner.link ? 'target="_blank"' : ''} 
+                       style="display: block; aspect-ratio: 9 / 16; overflow: hidden; border-radius: 15px; border: 1px solid rgba(155, 17, 30, 0.2); box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
                         <img src="${heroBanner.image_url}" 
                              alt="${heroBanner.alt_text || heroBanner.title}" 
-                             class="w-full h-64 md:h-96 object-cover"
+                             style="width: 100%; height: 100%; object-fit: cover;"
                              onerror="this.src='assets/default-banner.jpg'">
                     </a>
                 `;
             }
         }
         
-        // Middle Banner
+        // --- [2] البانر الأوسط (Middle Banner) ---
         const middleBanner = activeBanners.find(b => b.position === 'middle');
         if (middleBanner) {
             const middleContainer = document.getElementById('middleBanner');
@@ -655,7 +656,7 @@ async function loadBanners() {
             }
         }
         
-        // Bottom Banner
+        // --- [3] البانر السفلي (Bottom Banner) ---
         const bottomBanner = activeBanners.find(b => b.position === 'bottom');
         if (bottomBanner) {
             const bottomContainer = document.getElementById('bottomBanner');
@@ -676,7 +677,6 @@ async function loadBanners() {
         console.error('Error loading banners:', error);
     }
 }
-
 // --- [5] الإحصائيات ---
 async function loadStatistics() {
     try {
