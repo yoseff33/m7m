@@ -124,7 +124,8 @@ async function loadSiteSettings() {
 function applySiteSettings() {
     if (!siteSettings) return;
 
-    // --- تحقق وضع الصيانة ---
+    // --- [1] تحقق وضع الصيانة ---
+    // إذا كان وضع الصيانة مفعل في قاعدة البيانات، سيتم حجب الموقع تماماً وعرض رسالة الصيانة
     if (siteSettings.maintenance_mode === true) {
         document.body.innerHTML = `
             <div style="height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #0a0a0a; color: white; text-align: center; font-family: 'Rajdhani', sans-serif; padding: 20px;">
@@ -140,10 +141,10 @@ function applySiteSettings() {
             </div>
         `;
         document.body.style.overflow = 'hidden';
-        return; // إيقاف تحميل باقي الموقع تماماً
+        return; // التوقف هنا وعدم إكمال تحميل باقي عناصر الصفحة
     }
 
-    // --- تكملة الإعدادات الطبيعية للموقع ---
+    // --- [2] تحديث النصوص والمعلومات الأساسية (SEO) ---
     if (siteSettings.meta_title) {
         document.title = siteSettings.meta_title;
         const pageTitle = document.getElementById('pageTitle');
@@ -160,11 +161,13 @@ function applySiteSettings() {
         if (metaKey) metaKey.setAttribute('content', siteSettings.meta_keywords);
     }
     
+    // تحديث أيقونة الموقع
     if (siteSettings.site_favicon) {
         const favicon = document.getElementById('favicon');
         if (favicon) favicon.href = siteSettings.site_favicon;
     }
     
+    // --- [3] تحديث شريط الإعلانات ---
     if (siteSettings.announcement_bar) {
         const announcementBar = document.getElementById('announcementBar');
         const announcementText = document.getElementById('announcementText');
@@ -174,50 +177,9 @@ function applySiteSettings() {
         }
     }
     
+    // --- [4] تحديث الروابط والتتبع ---
     updateSocialLinks();
     updatePolicyLinks();
-    setupTrackingCodes();
-}
-
-    
-    // تحديث عنوان الصفحة
-    if (siteSettings.meta_title) {
-        document.title = siteSettings.meta_title;
-        document.getElementById('pageTitle').textContent = siteSettings.meta_title;
-    }
-    
-    // تحديث meta description
-    if (siteSettings.meta_description) {
-        document.getElementById('metaDescription').setAttribute('content', siteSettings.meta_description);
-    }
-    
-    // تحديث meta keywords
-    if (siteSettings.meta_keywords) {
-        document.getElementById('metaKeywords').setAttribute('content', siteSettings.meta_keywords);
-    }
-    
-    // تحديث Favicon
-    if (siteSettings.site_favicon) {
-        document.getElementById('favicon').href = siteSettings.site_favicon;
-    }
-    
-    // تحديث شريط الإعلانات
-    if (siteSettings.announcement_bar) {
-        const announcementBar = document.getElementById('announcementBar');
-        const announcementText = document.getElementById('announcementText');
-        if (announcementBar && announcementText) {
-            announcementText.textContent = siteSettings.announcement_bar;
-            announcementBar.classList.remove('hidden');
-        }
-    }
-    
-    // تحديث وسائل التواصل في الفوتر
-    updateSocialLinks();
-    
-    // تحديث روابط السياسات
-    updatePolicyLinks();
-    
-    // إضافة أكواد التتبع
     setupTrackingCodes();
 }
 
