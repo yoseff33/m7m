@@ -2180,7 +2180,7 @@ searchMedia(query) {
         }
     },
 
-    async uploadLogo() {
+   async uploadLogo() {
         const input = document.createElement('input');
         input.type = 'file';
         input.accept = 'image/*';
@@ -2197,6 +2197,31 @@ searchMedia(query) {
                     this.showNotification('تم رفع الشعار بنجاح', 'success');
                 } else {
                     this.showNotification('فشل رفع الشعار: ' + (result.message || 'خطأ غير معروف'), 'error');
+                }
+            }
+        };
+        input.click();
+    },
+
+    async uploadBannerImage() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        
+        input.onchange = async (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                this.showNotification('جاري رفع صورة البانر...', 'info');
+                const result = await window.ironPlus.uploadMedia(file, 'general');
+                if (result.success) {
+                    // تحديث خانة رابط الصورة في نموذج البانرات
+                    const bannerInput = document.getElementById('editBannerImage');
+                    if (bannerInput) {
+                        bannerInput.value = result.url;
+                        this.showNotification('تم رفع صورة البانر بنجاح', 'success');
+                    }
+                } else {
+                    this.showNotification('فشل رفع الصورة: ' + (result.message || 'خطأ غير معروف'), 'error');
                 }
             }
         };
@@ -2240,7 +2265,6 @@ searchMedia(query) {
             console.error('Apply dynamic settings error:', error);
         }
     },
-
     applyDynamicColors(settings) {
         const styleElement = document.getElementById('dynamic-styles');
         if (!styleElement) return;
