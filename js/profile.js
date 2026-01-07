@@ -44,10 +44,14 @@ async function loadUserData() {
 /* =========================
    تحميل طلبات المستخدم
 ========================= */
+/* =========================
+   تحميل طلبات المستخدم
+========================= */
 async function loadUserOrders() {
     const phone = localStorage.getItem('iron_user_phone');
 
     try {
+        // قمنا بتعديل الاستعلام لتحديد أسماء العلاقات صراحة ( !اسم_العلاقة )
         const { data: orders, error } = await supabaseClient
             .from('orders')
             .select(`
@@ -56,13 +60,16 @@ async function loadUserOrders() {
                 status,
                 created_at,
                 activation_code_id,
-                products ( name ),
-                activation_codes ( code )
+                products!orders_product_id_fkey ( name ),
+                activation_codes!orders_activation_code_id_fkey ( code )
             `)
             .eq('customer_phone', phone)
             .order('created_at', { ascending: false });
 
-        if (error) throw error;
+        if (error) {
+            console.error('Supabase Query Error:', error);
+            throw error;
+        }
 
         displayOrders(orders || []);
 
