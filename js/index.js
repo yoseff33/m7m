@@ -96,13 +96,13 @@ document.addEventListener('DOMContentLoaded', async function() {
         showNotification('حدث خطأ في تحميل الصفحة. جرب تحديث الصفحة.', 'error');
     }
 });
-
-// --- [1] تحميل إعدادات الموقع ---
+// --- [1] تحميل إعدادات الموقع مع فحص وضع الصيانة ---
 async function loadSiteSettings() {
     try {
         if (!window.ironPlus) {
             console.warn('ironPlus library not found, using default settings');
             siteSettings = window.ironPlus?.getDefaultSettings?.() || {};
+            applySiteSettings(); // تشغيل التطبيق بالإعدادات الافتراضية
             return;
         }
         
@@ -123,6 +123,62 @@ async function loadSiteSettings() {
 
 function applySiteSettings() {
     if (!siteSettings) return;
+
+    // --- تحقق وضع الصيانة ---
+    if (siteSettings.maintenance_mode === true) {
+        document.body.innerHTML = `
+            <div style="height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #0a0a0a; color: white; text-align: center; font-family: 'Rajdhani', sans-serif; padding: 20px;">
+                <div style="border: 1px solid #9B111E; padding: 40px; border-radius: 15px; background: rgba(155, 17, 30, 0.05); box-shadow: 0 0 20px rgba(155, 17, 30, 0.2);">
+                    <h1 style="color: #9B111E; font-size: 3.5rem; margin-bottom: 10px; text-shadow: 0 0 10px rgba(155, 17, 30, 0.5);">🦾 IRON+</h1>
+                    <div style="width: 50px; height: 2px; background: #FFD700; margin: 20px auto;"></div>
+                    <h2 style="font-size: 1.8rem; margin-bottom: 15px; color: #fff;">المتجر حالياً في وضع الصيانة</h2>
+                    <p style="color: #A0A0A0; font-size: 1.1rem; max-width: 400px; line-height: 1.6;">
+                        نحن نقوم ببعض التحديثات التقنية لضمان أفضل تجربة لك. سنعود قريباً جداً، ترقبوا الإطلاق الجديد!
+                    </p>
+                    <div style="margin-top: 30px; font-size: 0.9rem; color: #666;">إدارة ايرون بلس v5.5</div>
+                </div>
+            </div>
+        `;
+        document.body.style.overflow = 'hidden';
+        return; // إيقاف تحميل باقي الموقع تماماً
+    }
+
+    // --- تكملة الإعدادات الطبيعية للموقع ---
+    if (siteSettings.meta_title) {
+        document.title = siteSettings.meta_title;
+        const pageTitle = document.getElementById('pageTitle');
+        if (pageTitle) pageTitle.textContent = siteSettings.meta_title;
+    }
+    
+    if (siteSettings.meta_description) {
+        const metaDesc = document.getElementById('metaDescription');
+        if (metaDesc) metaDesc.setAttribute('content', siteSettings.meta_description);
+    }
+    
+    if (siteSettings.meta_keywords) {
+        const metaKey = document.getElementById('metaKeywords');
+        if (metaKey) metaKey.setAttribute('content', siteSettings.meta_keywords);
+    }
+    
+    if (siteSettings.site_favicon) {
+        const favicon = document.getElementById('favicon');
+        if (favicon) favicon.href = siteSettings.site_favicon;
+    }
+    
+    if (siteSettings.announcement_bar) {
+        const announcementBar = document.getElementById('announcementBar');
+        const announcementText = document.getElementById('announcementText');
+        if (announcementBar && announcementText) {
+            announcementText.textContent = siteSettings.announcement_bar;
+            announcementBar.classList.remove('hidden');
+        }
+    }
+    
+    updateSocialLinks();
+    updatePolicyLinks();
+    setupTrackingCodes();
+}
+
     
     // تحديث عنوان الصفحة
     if (siteSettings.meta_title) {
