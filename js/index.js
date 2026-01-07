@@ -400,21 +400,37 @@ function renderProducts(products) {
         const price = formatPrice(product.price);
         const stars = generateStars(product.rating || 5);
         
-        let iconClass = 'fas fa-mobile-alt';
-        let iconColor = '#FFD700';
+        // --- إعداد شكل المنتج (صورة أو أيقونة) ---
+        let imageContent = '';
         
-        if (product.category === 'snap') {
-            iconClass = 'fab fa-snapchat-ghost';
-            iconColor = '#FFFC00';
-        } else if (product.category === 'tiktok') {
-            iconClass = 'fab fa-tiktok';
-            iconColor = '#000000';
-        } else if (product.category === 'youtube') {
-            iconClass = 'fab fa-youtube';
-            iconColor = '#FF0000';
-        } else if (product.name.includes('فك حظر')) {
-            iconClass = 'fas fa-unlock-alt';
-            iconColor = '#9B111E';
+        if (product.image_url) {
+            // إذا فيه صورة مرفوعة، نعرضها هي الأساس
+            imageContent = `<img src="${product.image_url}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt="${product.name}">`;
+        } else {
+            // إذا ما فيه صورة، نرجع لنظام الأيقونات التلقائي
+            let iconClass = 'fas fa-mobile-alt';
+            let iconColor = '#FFD700';
+            
+            if (product.category === 'snap') {
+                iconClass = 'fab fa-snapchat-ghost';
+                iconColor = '#FFFC00';
+            } else if (product.category === 'tiktok') {
+                iconClass = 'fab fa-tiktok';
+                iconColor = '#000000';
+            } else if (product.category === 'youtube') {
+                iconClass = 'fab fa-youtube';
+                iconColor = '#FF0000';
+            } else if (product.name.includes('فك حظر')) {
+                iconClass = 'fas fa-unlock-alt';
+                iconColor = '#9B111E';
+            }
+            
+            imageContent = `
+                <div class="text-center relative z-10">
+                    <i class="${iconClass} text-6xl" style="color: ${iconColor}"></i>
+                    <div class="mt-2 text-sm text-[#A0A0A0]">${product.category || 'باقة رقمية'}</div>
+                </div>
+            `;
         }
         
         // تحويل المميزات إلى قائمة
@@ -429,68 +445,57 @@ function renderProducts(products) {
         }
         
         return `
-            <div class="product-card group">
-                <!-- Product Image -->
-                <div class="h-40 bg-gradient-to-br from-[#1A1A1A] to-[#2A2A2A] flex items-center justify-center relative overflow-hidden">
-                    <div class="text-center relative z-10">
-                        <i class="${iconClass} text-6xl" style="color: ${iconColor}"></i>
-                        <div class="mt-2 text-sm text-[#A0A0A0]">${product.category === 'snap' ? 'Snapchat Plus' : product.category === 'tiktok' ? 'TikTok Plus' : product.category === 'youtube' ? 'YouTube Premium' : product.name}</div>
-                    </div>
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+            <div class="product-card group flex flex-col h-full">
+                <div class="h-56 bg-[#1A1A1A] flex items-center justify-center relative overflow-hidden rounded-t-xl">
+                    ${imageContent}
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                 </div>
                 
-                <!-- Product Info -->
                 <div class="p-6 flex-1 flex flex-col">
-                    <h3 class="font-bold text-xl mb-3">${product.name}</h3>
+                    <h3 class="font-bold text-xl mb-2 group-hover:text-[#FFD700] transition-colors">${product.name}</h3>
                     
-                    <!-- Rating -->
-                    <div class="rating-stars mb-4">
-                        ${stars}
-                        <span class="text-sm text-[#A0A0A0] mr-2">(${product.rating || 5}.0)</span>
+                    <div class="rating-stars mb-4 flex items-center">
+                        <div class="text-[#FFD700] flex gap-1">${stars}</div>
+                        <span class="text-xs text-[#A0A0A0] mr-2">(${product.rating || 5}.0)</span>
                     </div>
                     
-                    <!-- Features -->
-                    ${featuresList ? `
-                        <ul class="space-y-2 mb-4">
-                            ${featuresList}
-                        </ul>
-                    ` : ''}
+                    ${featuresList ? `<ul class="space-y-2 mb-4">${featuresList}</ul>` : ''}
                     
-                    <!-- Description -->
-                    <p class="text-[#A0A0A0] text-sm mb-4 flex-grow line-clamp-2">
-                        ${product.description || 'باقة مميزة مع مزايا متقدمة'}
+                    <p class="text-[#A0A0A0] text-sm mb-4 line-clamp-2 flex-grow">
+                        ${product.description || 'باقة مميزة مع مزايا متقدمة وتفعيل فوري'}
                     </p>
                     
-                    <!-- Stock -->
                     ${product.stock ? `
-                        <div class="mb-4">
-                            <div class="flex items-center justify-between text-sm">
-                                <span class="text-gray-400">المخزون:</span>
-                                <span class="${product.stock < 5 ? 'text-red-500' : 'text-green-500'} font-medium">
+                        <div class="mb-5">
+                            <div class="flex items-center justify-between text-xs mb-1">
+                                <span class="text-gray-400">مخزون الأكواد:</span>
+                                <span class="${product.stock < 5 ? 'text-red-500' : 'text-green-500'} font-bold">
                                     ${product.stock} متبقي
                                 </span>
                             </div>
-                            <div class="w-full bg-gray-800 rounded-full h-2 mt-1">
-                                <div class="bg-green-500 h-2 rounded-full" style="width: ${Math.min((product.stock / 10) * 100, 100)}%"></div>
+                            <div class="w-full bg-gray-800 rounded-full h-1.5">
+                                <div class="bg-gradient-to-r from-green-600 to-green-400 h-1.5 rounded-full" style="width: ${Math.min((product.stock / 15) * 100, 100)}%"></div>
                             </div>
                         </div>
                     ` : ''}
                     
-                    <!-- Price -->
                     <div class="mt-auto">
-                        <div class="flex items-baseline gap-2 mb-4">
-                            <span class="text-2xl font-bold text-[#FFD700]">${price}</span>
-                            <span class="text-[#A0A0A0]">ر.س</span>
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-baseline gap-1">
+                                <span class="text-2xl font-bold text-[#FFD700]">${price}</span>
+                                <span class="text-xs text-[#A0A0A0]">ر.س</span>
+                            </div>
                             ${product.duration ? `
-                                <span class="text-xs bg-gray-800 text-gray-300 px-2 py-1 rounded">
+                                <span class="text-[10px] bg-[#9B111E]/20 text-[#FFD700] border border-[#9B111E]/30 px-2 py-1 rounded">
                                     ${product.duration}
                                 </span>
                             ` : ''}
                         </div>
                         
-                        <!-- Add to Cart Button -->
-                        <button class="btn-primary w-full py-3 add-to-cart-btn" data-product-id="${product.id}" data-product-name="${product.name}" data-product-price="${product.price}">
-                            <i class="fas fa-cart-plus ml-2"></i> أضف للسلة
+                        <button class="btn-primary w-full py-3 rounded-lg font-bold flex items-center justify-center gap-2 transform active:scale-95 transition-transform" 
+                                onclick="ironHomepage.addToCart('${product.id}', '${product.name}', ${product.price})">
+                            <i class="fas fa-shopping-basket"></i>
+                            أضف للسلة
                         </button>
                     </div>
                 </div>
@@ -498,7 +503,9 @@ function renderProducts(products) {
         `;
     }).join('');
     
-    addCartButtonListeners();
+    if (typeof addCartButtonListeners === 'function') {
+        addCartButtonListeners();
+    }
 }
 
 function generateStars(rating) {
