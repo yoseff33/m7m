@@ -97,12 +97,13 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 });
 // --- [1] تحميل إعدادات الموقع مع فحص وضع الصيانة ---
+// --- [1] تحميل إعدادات الموقع ---
 async function loadSiteSettings() {
     try {
         if (!window.ironPlus) {
             console.warn('ironPlus library not found, using default settings');
             siteSettings = window.ironPlus?.getDefaultSettings?.() || {};
-            applySiteSettings(); // تشغيل التطبيق بالإعدادات الافتراضية
+            applySiteSettings();
             return;
         }
         
@@ -121,30 +122,36 @@ async function loadSiteSettings() {
     }
 }
 
+// --- [2] تطبيق الإعدادات وتحديث الواجهة ---
 function applySiteSettings() {
     if (!siteSettings) return;
 
-    // --- [1] تحقق وضع الصيانة ---
-    // إذا كان وضع الصيانة مفعل في قاعدة البيانات، سيتم حجب الموقع تماماً وعرض رسالة الصيانة
+    // --- تحقق وضع الصيانة (الشاشة المعتمة والضبابية) ---
     if (siteSettings.maintenance_mode === true) {
+        const whatsapp = siteSettings.whatsapp_number || '';
+        
         document.body.innerHTML = `
-            <div style="height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #0a0a0a; color: white; text-align: center; font-family: 'Rajdhani', sans-serif; padding: 20px;">
-                <div style="border: 1px solid #9B111E; padding: 40px; border-radius: 15px; background: rgba(155, 17, 30, 0.05); box-shadow: 0 0 20px rgba(155, 17, 30, 0.2);">
-                    <h1 style="color: #9B111E; font-size: 3.5rem; margin-bottom: 10px; text-shadow: 0 0 10px rgba(155, 17, 30, 0.5);">🦾 IRON+</h1>
-                    <div style="width: 50px; height: 2px; background: #FFD700; margin: 20px auto;"></div>
-                    <h2 style="font-size: 1.8rem; margin-bottom: 15px; color: #fff;">المتجر حالياً في وضع الصيانة</h2>
-                    <p style="color: #A0A0A0; font-size: 1.1rem; max-width: 400px; line-height: 1.6;">
-                        نحن نقوم ببعض التحديثات التقنية لضمان أفضل تجربة لك. سنعود قريباً جداً، ترقبوا الإطلاق الجديد!
+            <div style="position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,0.85); backdrop-filter: blur(15px); display: flex; align-items: center; justify-content: center; color: white; font-family: 'Cairo', 'Rajdhani', sans-serif; direction: rtl;">
+                <div style="text-align: center; padding: 40px; border: 1px solid rgba(255,215,0,0.3); border-radius: 20px; max-width: 500px; width: 90%; background: rgba(26, 26, 26, 0.5); box-shadow: 0 0 30px rgba(0,0,0,0.5);">
+                    <div style="font-size: 70px; margin-bottom: 20px;">🦾</div>
+                    <h1 style="font-size: 2.2rem; font-weight: bold; margin-bottom: 15px; color: #fff; text-shadow: 0 0 10px rgba(155, 17, 30, 0.5);">الموقع تحت الصيانة</h1>
+                    <p style="color: #A0A0A0; margin-bottom: 30px; line-height: 1.8; font-size: 1.1rem;">
+                        عذراً عميلنا العزيز، حنا جالسين نسوي بعض التحديثات والتحسينات عشان نخدمك بشكل أفضل.
+                        <br><strong style="color: #FFD700;">تقدر تطلب وتتواصل معنا مباشرة عبر الواتساب:</strong>
                     </p>
-                    <div style="margin-top: 30px; font-size: 0.9rem; color: #666;">إدارة ايرون بلس v5.5</div>
+                    <a href="https://wa.me/${whatsapp}" target="_blank" style="display: inline-flex; align-items: center; background: #25D366; color: white; padding: 16px 32px; border-radius: 50px; text-decoration: none; font-weight: bold; gap: 12px; transition: 0.3s; box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);">
+                        <i class="fab fa-whatsapp" style="font-size: 24px;"></i>
+                        للطلب عبر الواتساب اضغط هنا
+                    </a>
+                    <div style="margin-top: 40px; font-size: 0.85rem; color: #555; letter-spacing: 1px;">IRON+ OS v5.5</div>
                 </div>
             </div>
         `;
         document.body.style.overflow = 'hidden';
-        return; // التوقف هنا وعدم إكمال تحميل باقي عناصر الصفحة
+        return; // يوقف تحميل باقي الموقع تماماً
     }
 
-    // --- [2] تحديث النصوص والمعلومات الأساسية (SEO) ---
+    // --- تكملة الإعدادات الطبيعية (SEO والمعلومات) ---
     if (siteSettings.meta_title) {
         document.title = siteSettings.meta_title;
         const pageTitle = document.getElementById('pageTitle');
@@ -161,13 +168,11 @@ function applySiteSettings() {
         if (metaKey) metaKey.setAttribute('content', siteSettings.meta_keywords);
     }
     
-    // تحديث أيقونة الموقع
     if (siteSettings.site_favicon) {
         const favicon = document.getElementById('favicon');
         if (favicon) favicon.href = siteSettings.site_favicon;
     }
     
-    // --- [3] تحديث شريط الإعلانات ---
     if (siteSettings.announcement_bar) {
         const announcementBar = document.getElementById('announcementBar');
         const announcementText = document.getElementById('announcementText');
@@ -177,10 +182,10 @@ function applySiteSettings() {
         }
     }
     
-    // --- [4] تحديث الروابط والتتبع ---
-    updateSocialLinks();
-    updatePolicyLinks();
-    setupTrackingCodes();
+    // تحديث الروابط والتتبع
+    if (typeof updateSocialLinks === 'function') updateSocialLinks();
+    if (typeof updatePolicyLinks === 'function') updatePolicyLinks();
+    if (typeof setupTrackingCodes === 'function') setupTrackingCodes();
 }
 
 function updateSocialLinks() {
