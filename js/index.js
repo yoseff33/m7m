@@ -403,46 +403,18 @@ function renderProducts(products) {
         const price = formatPrice(product.price);
         const stars = generateStars(product.rating || 5);
         
-        // --- إعداد شكل المنتج (صورة أو أيقونة) ---
+        // إعداد الصورة أو الأيقونة
         let imageContent = '';
-        
         if (product.image_url) {
             imageContent = `<img src="${product.image_url}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt="${product.name}">`;
         } else {
             let iconClass = 'fas fa-mobile-alt';
             let iconColor = '#FFD700';
+            if (product.category === 'snap') { iconClass = 'fab fa-snapchat-ghost'; iconColor = '#FFFC00'; }
+            else if (product.category === 'tiktok') { iconClass = 'fab fa-tiktok'; iconColor = '#000000'; }
+            else if (product.category === 'youtube') { iconClass = 'fab fa-youtube'; iconColor = '#FF0000'; }
             
-            if (product.category === 'snap') {
-                iconClass = 'fab fa-snapchat-ghost';
-                iconColor = '#FFFC00';
-            } else if (product.category === 'tiktok') {
-                iconClass = 'fab fa-tiktok';
-                iconColor = '#000000';
-            } else if (product.category === 'youtube') {
-                iconClass = 'fab fa-youtube';
-                iconColor = '#FF0000';
-            } else if (product.name.includes('فك حظر')) {
-                iconClass = 'fas fa-unlock-alt';
-                iconColor = '#9B111E';
-            }
-            
-            imageContent = `
-                <div class="text-center relative z-10">
-                    <i class="${iconClass} text-6xl" style="color: ${iconColor}"></i>
-                    <div class="mt-2 text-sm text-[#A0A0A0]">${product.category || 'باقة رقمية'}</div>
-                </div>
-            `;
-        }
-        
-        // تحويل المميزات إلى قائمة (أول 3 فقط للبطاقة)
-        let featuresList = '';
-        if (product.features && Array.isArray(product.features)) {
-            featuresList = product.features.slice(0, 3).map(feature => 
-                `<li class="flex items-center gap-2 text-sm text-gray-400">
-                    <i class="fas fa-check text-green-500 text-xs"></i>
-                    <span>${feature}</span>
-                </li>`
-            ).join('');
+            imageContent = `<div class="text-center relative z-10"><i class="${iconClass} text-6xl" style="color: ${iconColor}"></i></div>`;
         }
         
         return `
@@ -458,54 +430,22 @@ function renderProducts(products) {
                 
                 <div class="p-6 flex-1 flex flex-col">
                     <h3 class="font-bold text-xl mb-2 group-hover:text-[#FFD700] transition-colors">${product.name}</h3>
-                    
-                    <div class="rating-stars mb-4 flex items-center">
-                        <div class="text-[#FFD700] flex gap-1">${stars}</div>
-                        <span class="text-xs text-[#A0A0A0] mr-2">(${product.rating || 5}.0)</span>
+                    <div class="rating-stars mb-4 flex items-center text-[#FFD700] gap-1">
+                        ${stars} <span class="text-xs text-[#A0A0A0] mr-1">(${product.rating || 5}.0)</span>
                     </div>
-                    
-                    ${featuresList ? `<ul class="space-y-2 mb-4">${featuresList}</ul>` : ''}
-                    
-                    <p class="text-[#A0A0A0] text-sm mb-4 line-clamp-2 flex-grow">
-                        ${product.description || 'باقة مميزة مع مزايا متقدمة وتفعيل فوري'}
-                    </p>
-                    
-                    ${product.stock ? `
-                        <div class="mb-5">
-                            <div class="flex items-center justify-between text-xs mb-1">
-                                <span class="text-gray-400">مخزون الأكواد:</span>
-                                <span class="${product.stock < 5 ? 'text-red-500' : 'text-green-500'} font-bold">
-                                    ${product.stock} متبقي
-                                </span>
-                            </div>
-                            <div class="w-full bg-gray-800 rounded-full h-1.5">
-                                <div class="bg-gradient-to-r from-green-600 to-green-400 h-1.5 rounded-full" style="width: ${Math.min((product.stock / 15) * 100, 100)}%"></div>
-                            </div>
-                        </div>
-                    ` : ''}
+                    <p class="text-[#A0A0A0] text-sm mb-4 line-clamp-2 flex-grow">${product.description || 'تفعيل فوري آمن ومستقر.'}</p>
                     
                     <div class="mt-auto">
                         <div class="flex items-center justify-between mb-4">
-                            <div class="flex items-baseline gap-1">
-                                <span class="text-2xl font-bold text-[#FFD700]">${price}</span>
-                                <span class="text-xs text-[#A0A0A0]">ر.س</span>
-                            </div>
-                            ${product.duration ? `
-                                <span class="text-[10px] bg-[#9B111E]/20 text-[#FFD700] border border-[#9B111E]/30 px-2 py-1 rounded">
-                                    ${product.duration}
-                                </span>
-                            ` : ''}
+                            <span class="text-2xl font-bold text-[#FFD700]">${price} <small class="text-xs text-[#A0A0A0]">ر.س</small></span>
                         </div>
-                        
                         <button class="btn-primary w-full py-3 rounded-lg font-bold flex items-center justify-center gap-2 transform active:scale-95 transition-transform" 
                                 onclick="event.stopPropagation(); ironHomepage.addToCart('${product.id}', '${product.name}', ${product.price})">
-                            <i class="fas fa-shopping-basket"></i>
-                            أضف للسلة
+                            <i class="fas fa-shopping-basket"></i> أضف للسلة
                         </button>
                     </div>
                 </div>
-            </div>
-        `;
+            </div>`;
     }).join('');
 }
     
@@ -1119,3 +1059,53 @@ window.ironHomepage = {
 };
 
 console.log('📦 IRON+ Homepage v5.5 loaded successfully!');
+// دالة فتح النافذة وتعبئة بيانات المنتج المختار
+window.showProductDetails = function(productId) {
+    const product = window.allProducts?.find(p => p.id === productId);
+    if (!product) return;
+
+    // تعبئة البيانات في النافذة
+    document.getElementById('modalName').textContent = product.name;
+    document.getElementById('modalDescription').textContent = product.description || 'باقة مميزة مع تفعيل فوري وضمان الاستقرار.';
+    document.getElementById('modalPrice').textContent = (product.price / 100).toFixed(2);
+    document.getElementById('modalStars').innerHTML = generateStars(product.rating || 5);
+    
+    const imgContainer = document.getElementById('modalImageContainer');
+    imgContainer.innerHTML = product.image_url 
+        ? `<img src="${product.image_url}" class="max-w-full max-h-full object-contain">`
+        : `<i class="fas fa-box text-7xl text-[#9B111E]"></i>`;
+
+    const featuresList = document.getElementById('modalFeatures');
+    featuresList.innerHTML = (product.features || ['تفعيل فوري', 'ضمان كامل', 'دعم فني']).map(f => 
+        `<li class="flex items-center gap-2"><i class="fas fa-check-circle text-[#FFD700]"></i><span>${f}</span></li>`
+    ).join('');
+
+    // برمجة زر الإضافة داخل النافذة ليقوم بالإغلاق بعد الإضافة
+    const modalAddBtn = document.getElementById('modalAddBtn');
+    modalAddBtn.onclick = async () => {
+        await ironHomepage.addToCart(product.id, product.name, product.price);
+        closeProductModal(); // إغلاق النافذة تلقائياً
+    };
+
+    // إظهار النافذة
+    const modal = document.getElementById('productModal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    document.body.style.overflow = 'hidden'; // منع التمرير خلف النافذة
+};
+
+// دالة إغلاق النافذة
+window.closeProductModal = function() {
+    const modal = document.getElementById('productModal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        document.body.style.overflow = ''; // إعادة التمرير
+    }
+};
+
+// إغلاق النافذة عند الضغط خارجها
+window.addEventListener('click', (e) => {
+    const modal = document.getElementById('productModal');
+    if (e.target === modal) closeProductModal();
+});
