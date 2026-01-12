@@ -975,7 +975,6 @@ function showNotification(message, type = 'info', duration = 4000) {
         }, duration);
     }
 }
-
 // --- [11] تهيئة النظام الكاملة ---
 document.addEventListener('DOMContentLoaded', function() {
     setupEventListeners();
@@ -988,110 +987,67 @@ document.addEventListener('DOMContentLoaded', function() {
         updateCartCount();
     }, 100);
 });
-// دالة فتح نافذة تفاصيل المنتج
-window.showProductDetails = function(productId) {
-    const product = window.allProducts.find(p => p.id === productId);
-    if (!product) return;
 
-    // تعبئة البيانات في النافذة
-    document.getElementById('modalName').textContent = product.name;
-    document.getElementById('modalDescription').textContent = product.description || 'لا يوجد وصف متاح لهذا المنتج حالياً.';
-    document.getElementById('modalPrice').textContent = (product.price / 100).toFixed(2);
-    document.getElementById('modalCategory').textContent = product.category === 'snap' ? 'باقة سناب بلس' : 'باقة رقمية';
-    
-    // تعبئة الصورة
-    const imgContainer = document.getElementById('modalImageContainer');
-    imgContainer.innerHTML = product.image_url 
-        ? `<img src="${product.image_url}" class="w-full h-full object-contain p-4" alt="${product.name}">`
-        : `<i class="fas fa-box text-8xl text-[#9B111E]"></i>`;
+// --- [12] دوال النافذة المنبثقة (Modal) لتفاصيل المنتج ---
 
-    // تعبئة النجوم
-    document.getElementById('modalStars').innerHTML = generateStars(product.rating || 5);
-    document.getElementById('modalRating').textContent = `(${product.rating || 5}.0)`;
-
-    // تعبئة المميزات
-    const featuresList = document.getElementById('modalFeatures');
-    featuresList.innerHTML = '';
-    if (product.features && Array.isArray(product.features)) {
-        product.features.forEach(feature => {
-            featuresList.innerHTML += `
-                <li class="flex items-center gap-3">
-                    <i class="fas fa-check-circle text-[#FFD700]"></i>
-                    <span>${feature}</span>
-                </li>`;
-        });
-    }
-
-    // تحديث زر الإضافة للسلة في النافذة
-    const addBtn = document.getElementById('modalAddBtn');
-    addBtn.onclick = (e) => {
-        e.stopPropagation(); // منع تكرار الضغط
-        ironHomepage.addToCart(product.id, product.name, product.price);
-        closeProductModal();
-    };
-
-    // إظهار النافذة
-    const modal = document.getElementById('productModal');
-    modal.classList.remove('hidden');
-    document.body.style.overflow = 'hidden'; // منع التمرير في الخلفية
-};
-
-// دالة إغلاق النافذة
-window.closeProductModal = function() {
-    const modal = document.getElementById('productModal');
-    modal.classList.add('hidden');
-    document.body.style.overflow = ''; // إعادة التمرير
-};
-
-// إغلاق النافذة عند الضغط خارجها
-window.onclick = function(event) {
-    const modal = document.getElementById('productModal');
-    if (event.target == modal) {
-        closeProductModal();
-    }
-};
-// تصدير الوظائف للاستخدام العام
-window.ironHomepage = {
-    addToCart,
-    showNotification,
-    updateCartCount,
-    closeNotification
-};
-
-console.log('📦 IRON+ Homepage v5.5 loaded successfully!');
 // دالة فتح النافذة وتعبئة بيانات المنتج المختار
 window.showProductDetails = function(productId) {
     const product = window.allProducts?.find(p => p.id === productId);
     if (!product) return;
 
-    // تعبئة البيانات في النافذة
-    document.getElementById('modalName').textContent = product.name;
-    document.getElementById('modalDescription').textContent = product.description || 'باقة مميزة مع تفعيل فوري وضمان الاستقرار.';
-    document.getElementById('modalPrice').textContent = (product.price / 100).toFixed(2);
-    document.getElementById('modalStars').innerHTML = generateStars(product.rating || 5);
-    
+    // 1. تعبئة النصوص الأساسية
+    const modalName = document.getElementById('modalName');
+    const modalDesc = document.getElementById('modalDescription');
+    const modalPrice = document.getElementById('modalPrice');
+    const modalCategory = document.getElementById('modalCategory');
+    const modalRating = document.getElementById('modalRating');
+
+    if (modalName) modalName.textContent = product.name;
+    if (modalDesc) modalDesc.textContent = product.description || 'باقة مميزة مع تفعيل فوري وضمان الاستقرار.';
+    if (modalPrice) modalPrice.textContent = (product.price / 100).toFixed(2);
+    if (modalCategory) modalCategory.textContent = product.category === 'snap' ? 'باقة سناب بلس' : 'باقة رقمية';
+    if (modalRating) modalRating.textContent = `(${product.rating || 5}.0)`;
+
+    // 2. تعبئة الصورة
     const imgContainer = document.getElementById('modalImageContainer');
-    imgContainer.innerHTML = product.image_url 
-        ? `<img src="${product.image_url}" class="max-w-full max-h-full object-contain">`
-        : `<i class="fas fa-box text-7xl text-[#9B111E]"></i>`;
+    if (imgContainer) {
+        imgContainer.innerHTML = product.image_url 
+            ? `<img src="${product.image_url}" class="max-w-full max-h-full object-contain p-4" alt="${product.name}">`
+            : `<i class="fas fa-box text-7xl text-[#9B111E]"></i>`;
+    }
+
+    // 3. تعبئة النجوم والمميزات
+    const modalStars = document.getElementById('modalStars');
+    if (modalStars) modalStars.innerHTML = generateStars(product.rating || 5);
 
     const featuresList = document.getElementById('modalFeatures');
-    featuresList.innerHTML = (product.features || ['تفعيل فوري', 'ضمان كامل', 'دعم فني']).map(f => 
-        `<li class="flex items-center gap-2"><i class="fas fa-check-circle text-[#FFD700]"></i><span>${f}</span></li>`
-    ).join('');
+    if (featuresList) {
+        const features = product.features && Array.isArray(product.features) ? product.features : ['تفعيل فوري', 'ضمان كامل', 'دعم فني 24/7'];
+        featuresList.innerHTML = features.map(f => 
+            `<li class="flex items-center gap-3">
+                <i class="fas fa-check-circle text-[#FFD700]"></i>
+                <span>${f}</span>
+            </li>`
+        ).join('');
+    }
 
-    // برمجة زر الإضافة داخل النافذة ليقوم بالإغلاق بعد الإضافة
+    // 4. برمجة زر الإضافة داخل النافذة (يضيف للسلة ثم يغلق النافذة)
     const modalAddBtn = document.getElementById('modalAddBtn');
-    modalAddBtn.onclick = async () => {
-        await ironHomepage.addToCart(product.id, product.name, product.price);
-        closeProductModal(); // إغلاق النافذة تلقائياً
-    };
+    if (modalAddBtn) {
+        modalAddBtn.onclick = async (e) => {
+            e.stopPropagation(); // منع تداخل الضغطات
+            await ironHomepage.addToCart(product.id, product.name, product.price);
+            closeProductModal(); // إغلاق النافذة تلقائياً
+        };
+    }
 
-    // إظهار النافذة
+    // 5. إظهار النافذة وتغيير حالة التمرير
     const modal = document.getElementById('productModal');
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-    document.body.style.overflow = 'hidden'; // منع التمرير خلف النافذة
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex'); // نستخدم flex للتوسيط
+        document.body.style.overflow = 'hidden'; // منع التمرير خلف النافذة
+    }
 };
 
 // دالة إغلاق النافذة
@@ -1100,12 +1056,31 @@ window.closeProductModal = function() {
     if (modal) {
         modal.classList.add('hidden');
         modal.classList.remove('flex');
-        document.body.style.overflow = ''; // إعادة التمرير
+        document.body.style.overflow = ''; // إعادة التمرير للوضع الطبيعي
     }
 };
 
-// إغلاق النافذة عند الضغط خارجها
+// إغلاق النافذة عند الضغط خارج الإطار الأبيض
 window.addEventListener('click', (e) => {
     const modal = document.getElementById('productModal');
-    if (e.target === modal) closeProductModal();
+    if (e.target === modal) {
+        closeProductModal();
+    }
 });
+
+// إغلاق النافذة عند الضغط على زر Esc في الكيبورد
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeProductModal();
+});
+
+// تصدير الوظائف للاستخدام العام (Global Access)
+window.ironHomepage = {
+    addToCart,
+    showNotification,
+    updateCartCount,
+    closeNotification,
+    closeProductModal,
+    showProductDetails
+};
+
+console.log('🦾 IRON+ Homepage v5.5: Modal System & All Functions Loaded!');
