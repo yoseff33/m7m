@@ -396,6 +396,9 @@ function renderProducts(products) {
     const container = document.getElementById('productsContainer');
     if (!container) return;
     
+    // حفظ المنتجات في متغير عالمي لكي تتمكن نافذة التفاصيل من الوصول إليها
+    window.allProducts = products; 
+    
     container.innerHTML = products.map(product => {
         const price = formatPrice(product.price);
         const stars = generateStars(product.rating || 5);
@@ -404,10 +407,8 @@ function renderProducts(products) {
         let imageContent = '';
         
         if (product.image_url) {
-            // إذا فيه صورة مرفوعة، نعرضها هي الأساس
             imageContent = `<img src="${product.image_url}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt="${product.name}">`;
         } else {
-            // إذا ما فيه صورة، نرجع لنظام الأيقونات التلقائي
             let iconClass = 'fas fa-mobile-alt';
             let iconColor = '#FFD700';
             
@@ -433,7 +434,7 @@ function renderProducts(products) {
             `;
         }
         
-        // تحويل المميزات إلى قائمة
+        // تحويل المميزات إلى قائمة (أول 3 فقط للبطاقة)
         let featuresList = '';
         if (product.features && Array.isArray(product.features)) {
             featuresList = product.features.slice(0, 3).map(feature => 
@@ -445,10 +446,14 @@ function renderProducts(products) {
         }
         
         return `
-            <div class="product-card group flex flex-col h-full">
+            <div class="product-card group flex flex-col h-full cursor-pointer transition-all duration-300 hover:border-[#FFD700]/30 border border-transparent rounded-xl overflow-hidden" 
+                 onclick="showProductDetails('${product.id}')">
                 <div class="h-56 bg-[#1A1A1A] flex items-center justify-center relative overflow-hidden rounded-t-xl">
                     ${imageContent}
                     <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                    <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 backdrop-blur-[2px]">
+                         <span class="bg-[#FFD700] text-black px-4 py-2 rounded-full font-bold text-sm">عرض التفاصيل</span>
+                    </div>
                 </div>
                 
                 <div class="p-6 flex-1 flex flex-col">
@@ -493,7 +498,7 @@ function renderProducts(products) {
                         </div>
                         
                         <button class="btn-primary w-full py-3 rounded-lg font-bold flex items-center justify-center gap-2 transform active:scale-95 transition-transform" 
-                                onclick="ironHomepage.addToCart('${product.id}', '${product.name}', ${product.price})">
+                                onclick="event.stopPropagation(); ironHomepage.addToCart('${product.id}', '${product.name}', ${product.price})">
                             <i class="fas fa-shopping-basket"></i>
                             أضف للسلة
                         </button>
@@ -502,6 +507,7 @@ function renderProducts(products) {
             </div>
         `;
     }).join('');
+}
     
     if (typeof addCartButtonListeners === 'function') {
         addCartButtonListeners();
