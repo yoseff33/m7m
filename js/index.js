@@ -402,10 +402,12 @@ function renderProducts(products) {
     container.innerHTML = products.map(product => {
         const price = formatPrice(product.price);
         const stars = generateStars(product.rating || 5);
+        
+        // تنظيف اسم المنتج من أي فواصل قد تكسر الكود (Escape quotes)
+        const escapedName = product.name.replace(/'/g, "\\'");
 
         // --- إعداد شكل المنتج (صورة أو أيقونة) ---
         let imageContent = '';
-
         if (product.image_url) {
             imageContent = `<img src="${product.image_url}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt="${product.name}">`;
         } else {
@@ -447,7 +449,7 @@ function renderProducts(products) {
 
         return `
             <div class="product-card group flex flex-col h-full cursor-pointer transition-all duration-300 hover:border-[#FFD700]/30 border border-transparent rounded-xl overflow-hidden"
-                 onclick="showProductDetails('${product.id}')">
+                 onclick="ironHomepage.showProductDetails('${product.id}')">
 
                 <div class="h-56 bg-[#1A1A1A] flex items-center justify-center relative overflow-hidden rounded-t-xl">
                     ${imageContent}
@@ -492,15 +494,10 @@ function renderProducts(products) {
                                 <span class="text-2xl font-bold text-[#FFD700]">${price}</span>
                                 <span class="text-xs text-[#A0A0A0]">ر.س</span>
                             </div>
-                            ${product.duration ? `
-                                <span class="text-[10px] bg-[#9B111E]/20 text-[#FFD700] border border-[#9B111E]/30 px-2 py-1 rounded">
-                                    ${product.duration}
-                                </span>
-                            ` : ''}
                         </div>
 
                         <button class="btn-primary w-full py-3 rounded-lg font-bold flex items-center justify-center gap-2 transform active:scale-95 transition-transform"
-                                onclick="event.stopPropagation(); ironHomepage.addToCart('${product.id}', '${product.name}', ${product.price})">
+                                onclick="event.stopPropagation(); ironHomepage.addToCart('${product.id}', '${escapedName}', ${product.price})">
                             <i class="fas fa-shopping-basket"></i>
                             أضف للسلة
                         </button>
@@ -508,14 +505,11 @@ function renderProducts(products) {
                 </div>
             </div>
         `;
-      }).join('');
+    }).join('');
     
-    if (typeof addCartButtonListeners === 'function') {
-        addCartButtonListeners();
-    }
+    // إعادة تحديث عداد السلة والمستمعات
+    if (typeof updateCartCount === 'function') updateCartCount();
 }
-
-
 function generateStars(rating) {
     const fullStars = Math.floor(rating);
     const halfStar = rating % 1 >= 0.5;
