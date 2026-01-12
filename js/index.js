@@ -1042,7 +1042,68 @@ document.addEventListener('DOMContentLoaded', function() {
         updateCartCount();
     }, 100);
 });
+// دالة فتح نافذة تفاصيل المنتج
+window.showProductDetails = function(productId) {
+    const product = window.allProducts.find(p => p.id === productId);
+    if (!product) return;
 
+    // تعبئة البيانات في النافذة
+    document.getElementById('modalName').textContent = product.name;
+    document.getElementById('modalDescription').textContent = product.description || 'لا يوجد وصف متاح لهذا المنتج حالياً.';
+    document.getElementById('modalPrice').textContent = (product.price / 100).toFixed(2);
+    document.getElementById('modalCategory').textContent = product.category === 'snap' ? 'باقة سناب بلس' : 'باقة رقمية';
+    
+    // تعبئة الصورة
+    const imgContainer = document.getElementById('modalImageContainer');
+    imgContainer.innerHTML = product.image_url 
+        ? `<img src="${product.image_url}" class="w-full h-full object-contain p-4" alt="${product.name}">`
+        : `<i class="fas fa-box text-8xl text-[#9B111E]"></i>`;
+
+    // تعبئة النجوم
+    document.getElementById('modalStars').innerHTML = generateStars(product.rating || 5);
+    document.getElementById('modalRating').textContent = `(${product.rating || 5}.0)`;
+
+    // تعبئة المميزات
+    const featuresList = document.getElementById('modalFeatures');
+    featuresList.innerHTML = '';
+    if (product.features && Array.isArray(product.features)) {
+        product.features.forEach(feature => {
+            featuresList.innerHTML += `
+                <li class="flex items-center gap-3">
+                    <i class="fas fa-check-circle text-[#FFD700]"></i>
+                    <span>${feature}</span>
+                </li>`;
+        });
+    }
+
+    // تحديث زر الإضافة للسلة في النافذة
+    const addBtn = document.getElementById('modalAddBtn');
+    addBtn.onclick = (e) => {
+        e.stopPropagation(); // منع تكرار الضغط
+        ironHomepage.addToCart(product.id, product.name, product.price);
+        closeProductModal();
+    };
+
+    // إظهار النافذة
+    const modal = document.getElementById('productModal');
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden'; // منع التمرير في الخلفية
+};
+
+// دالة إغلاق النافذة
+window.closeProductModal = function() {
+    const modal = document.getElementById('productModal');
+    modal.classList.add('hidden');
+    document.body.style.overflow = ''; // إعادة التمرير
+};
+
+// إغلاق النافذة عند الضغط خارجها
+window.onclick = function(event) {
+    const modal = document.getElementById('productModal');
+    if (event.target == modal) {
+        closeProductModal();
+    }
+};
 // تصدير الوظائف للاستخدام العام
 window.ironHomepage = {
     addToCart,
