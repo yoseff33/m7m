@@ -508,14 +508,13 @@ function renderProducts(products) {
                 </div>
             </div>
         `;
-    }).join('');
-}
-
+      }).join('');
     
     if (typeof addCartButtonListeners === 'function') {
         addCartButtonListeners();
     }
 }
+
 
 function generateStars(rating) {
     const fullStars = Math.floor(rating);
