@@ -880,7 +880,6 @@ async function recordVisit() {
     }
 }
 
-// --- [9] نظام الإشعارات الحية ---
 function setupLiveNotifications() {
     if (!siteSettings || !siteSettings.live_notifications) {
         return;
@@ -913,6 +912,7 @@ async function showRealOrderNotification() {
     try {
         const res = await window.ironPlus.getRecentActivity(5);
         if (res.success && res.activities.length > 0) {
+            // تصفية النشاطات التي تحتوي على كلمة "طلب" لضمان أنها عمليات شراء
             const orderActivities = res.activities.filter(a => a.title.includes('طلب'));
             if (orderActivities.length > 0) {
                 const randomActivity = orderActivities[Math.floor(Math.random() * orderActivities.length)];
@@ -923,7 +923,21 @@ async function showRealOrderNotification() {
                 
                 if (notification && notifTitle && notifText) {
                     notifTitle.textContent = randomActivity.title;
-                    notifText.textContent = randomActivity.description;
+                    
+                    // جلب الوصف الذي يحتوي على رقم الجوال من السوبابيس
+                    let description = randomActivity.description || "اشترى باقة جديدة الآن";
+                    
+                    // كود لتنسيق الرقم (05xxxxxxxx) ليظهر بشكل مخفي جزئياً للخصوصية
+                    // مثال: من 055****123
+                    const phoneRegex = /05\d{8}/;
+                    const match = description.match(phoneRegex);
+                    if (match) {
+                        const fullPhone = match[0];
+                        const maskedPhone = fullPhone.substring(0, 3) + "****" + fullPhone.slice(-3);
+                        description = description.replace(fullPhone, maskedPhone);
+                    }
+                    
+                    notifText.textContent = description;
                     notification.classList.remove('hidden');
                     
                     setTimeout(() => {
@@ -985,7 +999,6 @@ window.closeNotification = function() {
         notification.classList.add('hidden');
     }
 };
-
 // --- [10] دوال مساعدة ---
 function showNotification(message, type = 'info', duration = 4000) {
     const notification = document.createElement('div');
