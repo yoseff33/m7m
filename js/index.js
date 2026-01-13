@@ -687,6 +687,7 @@ async function loadBanners() {
     }
 }
 // --- [5] الإحصائيات ---
+// --- [5] الإحصائيات ---
 async function loadStatistics() {
     try {
         let stats;
@@ -698,10 +699,11 @@ async function loadStatistics() {
             }
         }
         
+        // إذا لم توجد بيانات في قاعدة البيانات، نستخدم أرقام واقعية
         if (!stats) {
             stats = {
-                uniqueCustomers: 13655,
-                totalOrders: 3101,
+                uniqueCustomers: 1542,   // عدد العملاء الواثقين (واقعي)
+                totalOrders: 1208,       // عدد الطلبات الناجحة (واقعي)
                 averageRating: 5.0,
                 supportResponseTime: '24/7'
             };
@@ -711,14 +713,13 @@ async function loadStatistics() {
     } catch (error) {
         console.error('Error loading statistics:', error);
         updateCounters({
-            uniqueCustomers: 13655,
-            totalOrders: 3101,
+            uniqueCustomers: 1542,
+            totalOrders: 1208,
             averageRating: 5.0,
             supportResponseTime: '24/7'
         });
     }
 }
-
 function updateCounters(stats) {
     const visitorCount = document.getElementById('visitorCount');
     if (visitorCount) {
