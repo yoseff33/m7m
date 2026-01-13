@@ -946,41 +946,42 @@ async function recordVisit() {
     }
 }
 
+// --- [9] نظام الإشعارات الحية (طلبات حقيقية فقط) ---
 function setupLiveNotifications() {
-    if (!siteSettings || !siteSettings.live_notifications) {
+    // التحقق من تفعيل الإشعارات ومن تفعيل الإشعارات الحقيقية حصراً
+    if (!siteSettings || !siteSettings.live_notifications || !siteSettings.real_order_notifications) {
+        console.log("إشعارات الطلبات الحقيقية معطلة من الإعدادات.");
         return;
     }
     
     clearInterval(liveNotificationsInterval);
     
-    // عرض إشعار أولي بعد 3 ثواني
+    // عرض أول إشعار حقيقي بعد 5 ثواني من فتح الموقع (إذا وجد)
     setTimeout(() => {
-        if (siteSettings.real_order_notifications && window.ironPlus) {
+        if (window.ironPlus) {
             showRealOrderNotification();
-        } else {
-            showRandomNotification();
         }
-    }, 3000);
+    }, 5000);
     
-    // عرض إشعارات عشوائية كل 15-30 ثانية
+    // محاولة جلب طلبات حقيقية كل 40 إلى 60 ثانية (توقيت واقعي لتجنب شكوك جوجل)
     liveNotificationsInterval = setInterval(() => {
-        if (Math.random() > 0.3) {
-            if (siteSettings.real_order_notifications && window.ironPlus) {
-                showRealOrderNotification();
-            } else {
-                showRandomNotification();
-            }
+        if (window.ironPlus) {
+            showRealOrderNotification();
         }
-    }, 15000 + Math.random() * 15000);
+    }, 40000 + Math.random() * 20000);
 }
 
 async function showRealOrderNotification() {
     try {
-        const res = await window.ironPlus.getRecentActivity(5);
+        if (!window.ironPlus || !window.ironPlus.getRecentActivity) return;
+
+        const res = await window.ironPlus.getRecentActivity(10);
         if (res.success && res.activities.length > 0) {
-            // تصفية النشاطات التي تحتوي على كلمة "طلب" لضمان أنها عمليات شراء
+            // تصفية النشاطات لتشمل فقط العناوين التي تحتوي على كلمة "طلب" (طلبات حقيقية)
             const orderActivities = res.activities.filter(a => a.title.includes('طلب'));
+            
             if (orderActivities.length > 0) {
+                // اختيار طلب واحد عشوائي من آخر الطلبات الحقيقية
                 const randomActivity = orderActivities[Math.floor(Math.random() * orderActivities.length)];
                 
                 const notification = document.getElementById('liveNotification');
@@ -990,11 +991,9 @@ async function showRealOrderNotification() {
                 if (notification && notifTitle && notifText) {
                     notifTitle.textContent = randomActivity.title;
                     
-                    // جلب الوصف الذي يحتوي على رقم الجوال من السوبابيس
                     let description = randomActivity.description || "اشترى باقة جديدة الآن";
                     
-                    // كود لتنسيق الرقم (05xxxxxxxx) ليظهر بشكل مخفي جزئياً للخصوصية
-                    // مثال: من 055****123
+                    // تنسيق الرقم للخصوصية (مثال: 055****123)
                     const phoneRegex = /05\d{8}/;
                     const match = description.match(phoneRegex);
                     if (match) {
@@ -1006,22 +1005,80 @@ async function showRealOrderNotification() {
                     notifText.textContent = description;
                     notification.classList.remove('hidden');
                     
+                    // إخفاء الإشعار بعد المدة المحددة (أو 8 ثواني كافتراضي)
                     setTimeout(() => {
                         notification.classList.add('hidden');
-                    }, (siteSettings.notification_duration || 10) * 1000);
+                    }, (siteSettings.notification_duration || 8) * 1000);
                 }
-                return;
             }
+            // ملاحظة: إذا لم توجد طلبات حقيقية، لن يظهر أي شيء (تم حذف الـ fallback)
         }
-        
-        // إذا لم تكن هناك طلبات حقيقية، نعرض إشعار عشوائي
-        showRandomNotification();
     } catch (error) {
-        console.error('Error showing real order notification:', error);
-        showRandomNotification();
+        console.error('Error fetching real orders:', error);
     }
 }
 
+// دالة إغلاق الإشعار يدوياً
+window.closeNotification = function() {
+    const notification = document.getElementById('liveNotification');
+    if (notification) {
+        notification.classList.add('hidden');
+    }
+};
+
+// --- [10] دوال مساعدة ---
+function showNotification(message, type = 'info', duration = 4000) {
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg max-w-sm ${
+        type === 'success' ? 'bg-green-900/90 border-green-700' :
+        type === 'error' ? 'bg-red-900/90 border-red-700' :
+        type === 'warning' ? 'bg-yellow-900/90 border-yellow-700' :
+        'bg-blue-900/90 border-blue-700'
+    } border`;
+    
+    let icon = '';
+    switch (type) {
+        case 'success': icon = 'fa-check-circle'; break;
+        case 'error': icon = 'fa-times-circle'; break;
+        case 'warning': icon = 'fa-exclamation-triangle'; break;
+        default: icon = 'fa-info-circle';
+    }
+    
+    notification.innerHTML = `
+        <div class="flex items-center">
+            <i class="fas ${icon} mr-3 text-xl"></i>
+            <span class="flex-1">${message}</span>
+            <button class="ml-4 text-gray-300 hover:text-white" onclick="this.parentElement.parentElement.remove()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    if (duration > 0) {
+        setTimeout(() => {
+            if (notification.parentNode) notification.remove();
+        }, duration);
+    }
+}
+
+// --- [11] تهيئة النظام الكاملة ---
+document.addEventListener('DOMContentLoaded', function() {
+    // ملاحظة: تأكد أن setupEventListeners() مستدعاة في مكان واحد فقط لتجنب تكرار الأحداث
+    if (typeof setupEventListeners === 'function') {
+        setupEventListeners();
+    }
+
+    setTimeout(async () => {
+        await checkUserStatus();
+        await loadProducts();
+        await loadStatistics();
+        await recordVisit();
+        updateCartCount();
+        setupLiveNotifications(); // تشغيل نظام الإشعارات الجديد
+    }, 100);
+});
 function showRandomNotification() {
     const notification = document.getElementById('liveNotification');
     const notifTitle = document.getElementById('notifTitle');
