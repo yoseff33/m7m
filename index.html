@@ -561,65 +561,87 @@
         </div>
     </footer>
 
-    <div id="liveNotification" class="live-notification hidden">
-        <div class="w-10 h-10 rounded-full bg-[#9B111E]/20 flex items-center justify-center">
-            <i class="fas fa-bolt text-[#FFD700]"></i>
-        </div>
-        <div>
-            <div class="font-medium text-sm" id="notifTitle">مستخدم جديد اشترى الآن!</div>
-            <div class="text-xs text-[#A0A0A0]" id="notifText">محمد اشترى باقة سناب بلس</div>
-        </div>
-        <button onclick="closeNotification()" class="mr-auto text-[#A0A0A0] hover:text-white">
+  <div id="liveNotification" class="live-notification hidden">
+    <div class="w-10 h-10 rounded-full bg-[#9B111E]/20 flex items-center justify-center">
+        <i class="fas fa-bolt text-[#FFD700]"></i>
+    </div>
+    <div>
+        <div class="font-medium text-sm" id="notifTitle">مستخدم جديد اشترى الآن!</div>
+        <div class="text-xs text-[#A0A0A0]" id="notifText">محمد اشترى باقة سناب بلس</div>
+    </div>
+    <button onclick="closeNotification()" class="mr-auto text-[#A0A0A0] hover:text-white">
+        <i class="fas fa-times"></i>
+    </button>
+</div>
+
+<div id="productModal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4 bg-black/90 backdrop-blur-sm">
+    <div class="bg-[#1A1A1A] border border-[#333] rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto relative animate-in fade-in zoom-in duration-300">
+        <button onclick="closeProductModal()" class="absolute top-4 left-4 text-gray-400 hover:text-white text-2xl z-10">
             <i class="fas fa-times"></i>
         </button>
-    </div>
 
-   <div id="productModal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4 bg-black/90 backdrop-blur-sm">
-        <div class="bg-[#1A1A1A] border border-[#333] rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto relative animate-in fade-in zoom-in duration-300">
-            <button onclick="closeProductModal()" class="absolute top-4 left-4 text-gray-400 hover:text-white text-2xl z-10">
-                <i class="fas fa-times"></i>
-            </button>
+        <div class="grid grid-cols-1 md:grid-cols-2">
+            <div id="modalImageContainer" class="h-64 md:h-full bg-[#111] flex items-center justify-center border-b md:border-b-0 md:border-l border-[#333]">
+            </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2">
-                <div id="modalImageContainer" class="h-64 md:h-full bg-[#111] flex items-center justify-center border-b md:border-b-0 md:border-l border-[#333]">
-                    </div>
+            <div class="p-8">
+                <div id="modalCategory" class="text-[#FFD700] text-xs font-bold mb-2 tracking-widest uppercase">باقة مميزة</div>
+                <h2 id="modalName" class="tech-font text-3xl font-bold mb-4 text-white">اسم المنتج</h2>
+                
+                <div class="flex items-center gap-2 mb-6">
+                    <div id="modalStars" class="text-[#FFD700] flex gap-1"></div>
+                    <span id="modalRating" class="text-gray-400 text-sm"></span>
+                </div>
 
-                <div class="p-8">
-                    <div id="modalCategory" class="text-[#FFD700] text-xs font-bold mb-2 tracking-widest uppercase">باقة مميزة</div>
-                    <h2 id="modalName" class="tech-font text-3xl font-bold mb-4 text-white">اسم المنتج</h2>
-                    
-                    <div class="flex items-center gap-2 mb-6">
-                        <div id="modalStars" class="text-[#FFD700] flex gap-1"></div>
-                        <span id="modalRating" class="text-gray-400 text-sm"></span>
-                    </div>
+                <p id="modalDescription" class="text-[#A0A0A0] leading-relaxed mb-8 text-lg">
+                    وصف المنتج المفصل...
+                </p>
 
-                    <p id="modalDescription" class="text-[#A0A0A0] leading-relaxed mb-8 text-lg">
-                        وصف المنتج المفصل...
-                    </p>
+                <div class="mb-8">
+                    <h4 class="text-white font-bold mb-4">مميزات الباقة:</h4>
+                    <ul id="modalFeatures" class="space-y-3 text-gray-300">
+                    </ul>
+                </div>
 
-                    <div class="mb-8">
-                        <h4 class="text-white font-bold mb-4">مميزات الباقة:</h4>
-                        <ul id="modalFeatures" class="space-y-3 text-gray-300">
-                            </ul>
-                    </div>
-
-                    <div class="flex items-center justify-between pt-6 border-t border-[#333]">
-                        <div>
-                            <div class="text-gray-400 text-sm mb-1">السعر النهائي:</div>
-                            <div class="flex items-baseline gap-1">
-                                <span id="modalPrice" class="text-3xl font-bold text-[#FFD700]">0.00</span>
-                                <span class="text-sm text-[#A0A0A0]">ر.س</span>
-                            </div>
+                <div class="mt-8 border-t border-[#333] pt-6 mb-8">
+                    <h4 class="text-white font-bold mb-4 flex items-center gap-2">
+                        <i class="fas fa-question-circle text-[#FFD700]"></i>
+                        الأسئلة الشائعة حول المنتج
+                    </h4>
+                    <div id="questionsContainer" class="space-y-4">
+                        <div class="bg-[#111] p-4 rounded-xl border-r-4 border-[#FFD700]">
+                            <p class="text-white text-sm font-bold mb-2">س: هل الاشتراك آمن من الحظر؟</p>
+                            <p class="text-[#A0A0A0] text-sm italic">ج: نعم، النسخة مطورة بأكواد حماية قوية جداً وضد الحظر، وننصح دائماً باتباع تعليمات التثبيت لضمان استقرار حسابك.</p>
                         </div>
-                        <button id="modalAddBtn" class="btn-primary px-8 py-4 rounded-xl font-bold flex items-center gap-3">
-                            <i class="fas fa-cart-plus"></i>
-                            أضف للسلة
-                        </button>
+                        <div class="bg-[#111] p-4 rounded-xl border-r-4 border-[#FFD700]">
+                            <p class="text-white text-sm font-bold mb-2">س: متى يتم تفعيل الاشتراك بعد الدفع؟</p>
+                            <p class="text-[#A0A0A0] text-sm italic">ج: التفعيل فوري وتلقائي! بمجرد إتمام الدفع، سيظهر لك كود التفعيل مباشرة في صفحة "طلباتي" وتصلك رسالة نصية.</p>
+                        </div>
+                        <div class="bg-[#111] p-4 rounded-xl border-r-4 border-[#FFD700]">
+                            <p class="text-white text-sm font-bold mb-2">س: هل أحتاج لحذف التطبيق الأصلي؟</p>
+                            <p class="text-[#A0A0A0] text-sm italic">ج: نعم، لضمان عمل برامج بلس وسناب بلس بدون تعارض، يجب حذف التطبيق الأصلي قبل البدء في تثبيت النسخة المطورة.</p>
+                        </div>
                     </div>
+                </div>
+
+                <div class="flex items-center justify-between pt-6 border-t border-[#333]">
+                    <div>
+                        <div class="text-gray-400 text-sm mb-1">السعر النهائي:</div>
+                        <div class="flex items-baseline gap-1">
+                            <span id="modalPrice" class="text-3xl font-bold text-[#FFD700]">0.00</span>
+                            <span class="text-sm text-[#A0A0A0]">ر.س</span>
+                        </div>
+                    </div>
+                    <button id="modalAddBtn" class="btn-primary px-8 py-4 rounded-xl font-bold flex items-center gap-3">
+                        <i class="fas fa-cart-plus"></i>
+                        أضف للسلة
+                    </button>
                 </div>
             </div>
         </div>
     </div>
+</div>
+
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase-config.js"></script>
