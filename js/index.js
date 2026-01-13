@@ -1111,9 +1111,9 @@ function showNotification(message, type = 'info', duration = 4000) {
     }
 }
 // --- [11] تهيئة النظام الكاملة ---
+// --- [11] تهيئة النظام الكاملة ---
 document.addEventListener('DOMContentLoaded', function() {
-    setupEventListeners();
-    
+
     setTimeout(async () => {
         await checkUserStatus();
         await loadProducts();
