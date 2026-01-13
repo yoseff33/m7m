@@ -1058,8 +1058,24 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // --- [12] دوال النافذة المنبثقة (Modal) لتفاصيل المنتج ---
+// --- [1] بيانات الأسئلة المؤقتة (إملاء احترافي واقعي) ---
+const MOCK_QUESTIONS = {
+    // أسئلة خاصة بمنتجات سناب بلس
+    'snap': [
+        { q: "هل الاشتراك آمن من الحظر؟", a: "نعم، النسخة مطورة بأكواد حماية قوية جداً وضد الحظر، وننصح دائماً باتباع تعليمات التثبيت لضمان استقرار حسابك." },
+        { q: "هل أحتاج لحذف التطبيق الأصلي؟", a: "نعم، لضمان عمل سناب بلس بدون تعارض، يجب حذف التطبيق الأصلي قبل البدء في تثبيت النسخة المطورة." },
+        { q: "هل يظهر للآخرين إني أصور الشاشة أو أحفظ؟", a: "لا، النسخة تدعم تصوير الشاشة وحفظ السنابات والدردشات بدون علم الطرف الآخر تماماً." }
+    ],
+    
+    // أسئلة خاصة ببرامج بلس الأخرى
+    'apps': [
+        { q: "متى يتم تفعيل الاشتراك بعد الدفع؟", a: "التفعيل فوري وتلقائي! بمجرد إتمام الدفع، سيظهر لك كود التفعيل مباشرة في صفحة 'طلباتي' وتوصلك رسالة نصية." },
+        { q: "هل الاشتراك لجهاز واحد فقط؟", a: "الاشتراك يرتبط بجهازك (UDID)، وبمجرد التفعيل تقدر تحمل كل برامج بلس المتاحة لجهازك طوال فترة الاشتراك." },
+        { q: "لو واجهت مشكلة في التثبيت وش أسوي؟", a: "دعمنا الفني معك 24/7! تواصل معنا عبر الواتساب وبنحل لك أي مشكلة تواجهك في ثواني." }
+    ]
+};
 
-// دالة فتح النافذة وتعبئة بيانات المنتج المختار
+// --- [2] دالة فتح النافذة وتعبئة بيانات المنتج المختار ---
 window.showProductDetails = function(productId) {
     const product = window.allProducts?.find(p => p.id === productId);
     if (!product) return;
@@ -1074,7 +1090,10 @@ window.showProductDetails = function(productId) {
     if (modalName) modalName.textContent = product.name;
     if (modalDesc) modalDesc.textContent = product.description || 'باقة مميزة مع تفعيل فوري وضمان الاستقرار.';
     if (modalPrice) modalPrice.textContent = (product.price / 100).toFixed(2);
-    if (modalCategory) modalCategory.textContent = product.category === 'snap' ? 'باقة سناب بلس' : 'باقة رقمية';
+    
+    // تحديد الفئة للعرض
+    const isSnap = product.category === 'snap' || product.name.includes('سناب');
+    if (modalCategory) modalCategory.textContent = isSnap ? 'باقة سناب بلس' : 'باقة برامج بلس';
     if (modalRating) modalRating.textContent = `(${product.rating || 5}.0)`;
 
     // 2. تعبئة الصورة
@@ -1100,13 +1119,25 @@ window.showProductDetails = function(productId) {
         ).join('');
     }
 
-    // 4. برمجة زر الإضافة داخل النافذة (يضيف للسلة ثم يغلق النافذة)
+    // --- [إضافة جديدة] تعبئة الأسئلة الشائعة بناءً على نوع المنتج ---
+    const questionsContainer = document.getElementById('questionsContainer');
+    if (questionsContainer) {
+        const questions = isSnap ? MOCK_QUESTIONS.snap : MOCK_QUESTIONS.apps;
+        questionsContainer.innerHTML = questions.map(item => `
+            <div class="bg-[#111] p-4 rounded-xl border-r-4 border-[#FFD700]">
+                <p class="text-white text-sm font-bold mb-2">س: ${item.q}</p>
+                <p class="text-[#A0A0A0] text-sm italic">ج: ${item.a}</p>
+            </div>
+        `).join('');
+    }
+
+    // 4. برمجة زر الإضافة داخل النافذة
     const modalAddBtn = document.getElementById('modalAddBtn');
     if (modalAddBtn) {
         modalAddBtn.onclick = async (e) => {
-            e.stopPropagation(); // منع تداخل الضغطات
+            e.stopPropagation();
             await ironHomepage.addToCart(product.id, product.name, product.price);
-            closeProductModal(); // إغلاق النافذة تلقائياً
+            closeProductModal();
         };
     }
 
@@ -1114,42 +1145,36 @@ window.showProductDetails = function(productId) {
     const modal = document.getElementById('productModal');
     if (modal) {
         modal.classList.remove('hidden');
-        modal.classList.add('flex'); // نستخدم flex للتوسيط
-        document.body.style.overflow = 'hidden'; // منع التمرير خلف النافذة
+        modal.classList.add('flex');
+        document.body.style.overflow = 'hidden';
     }
 };
 
-// دالة إغلاق النافذة
+// --- [3] دالة إغلاق النافذة ---
 window.closeProductModal = function() {
     const modal = document.getElementById('productModal');
     if (modal) {
         modal.classList.add('hidden');
         modal.classList.remove('flex');
-        document.body.style.overflow = ''; // إعادة التمرير للوضع الطبيعي
+        document.body.style.overflow = '';
     }
 };
 
-// إغلاق النافذة عند الضغط خارج الإطار الأبيض
+// إغلاق النافذة عند الضغط خارج الإطار أو زر Esc
 window.addEventListener('click', (e) => {
     const modal = document.getElementById('productModal');
-    if (e.target === modal) {
-        closeProductModal();
-    }
+    if (e.target === modal) closeProductModal();
 });
 
-// إغلاق النافذة عند الضغط على زر Esc في الكيبورد
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') closeProductModal();
 });
 
-// تصدير الوظائف للاستخدام العام (Global Access)
+// تصدير الوظائف للاستخدام العام
 window.ironHomepage = {
-    addToCart,
-    showNotification,
-    updateCartCount,
-    closeNotification,
+    ...window.ironHomepage, // الحفاظ على الوظائف السابقة
     closeProductModal,
     showProductDetails
 };
 
-console.log('🦾 IRON+ Homepage v5.5: Modal System & All Functions Loaded!');
+console.log('🦾 IRON+ FAQ & Modal System: Fully Loaded!');
