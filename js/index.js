@@ -766,8 +766,9 @@ function animateCounter(element, target) {
 }
 
 // --- [6] إعداد مستمعي الأحداث ---
+// --- [6] إعداد مستمعي الأحداث ---
 function setupEventListeners() {
-    // القائمة الجانبية للجوال (Mobile Menu)
+    // 1. القائمة الجانبية للجوال (Mobile Menu)
     const mobileMenuBtn = document.getElementById('mobileMenuBtn');
     const closeMenuBtn = document.getElementById('closeMenuBtn');
     const mobileMenu = document.getElementById('mobileMenu');
@@ -782,34 +783,38 @@ function setupEventListeners() {
     if (closeMenuBtn && mobileMenu) {
         closeMenuBtn.addEventListener('click', () => {
             mobileMenu.classList.remove('active');
-            document.body.style.overflow = ''; // إعادة التمرير
+            document.body.style.overflow = ''; // إعادة التمرير للوضع الطبيعي
         });
     }
     
-    // نظام الأكورديون للأسئلة الشائعة (FAQ)
+    // 2. نظام الأكورديون للأسئلة الشائعة (FAQ)
     document.querySelectorAll('.accordion-header').forEach(header => {
         header.addEventListener('click', () => {
             const content = header.nextElementSibling;
             const icon = header.querySelector('i');
             
-            // إغلاق باقي العناصر المفتوحة
+            // إغلاق باقي الأسئلة المفتوحة (عشان يفتح واحد بس في كل مرة)
             document.querySelectorAll('.accordion-content').forEach(item => {
-                if (item !== content) {
+                if (item !== content && item.classList.contains('active')) {
                     item.classList.remove('active');
-                    item.previousElementSibling.querySelector('i').classList.remove('fa-chevron-up');
-                    item.previousElementSibling.querySelector('i').classList.add('fa-chevron-down');
+                    // تغيير أيقونة السؤال اللي تقفل
+                    const otherIcon = item.previousElementSibling.querySelector('i');
+                    if (otherIcon) {
+                        otherIcon.classList.replace('fa-chevron-up', 'fa-chevron-down');
+                    }
                 }
             });
             
-            // تبديل حالة العنصر الحالي
-            content.classList.toggle('active');
+            // تبديل حالة السؤال الحالي (فتح أو إغلاق)
+            const isActive = content.classList.toggle('active');
             
-            if (content.classList.contains('active')) {
-                icon.classList.remove('fa-chevron-down');
-                icon.classList.add('fa-chevron-up');
-            } else {
-                icon.classList.remove('fa-chevron-up');
-                icon.classList.add('fa-chevron-down');
+            // تغيير الأيقونة بناءً على الحالة الجديدة
+            if (icon) {
+                if (isActive) {
+                    icon.classList.replace('fa-chevron-down', 'fa-chevron-up');
+                } else {
+                    icon.classList.replace('fa-chevron-up', 'fa-chevron-down');
+                }
             }
         });
     });
