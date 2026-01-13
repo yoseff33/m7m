@@ -731,29 +731,42 @@ function updateCounters(stats) {
     }
 }
 
+// --- [5] الدوال المساعدة للإحصائيات ---
 function animateCounter(element, target) {
-    const current = parseInt(element.textContent.replace(/,/g, '') || 0);
-    const increment = target > current ? 1 : -1;
-    const step = Math.ceil(Math.abs(target - current) / 100);
+    // 1. تنظيف النص الحالي من أي حروف أو فواصل (مثل ,) لضمان تحويله لرقم صحيح
+    const currentText = element.textContent || "0";
+    const current = parseInt(currentText.replace(/\D/g, '')) || 0;
+    
+    // 2. تحويل الرقم المستهدف (Target) لرقم صحيح
+    const targetNum = parseInt(target) || 0;
+    
+    // إذا كان الرقم الحالي هو نفسه المستهدف، لا داعي للتكرار
+    if (current === targetNum) return;
+
+    const increment = targetNum > current ? 1 : -1;
+    // حساب الخطوة (السرعة) بناءً على حجم الرقم ليكون التحرك سلساً
+    const step = Math.ceil(Math.abs(targetNum - current) / 100); 
     
     let currentValue = current;
     
     const timer = setInterval(() => {
         currentValue += increment * step;
         
-        if ((increment > 0 && currentValue >= target) || 
-            (increment < 0 && currentValue <= target)) {
-            currentValue = target;
+        // التوقف عند الوصول للرقم المستهدف أو تجاوزه
+        if ((increment > 0 && currentValue >= targetNum) || 
+            (increment < 0 && currentValue <= targetNum)) {
+            currentValue = targetNum;
             clearInterval(timer);
         }
         
-        element.textContent = currentValue.toLocaleString();
+        // عرض الرقم بتنسيق إنجليزي (يضيف الفواصل تلقائياً للأرقام الكبيرة)
+        element.textContent = currentValue.toLocaleString('en-US');
     }, 20);
 }
 
 // --- [6] إعداد مستمعي الأحداث ---
 function setupEventListeners() {
-    // Mobile Menu
+    // القائمة الجانبية للجوال (Mobile Menu)
     const mobileMenuBtn = document.getElementById('mobileMenuBtn');
     const closeMenuBtn = document.getElementById('closeMenuBtn');
     const mobileMenu = document.getElementById('mobileMenu');
@@ -761,23 +774,24 @@ function setupEventListeners() {
     if (mobileMenuBtn && mobileMenu) {
         mobileMenuBtn.addEventListener('click', () => {
             mobileMenu.classList.add('active');
-            document.body.style.overflow = 'hidden';
+            document.body.style.overflow = 'hidden'; // منع التمرير خلف القائمة
         });
     }
     
     if (closeMenuBtn && mobileMenu) {
         closeMenuBtn.addEventListener('click', () => {
             mobileMenu.classList.remove('active');
-            document.body.style.overflow = '';
+            document.body.style.overflow = ''; // إعادة التمرير
         });
     }
     
-    // Accordion
+    // نظام الأكورديون للأسئلة الشائعة (FAQ)
     document.querySelectorAll('.accordion-header').forEach(header => {
         header.addEventListener('click', () => {
             const content = header.nextElementSibling;
             const icon = header.querySelector('i');
             
+            // إغلاق باقي العناصر المفتوحة
             document.querySelectorAll('.accordion-content').forEach(item => {
                 if (item !== content) {
                     item.classList.remove('active');
@@ -786,6 +800,7 @@ function setupEventListeners() {
                 }
             });
             
+            // تبديل حالة العنصر الحالي
             content.classList.toggle('active');
             
             if (content.classList.contains('active')) {
@@ -799,6 +814,7 @@ function setupEventListeners() {
     });
 }
 
+// تحديث عداد السلة في الهيدر
 function updateCartCount() {
     try {
         const cartCount = document.getElementById('cartCount');
@@ -812,7 +828,7 @@ function updateCartCount() {
         if (totalItems > 0) {
             cartCount.style.display = 'flex';
             
-            // تأثير عند تحديث العداد
+            // إضافة تأثير حركي عند زيادة العدد
             cartCount.style.animation = 'none';
             setTimeout(() => {
                 cartCount.style.animation = 'bounce 0.5s ease';
@@ -825,7 +841,51 @@ function updateCartCount() {
     }
 }
 
-// --- [7] تأثيرات التمرير ---
+// --- [7] تأثيرات التمرير ونظام التنقل ---
+function setupScrollEffects() {
+    const nav = document.querySelector('.nav-container');
+    let lastScroll = 0;
+    
+    if (nav) {
+        window.addEventListener('scroll', () => {
+            const currentScroll = window.pageYOffset;
+            
+            if (currentScroll > 100) {
+                nav.classList.add('scrolled'); // إضافة خلفية عند التمرير
+                
+                // إخفاء الشريط عند التمرير للأسفل وإظهاره عند التمرير للأعلى
+                if (currentScroll > lastScroll) {
+                    nav.style.transform = 'translateY(-100%)';
+                } else {
+                    nav.style.transform = 'translateY(0)';
+                }
+            } else {
+                nav.classList.remove('scrolled');
+                nav.style.transform = 'translateY(0)';
+            }
+            
+            lastScroll = currentScroll;
+        });
+    }
+    
+    // تمرير سلس عند الضغط على روابط القائمة
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            const targetId = this.getAttribute('href');
+            if (targetId === '#') return;
+            
+            const targetElement = document.querySelector(targetId);
+            if (targetElement) {
+                window.scrollTo({
+                    top: targetElement.offsetTop - 80, // تعويض ارتفاع الهيدر
+                    behavior: 'smooth'
+                });
+            }
+        });
+    });
+}
 function setupScrollEffects() {
     const nav = document.querySelector('.nav-container');
     let lastScroll = 0;
