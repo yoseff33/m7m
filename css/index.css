@@ -78,3 +78,16 @@
     color: #aaa;
     font-size: 14px;
 }
+/* كود ضروري لعمل الأسئلة الشائعة */
+.accordion-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: all 0.3s ease-out; /* حركة ناعمة */
+    opacity: 0;
+}
+
+.accordion-content.active {
+    max-height: 500px; /* طول كافي للنص */
+    opacity: 1;
+    padding: 15px 0; /* مسافة بسيطة للنص */
+}
