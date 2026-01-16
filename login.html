@@ -8,6 +8,19 @@
     <link rel="stylesheet" href="css/login.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* إضافة بسيطة لضمان مظهر الرسائل */
+        .message {
+            padding: 12px;
+            border-radius: 5px;
+            margin-top: 15px;
+            text-align: center;
+            font-family: 'Rajdhani', sans-serif;
+        }
+        .message.success { background: rgba(0, 255, 0, 0.1); color: #00ff00; border: 1px solid #00ff00; }
+        .message.error { background: rgba(255, 0, 0, 0.1); color: #ff0000; border: 1px solid #ff0000; }
+        .message.info { background: rgba(0, 200, 255, 0.1); color: #00c8ff; border: 1px solid #00c8ff; }
+    </style>
 </head>
 <body>
     <div class="login-page">
@@ -17,14 +30,13 @@
                 <p class="text-glow-blue">تسجيل الدخول إلى حسابك</p>
             </div>
             
-            <!-- خطوة 1: إدخال رقم الجوال -->
             <div id="phoneStep" class="login-step">
                 <div class="input-group" style="margin-bottom: 20px;">
                     <label class="text-gold" style="display: block; margin-bottom: 8px;">رقم الجوال</label>
                     <input type="tel" id="phoneNumber" class="input-iron" placeholder="05xxxxxxxx" maxlength="10" required>
                 </div>
                 
-                <button onclick="sendOTP()" class="btn-iron" style="width: 100%;">
+                <button id="sendOtpBtn" onclick="sendOTP()" class="btn-iron" style="width: 100%;">
                     <i class="fas fa-mobile-alt" style="margin-left: 8px;"></i>
                     إرسال رمز التحقق
                 </button>
@@ -37,32 +49,44 @@
                 </div>
             </div>
             
-            <!-- خطوة 2: إدخال رمز التحقق -->
             <div id="otpStep" class="login-step" style="display: none;">
                 <div class="input-group" style="margin-bottom: 20px;">
-                    <label class="text-gold" style="display: block; margin-bottom: 8px;">رمز التحقق</label>
-                    <input type="text" id="otpCode" class="input-iron" placeholder="أدخل الرمز المكون من 6 أرقام" maxlength="6" required>
+                    <label class="text-gold" style="display: block; margin-bottom: 8px;">رمز التحقق الوارد على واتساب</label>
+                    <input type="text" id="otpInput" class="input-iron" placeholder="أدخل الرمز (4 أرقام)" maxlength="4" required>
                 </div>
                 
                 <button onclick="verifyOTP()" class="btn-iron" style="width: 100%;">
                     <i class="fas fa-check-circle" style="margin-left: 8px;"></i>
-                    تأكيد الرمز
+                    تأكيد الدخول
                 </button>
                 
                 <div style="margin-top: 20px; text-align: center;">
                     <a href="javascript:void(0)" onclick="goBackToPhone()" class="text-glow-blue" style="text-decoration: none;">
-                        <i class="fas fa-arrow-right" style="margin-left: 5px;"></i>
+                        <i class="fas fa-edit" style="margin-left: 5px;"></i>
                         تعديل رقم الجوال
                     </a>
                 </div>
             </div>
             
-            <div id="loginMessage" class="message" style="margin-top: 20px; display: none;"></div>
+            <div id="loginMessage" class="message" style="display: none;"></div>
         </div>
     </div>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase-config.js"></script>
     <script src="js/login.js"></script>
+
+    <script>
+        // دالة للعودة لتعديل الرقم
+        function goBackToPhone() {
+            document.getElementById('otpStep').style.display = 'none';
+            document.getElementById('phoneStep').style.display = 'block';
+            document.getElementById('phoneNumber').disabled = false;
+            document.getElementById('loginMessage').style.display = 'none';
+        }
+
+        // ملاحظة: تأكد أن دالة sendOTP في login.js 
+        // تقوم بإخفاء phoneStep وإظهار otpStep عند النجاح
+    </script>
 </body>
 </html>
