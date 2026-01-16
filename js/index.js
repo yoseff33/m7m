@@ -1296,6 +1296,7 @@ document.addEventListener('keydown', (e) => {
 // تصدير الوظائف للاستخدام العام
 window.ironHomepage = {
     ...window.ironHomepage, // الحفاظ على الوظائف السابقة
+    addToCart,             // <--- هذي الإضافة اللي كانت ناقصة وتسببت بالمشكلة
     closeProductModal,
     showProductDetails
 };
