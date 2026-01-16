@@ -5,12 +5,12 @@
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Jarvis: Real OTP system initializing... 🦾');
     
-    // إدارة التوجيه
+    // 1. إدارة التوجيه (وين يروح المستخدم بعد الدخول)
     const urlParams = new URLSearchParams(window.location.search);
     const redirectUrl = urlParams.get('redirect') || 'profile.html';
     localStorage.setItem('login_redirect', redirectUrl);
     
-    // التحقق من الجلسة النشطة
+    // 2. التحقق من الجلسة النشطة (إذا مسجل دخول من قبل يوجهه فوراً)
     if (localStorage.getItem('iron_user_phone')) {
         console.log('Active session detected. Redirecting...');
         window.location.href = redirectUrl;
@@ -20,15 +20,16 @@ document.addEventListener('DOMContentLoaded', function() {
     setupEventListeners();
 });
 
+// إعداد مستمعي الأحداث للوحة المفاتيح وتنسيق الأرقام
 function setupEventListeners() {
     const phoneInput = document.getElementById('phoneNumber');
-    const otpInput = document.getElementById('otpInput'); // تأكد أن هذا الـ ID موجود في HTML
+    const otpInput = document.getElementById('otpInput');
 
     if (phoneInput) {
-        // ضغط Enter يرسل الكود
+        // ضغط زر Enter في خانة الجوال يرسل الكود
         phoneInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendOTP(); });
         
-        // تنسيق الرقم
+        // تنسيق تلقائي للرقم (يمنع الحروف ويجبر البداية بـ 05)
         phoneInput.addEventListener('input', function(e) {
             let val = e.target.value.replace(/\D/g, ''); 
             if (val.length > 0 && !val.startsWith('05')) val = '05' + val;
@@ -38,15 +39,17 @@ function setupEventListeners() {
     }
 
     if (otpInput) {
+        // ضغط زر Enter في خانة الكود يتحقق من الصحة
         otpInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') verifyOTP(); });
     }
 }
 
-// --- أولاً: إرسال الكود إلى Supabase ---
+// --- أولاً: وظيفة إرسال الكود إلى Supabase ---
 async function sendOTP() {
     const phoneInput = document.getElementById('phoneNumber');
     const phone = phoneInput.value.trim();
     
+    // التحقق من صحة الرقم قبل الإرسال
     if (!phone || phone.length !== 10 || !phone.startsWith('05')) {
         showStatus('يرجى إدخال رقم جوال صحيح يبدأ بـ 05', 'error');
         return;
@@ -59,7 +62,7 @@ async function sendOTP() {
 
     try {
         // إرسال الطلب لجدول otp_requests في سوبابيس
-        // السكربت الموجود على السيرفر (PM2) سيقوم بالباقي
+        // السكربت الموجود على السيرفر (wa-engine.js) هو اللي بيلقط الطلب ويرسل الواتساب
         const { error } = await window.supabaseClient
             .from('otp_requests')
             .insert([{ 
@@ -70,26 +73,27 @@ async function sendOTP() {
 
         if (error) throw error;
 
-        // حفظ البيانات مؤقتاً للتحقق منها لاحقاً
+        // حفظ البيانات مؤقتاً في المتصفح للتحقق منها لاحقاً
         localStorage.setItem('temp_phone', phone);
         localStorage.setItem('temp_otp', generatedCode);
 
         showStatus('✅ تم إرسال الكود! تفقد رسائل الواتساب وأدخله هنا:', 'success');
         
-        // إظهار قسم إدخال الكود (OTP Section)
-        const otpSection = document.getElementById('otpSection');
-        if (otpSection) {
-            otpSection.style.display = 'block';
-            phoneInput.disabled = true; // تعطيل تغيير الرقم مؤقتاً
+        // --- تبديل الواجهة للمرحلة الثانية ---
+        document.getElementById('phoneStep').style.display = 'none'; // إخفاء خانة الجوال
+        document.getElementById('otpStep').style.display = 'block';   // إظهار خانة الكود
+        
+        if (document.getElementById('otpInput')) {
+            document.getElementById('otpInput').focus(); // وضع الماوس تلقائياً في خانة الكود
         }
 
     } catch (error) {
         console.error('OTP Send Error:', error);
-        showStatus('فشل في إرسال الكود، حاول مرة أخرى.', 'error');
+        showStatus('فشل في إرسال الكود، تأكد من اتصالك وحاول مرة أخرى.', 'error');
     }
 }
 
-// --- ثانياً: التحقق من الكود الذي أدخله المستخدم ---
+// --- ثانياً: وظيفة التحقق من الكود الذي أدخله المستخدم ---
 async function verifyOTP() {
     const otpInput = document.getElementById('otpInput');
     const userEnteredCode = otpInput.value.trim();
@@ -101,27 +105,28 @@ async function verifyOTP() {
         return;
     }
 
+    // مقارنة الكود المدخل بالكود اللي أرسلناه لسوبابيس
     if (userEnteredCode === correctCode) {
         showStatus('🦾 تم التحقق بنجاح! جاري الدخول...', 'success');
         
-        // حفظ تسجيل الدخول النهائي
+        // حفظ تسجيل الدخول النهائي في المتصفح (عشان ما يطلب دخول مرة ثانية)
         localStorage.setItem('iron_user_phone', phone);
         
-        // تنظيف البيانات المؤقتة
+        // تنظيف البيانات المؤقتة لزيادة الأمان
         localStorage.removeItem('temp_otp');
         localStorage.removeItem('temp_phone');
 
-        // التوجيه
+        // التوجيه لصفحة الحساب
         const redirectUrl = localStorage.getItem('login_redirect') || 'profile.html';
         setTimeout(() => {
             window.location.href = redirectUrl;
         }, 1500);
     } else {
-        showStatus('❌ الكود غير صحيح، تأكد من الرسالة في واتساب.', 'error');
+        showStatus('❌ الكود غير صحيح، تأكد من الرسالة في واتساب أو اطلب كود جديد.', 'error');
     }
 }
 
-// --- الخدمات المساعدة ---
+// --- الخدمات المساعدة لإظهار الرسائل ---
 function showStatus(msg, type) {
     const messageDiv = document.getElementById('loginMessage');
     if (messageDiv) {
